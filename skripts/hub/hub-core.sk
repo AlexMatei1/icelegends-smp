@@ -1,0 +1,80 @@
+# ============================================================
+# Hub Core — IceLegends SMP
+# Lume: hub (Multiverse-Core)
+# ============================================================
+
+options:
+    HUB_WORLD: hub
+    SMP_WORLD: world
+    HUB_PREFIX: &8[&bHub&8]
+
+# ── Comanda /hub ──────────────────────────────────────────────
+command /hub [<text>]:
+    trigger:
+        if arg-1 is "setspawn":
+            if player has permission "smp.admin":
+                set {hub::spawn} to player's location
+                send "{@HUB_PREFIX} &aSpawn hub setat!" to player
+            else:
+                send "{@HUB_PREFIX} &cNu ai permisiunea." to player
+            stop
+        teleport player to hubSpawn()
+        send "{@HUB_PREFIX} &bAi ajuns în Hub." to player
+
+# ── Comanda /smp — setspawn admin ────────────────────────────
+command /smp [<text>]:
+    trigger:
+        if arg-1 is "setspawn":
+            if player has permission "smp.admin":
+                set {smp::spawn} to player's location
+                send "{@HUB_PREFIX} &aSpawn SMP setat!" to player
+            else:
+                send "{@HUB_PREFIX} &cNu ai permisiunea." to player
+            stop
+        send "{@HUB_PREFIX} &7Foloseste &bBusola Lumilor &7pentru a calatori." to player
+
+# ── Funcție spawn hub ─────────────────────────────────────────
+function hubSpawn() :: location:
+    if {hub::spawn} is set:
+        return {hub::spawn}
+    return spawn of world "hub"
+
+# ── Join: teleportare la hub ──────────────────────────────────
+on join:
+    wait 5 ticks
+    teleport player to hubSpawn()
+    if player does not have permission "smp.admin":
+        set player's game mode to adventure
+    apply speed 1 to player for 9999 days
+
+# ── Hub: fără daune, fără foame ───────────────────────────────
+on damage:
+    if world of victim is world "{@HUB_WORLD}":
+        cancel event
+
+on food level change:
+    if world of player is world "{@HUB_WORLD}":
+        cancel event
+        set player's food level to 20
+
+# ── Menține adventure mode + speed în hub ────────────────────
+every 10 seconds:
+    loop all players:
+        if world of loop-player is world "{@HUB_WORLD}":
+            if loop-player does not have permission "smp.admin":
+                if loop-player's game mode is not adventure:
+                    set loop-player's game mode to adventure
+            apply speed 1 to loop-player for 9999 days
+
+# ── Drop-uri oprite în hub ────────────────────────────────────
+on drop:
+    if world of player is world "{@HUB_WORLD}":
+        cancel event
+        send "{@HUB_PREFIX} &7Nu poți arunca iteme în hub." to player
+
+# ── PvP oprit în hub ─────────────────────────────────────────
+on damage of player:
+    if attacker is a player:
+        if world of victim is world "{@HUB_WORLD}":
+            cancel event
+            send "{@HUB_PREFIX} &cPvP-ul este dezactivat în hub." to attacker

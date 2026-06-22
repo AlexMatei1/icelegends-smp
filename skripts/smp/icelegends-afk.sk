@@ -1,0 +1,48 @@
+## IceLegends — AFK System
+## Marcare AFK dupa 5 minute, kick dupa 15 minute de inactivitate
+
+options:
+    afk-after:  300   # secunde pana la AFK (5 min)
+    kick-after: 900   # secunde pana la kick (15 min)
+
+every 1 second:
+    loop all players:
+        add 1 to {afk::idle::%uuid of loop-player%}
+
+        # Marcare AFK
+        if {afk::idle::%uuid of loop-player%} = {@afk-after}:
+            set {afk::%uuid of loop-player%} to true
+            broadcast "&7&o%loop-player% este acum AFK."
+            send action bar "&7[AFK] Misca-te pentru a iesi din modul AFK." to loop-player
+
+        # Kick dupa prea mult timp
+        if {afk::idle::%uuid of loop-player%} >= {@kick-after}:
+            kick loop-player due to "&b&lIceLegends%nl%&7Ai fost deconectat dupa 15 minute de inactivitate.%nl%&bRevino oricand!"
+
+on player move:
+    if {afk::idle::%uuid of player%} >= {@afk-after}:
+        if {afk::%uuid of player%} is true:
+            set {afk::%uuid of player%} to false
+            broadcast "&7&o%player% nu mai este AFK."
+    set {afk::idle::%uuid of player%} to 0
+
+on chat:
+    if {afk::%uuid of player%} is true:
+        set {afk::%uuid of player%} to false
+        broadcast "&7&o%player% nu mai este AFK."
+    set {afk::idle::%uuid of player%} to 0
+
+on command:
+    set {afk::idle::%uuid of player%} to 0
+
+command /afk:
+    description: Intri/iesi din modul AFK manual.
+    trigger:
+        if {afk::%uuid of player%} is true:
+            set {afk::%uuid of player%} to false
+            set {afk::idle::%uuid of player%} to 0
+            broadcast "&7&o%player% nu mai este AFK."
+        else:
+            set {afk::%uuid of player%} to true
+            set {afk::idle::%uuid of player%} to {@afk-after}
+            broadcast "&7&o%player% este acum AFK."

@@ -1,0 +1,148 @@
+# ============================================================
+# IceLegends SMP — Server unic (Hub + SMP + Shop via Multiverse)
+# Optimizat pentru VM 7GB — heap 2G, CPU cap 3 cores
+# ============================================================
+
+x-jvm-flags: &jvm-flags >-
+  -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200
+  -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC
+  -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=2M
+  -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4
+  -XX:InitiatingHeapOccupancyPercent=25 -XX:G1MixedGCLiveThresholdPercent=90
+  -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32
+  -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1
+  -XX:+UseStringDeduplication
+  -Dpaper.debug-sync-loads=false
+
+services:
+
+  # ── MySQL — LuckPerms ────────────────────────────────────────
+  mysql:
+    image: mariadb:10.11
+    container_name: mc-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-icelegends_root}
+      MYSQL_DATABASE: luckperms
+      MYSQL_USER: luckperms
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-icelegends_lp}
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - mc-internal
+    mem_limit: 256m
+    memswap_limit: 256m
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Server Principal — toate lumile ──────────────────────────
+  mc:
+    image: itzg/minecraft-server:latest
+    platform: linux/amd64
+    container_name: mc
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    environment:
+      EULA: "TRUE"
+      TYPE: PAPER
+      VERSION: LATEST
+      INIT_MEMORY: 1024M
+      MEMORY: 3000M
+      MAX_PLAYERS: ${MAX_PLAYERS:-15}
+      MOTD: ${MOTD:-IceLegends SMP}
+      DIFFICULTY: ${DIFFICULTY:-normal}
+      GAMEMODE: ${GAMEMODE:-survival}
+      ONLINE_MODE: "false"
+      SPAWN_PROTECTION: "0"
+      VIEW_DISTANCE: "6"
+      SIMULATION_DISTANCE: "4"
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RCON_PORT: "25575"
+      MAX_TICK_TIME: "60000"
+      TZ: ${TZ:-Europe/Bucharest}
+      JVM_OPTS: *jvm-flags
+    ports:
+      - "25565:25565/tcp"
+      - "25565:25565/udp"
+    volumes:
+      - ./data:/data
+    networks:
+      - mc-internal
+    cpus: 3.0
+    mem_limit: 3800m
+    memswap_limit: 3800m
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "mc-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # ── Admin Panel ───────────────────────────────────────────────
+  panel:
+    build: ./panel
+    platform: linux/amd64
+    container_name: panel
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      RCON_HOST: mc
+      RCON_PORT: 25575
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      JWT_SECRET: ${PANEL_JWT_SECRET}
+      ADMIN_PASSWORD: ${PANEL_ADMIN_PASSWORD}
+      MC_LOG_PATH: /mc-logs/latest.log
+      MC_DATA_PATH: /mc-data
+    volumes:
+      - ./data/logs:/mc-logs:ro
+      - ./data:/mc-data:ro
+      - panel-data:/app/data
+      - ./panel/server.js:/app/server.js        # live — node --watch auto-restarts
+      - ./panel/public:/app/public              # live — static files served directly
+    networks:
+      - mc-internal
+    mem_limit: 256m
+    memswap_limit: 256m
+    depends_on:
+      mc:
+        condition: service_healthy
+
+  # ── playit.gg Tunnel ─────────────────────────────────────────
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.17
+    container_name: playit
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      SECRET_KEY: ${PLAYIT_SECRET_KEY}
+    volumes:
+      - playit-data:/etc/playit
+
+  # ── Cloudflare Tunnel (panel) ─────────────────────────────────
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    platform: linux/amd64
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    networks:
+      - mc-internal
+    depends_on:
+      - panel
+
+networks:
+  mc-internal:
+    driver: bridge
+
+volumes:
+  panel-data:
+  playit-data:

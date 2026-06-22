@@ -1,0 +1,62 @@
+# ============================================================
+# Quest Q3 — Umbra Sezonului (Shadow of the Season)
+# Plugin: Quests by PikaMug
+# Trigger: Manual de Admin la 60% din sezon
+#   Comandă unlock: /quests unlock <playername> umbra-sezonului
+# NPC: Bătrânul (Citizens) — dialog dramatic
+# IMPORTANT: Nu activa înainte de Boss Fight pregătit!
+# ============================================================
+
+quests:
+  umbra-sezonului:
+    name: "Umbra Sezonului"
+    description: "Participă la Boss Fight cu minimum 5 jucători."
+
+    # Dialog NPC la acceptarea quest-ului
+    ask-message: |
+      &4&lBătrânul: &rL-ai simțit? Ceva se mișcă în adâncuri.
+      &4&lBătrânul: &rNu poți face asta singur. Ai nevoie de aliați.
+      &4&lBătrânul: &rUmbra Senină... s-a trezit.
+
+    # Mesaj la finalizarea quest-ului
+    finish-message: |
+      &6&lBătrânul: &rAi reușit. Lumea respiră din nou.
+      &6&lBătrânul: &rDar Tăcerea... nu a fost un accident.
+      &a✓ Quest finalizat: Umbra Sezonului! Titlu permanent acordat.
+
+    # NPC care oferă quest-ul
+    npc-giver-id: 1
+
+    # Cerințe — Q2 trebuie completat și quest-ul trebuie deblocat de Admin
+    requirements:
+      quests:
+        - radacini
+      message: "&cAcest quest nu este disponibil încă."
+
+    stages:
+      ordered:
+        '1':
+          # Obiectiv: participă la boss fight
+          # Detectat prin kill boss sau event de participare MythicMobs
+          objectives:
+            - type: killMob
+              names:
+                - UmbraSenina
+              # Participare (nu neapărat kill) — damage dealt ≥ 1
+              amount: 1
+          start-message: "&7Găsește &cUmbra Senină &7la arenă și participă la luptă (&e/warp arena&7)."
+          complete-message: "&a✓ Ai participat la Boss Fight!"
+
+    rewards:
+      money: 1000
+      # Titlu cosmetic permanent — "Veteran S1"
+      commands:
+        # Titlu via LuckPerms meta
+        - "lp user {player} meta set suffix \" &7[&6Veteran S1&7]\""
+        # Broadcast în server
+        - "broadcast &6{player} &aa primit titlul &6Veteran S1&a pentru victoria împotriva Umbrei Senine!"
+      message: "&a+1000 coins &7și titlu permanent &6Veteran S1"
+
+    # Nu se poate repeta — quest final de sezon
+    repeat: false
+    time-limit: 0

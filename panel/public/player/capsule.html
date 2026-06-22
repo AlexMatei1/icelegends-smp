@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Time Capsule</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    :root { --accent: var(--ice); --surface: var(--glass); --page-accent: #ce93d8; --page-glow: rgba(206,147,216,0.2); }
+
+    /* Capsule list items (built from JS innerHTML) */
+    .capsule-list { display:flex; flex-direction:column; gap:10px; }
+    .capsule-item {
+      background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md);
+      padding:18px 22px; display:flex; align-items:center; gap:18px;
+      transition:border-color .25s;
+    }
+    .capsule-item:hover { border-color:rgba(206,147,216,.25); }
+    .capsule-icon { font-size:1.9rem; }
+    .capsule-info { flex:1; }
+    .capsule-to { font-family:'Exo 2',sans-serif; font-weight:700; font-size:.95rem; margin-bottom:4px; }
+    .capsule-preview { font-size:.82rem; color:var(--muted); margin-bottom:4px; font-style:italic; }
+    .capsule-when { font-size:.75rem; color:#ce93d8; font-weight:600; }
+    .badge-delivered { color:var(--green); font-size:.72rem; font-weight:700; }
+    .badge-pending { color:var(--gold); font-size:.72rem; font-weight:700; }
+
+    /* Delay selector override for selected state using .sel (matches ice.css) */
+    .delay-opt { border-color:rgba(206,147,216,.2); }
+    .delay-opt:hover { border-color:rgba(206,147,216,.4); }
+    .delay-opt.sel { background:rgba(206,147,216,.08); border-color:rgba(206,147,216,.4); }
+    .delay-days { color:#ce93d8; }
+
+    /* Not logged */
+    .not-logged { text-align:center; padding:20px; color:var(--muted); font-size:.88rem;
+      background:rgba(206,147,216,.04); border:1px solid rgba(206,147,216,.15); border-radius:var(--r-sm); }
+    .not-logged a { color:#ce93d8; text-decoration:none; }
+
+    /* Char count */
+    .char-count { text-align:right; font-size:.75rem; color:var(--muted); margin-top:5px; }
+
+    /* Tip box */
+    .tip { background:rgba(206,147,216,.04); border:1px solid rgba(206,147,216,.14); border-radius:var(--r-sm); padding:14px 16px; font-size:.84rem; color:var(--muted); margin-bottom:22px; }
+
+    /* Purple btn variant */
+    .btn-purple { background:linear-gradient(135deg,#4a148c,#8e24aa,#ce93d8); color:#fff; box-shadow:0 4px 20px rgba(206,147,216,.2); }
+    .btn-purple:hover { box-shadow:0 6px 30px rgba(206,147,216,.35); }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+    <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link active" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+    <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container" style="max-width:820px">
+    <div class="page-hero">
+      <div class="page-hero-title">⏳ <span class="accent" style="color:#ce93d8">Time Capsule</span></div>
+      <div class="page-hero-sub">Scrie un mesaj care va fi livrat ca o carte fizică în inventarul unui jucător după X zile.</div>
+    </div>
+
+    <div class="tip">
+      📖 Mesajele sunt livrate automat ca <strong>Cărți Scrise</strong> în Minecraft. Destinatarul le primește direct în inventar când se conectează.
+    </div>
+
+    <div class="sec-label">Scrie o capsulă</div>
+    <div class="card" id="composeCard" style="margin-bottom:28px">
+      <div class="not-logged" id="notLogMsg" style="display:none">
+        <a href="/player/login">Autentifică-te</a> pentru a trimite o capsulă.
+      </div>
+      <div id="formDiv">
+        <div class="form-group">
+          <label class="form-label">Destinatar (username Minecraft)</label>
+          <input class="form-input" type="text" id="toName" placeholder="Cui îi trimiți mesajul">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mesajul tău <span style="color:#ce93d8">(max 500 caractere)</span></label>
+          <textarea class="form-input" id="message" maxlength="500" placeholder="Scrie mesajul care va fi livrat în viitor..."></textarea>
+          <div class="char-count"><span id="charCount">0</span>/500</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Livrare după</label>
+          <div class="delay-grid">
+            <div class="delay-opt sel" onclick="selectDelay(this,3)">
+              <div class="delay-days">3</div><div class="delay-lbl">zile</div>
+            </div>
+            <div class="delay-opt" onclick="selectDelay(this,7)">
+              <div class="delay-days">7</div><div class="delay-lbl">zile</div>
+            </div>
+            <div class="delay-opt" onclick="selectDelay(this,14)">
+              <div class="delay-days">14</div><div class="delay-lbl">zile</div>
+            </div>
+            <div class="delay-opt" onclick="selectDelay(this,30)">
+              <div class="delay-days">30</div><div class="delay-lbl">zile</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-purple btn-full" onclick="sendCapsule()" style="margin-top:6px">TRIMITE CAPSULA</button>
+        <div id="sendMsg" class="alert"></div>
+      </div>
+    </div>
+
+    <div class="sec-label">Capsulele mele trimise</div>
+    <div class="capsule-list" id="capsuleList">
+      <div style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px">Autentifică-te pentru a vedea capsulele tale.</div>
+    </div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+let selectedDelay = 3;
+
+document.getElementById('message').addEventListener('input', e => {
+  document.getElementById('charCount').textContent = e.target.value.length;
+});
+
+function selectDelay(el, days) {
+  selectedDelay = days;
+  document.querySelectorAll('.delay-opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials: 'include' });
+    if (r.ok) {
+      const d = await r.json();
+      document.getElementById('navName').textContent = d.username;
+      loadMyCapsules();
+    } else {
+      document.getElementById('navName').textContent = 'Neautentificat';
+      document.getElementById('notLogMsg').style.display = 'block';
+      document.getElementById('formDiv').style.display = 'none';
+    }
+  } catch {}
+}
+
+async function sendCapsule() {
+  const msg = document.getElementById('sendMsg');
+  msg.className = 'alert';
+  const to_name = document.getElementById('toName').value.trim();
+  const message = document.getElementById('message').value.trim();
+  if (!to_name || !message) { msg.className='alert alert-err show'; msg.textContent='Completează toate câmpurile.'; return; }
+  const r = await fetch('/api/capsules', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include',
+    body: JSON.stringify({ to_name, message, delay_days: selectedDelay }) });
+  const d = await r.json();
+  if (d.ok) {
+    msg.className = 'alert alert-ok show';
+    const dt = new Date(d.deliver_at * 1000);
+    msg.textContent = `Capsulă trimisă! Va fi livrată pe ${dt.toLocaleDateString('ro-RO')}.`;
+    document.getElementById('toName').value = '';
+    document.getElementById('message').value = '';
+    document.getElementById('charCount').textContent = '0';
+    loadMyCapsules();
+  } else { msg.className='alert alert-err show'; msg.textContent=d.error; }
+}
+
+async function loadMyCapsules() {
+  const r = await fetch('/api/capsules/mine', { credentials: 'include' });
+  if (!r.ok) return;
+  const data = await r.json();
+  const el = document.getElementById('capsuleList');
+  if (!data.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px">Nicio capsulă trimisă încă.</div>'; return; }
+  el.innerHTML = data.map(c => {
+    const dt = new Date(c.deliver_at * 1000).toLocaleDateString('ro-RO');
+    const status = c.delivered ? '<span class="badge-delivered">✓ LIVRATĂ</span>' : '<span class="badge-pending">⏳ AȘTEPTARE</span>';
+    return `<div class="capsule-item">
+      <div class="capsule-icon">📜</div>
+      <div class="capsule-info">
+        <div class="capsule-to">Către: <strong>${c.to_name}</strong> ${status}</div>
+        <div class="capsule-preview">"${c.message.slice(0, 60)}${c.message.length > 60 ? '...' : ''}"</div>
+        <div class="capsule-when">${c.delivered ? 'Livrată' : 'Livrare pe'} ${dt}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>

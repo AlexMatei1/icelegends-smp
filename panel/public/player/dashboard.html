@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Dashboard</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    :root { --accent: var(--ice); --surface: var(--glass); }
+
+    .balance-card {
+      background: linear-gradient(135deg, rgba(4,15,38,.9) 0%, rgba(8,26,54,.8) 100%);
+      border: 1px solid rgba(100,223,223,.18); border-radius: var(--r-lg); padding: 28px 32px;
+      display: flex; align-items: center; gap: 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.4), 0 0 60px rgba(0,80,160,.08);
+      position: relative; overflow: hidden;
+    }
+    .balance-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(100,223,223,.4),transparent);
+    }
+    .balance-icon { font-size:2.8rem; filter:drop-shadow(0 0 12px rgba(255,213,128,.5)); }
+    .balance-label { font-size:.72rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+    .balance-val { font-family:'Exo 2',sans-serif; font-size:2.4rem; font-weight:900; color:var(--gold);
+      text-shadow:0 0 30px rgba(255,213,128,.4); }
+    .balance-val span { font-size:.95rem; color:var(--muted); font-weight:400; margin-left:6px; }
+
+    .skill-card { background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md);
+      padding:18px 16px; transition:all .25s; position:relative; overflow:hidden; }
+    .skill-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,var(--border-soft),transparent); }
+    .skill-card:hover { border-color:rgba(100,223,223,.22); transform:translateY(-2px);
+      box-shadow:0 12px 36px rgba(0,0,0,.35), 0 0 20px rgba(100,223,223,.06); }
+    .skill-icon { font-size:1.7rem; margin-bottom:8px; }
+    .skill-name { font-family:'Exo 2',sans-serif; font-size:.78rem; font-weight:700;
+      letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+    .skill-level { font-family:'Exo 2',sans-serif; font-size:1.6rem; font-weight:900; color:var(--ice); }
+    .skill-level span { font-size:.72rem; color:var(--muted); font-weight:400; }
+    .skill-bar { height:4px; background:rgba(100,223,223,.07); border-radius:2px; margin-top:10px; overflow:hidden; }
+    .skill-bar-fill { height:100%; border-radius:2px; transition:width 1.2s cubic-bezier(.4,0,.2,1); }
+
+    .lb-section { background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md); padding:22px; }
+    .tab { padding:8px 14px; border-radius:9px; border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-family:'Exo 2',sans-serif; font-size:.76rem; font-weight:700;
+      letter-spacing:1px; cursor:pointer; transition:all .2s; }
+    .tab.active { background:rgba(100,223,223,.1); border-color:rgba(100,223,223,.3); color:var(--ice); }
+    .tab-bar { display:flex; gap:3px; flex-wrap:wrap; margin-bottom:14px; }
+    .lb-col { text-align:right; color:var(--gold); font-weight:600; }
+    .rank-badge { display:inline-flex; align-items:center; justify-content:center;
+      width:26px; height:26px; border-radius:6px; font-size:.8rem; font-weight:700; }
+    .rank-1 { background:rgba(255,213,128,.15); color:var(--gold); }
+    .rank-2 { background:rgba(180,200,210,.1); color:#b0c4ce; }
+    .rank-3 { background:rgba(255,138,100,.1); color:#ff8a65; }
+    .rank-n { background:rgba(100,223,223,.06); color:var(--muted); }
+    .you-badge { background:rgba(100,223,223,.12); color:var(--ice); border-radius:4px;
+      padding:1px 7px; font-size:.7rem; margin-left:6px; }
+
+    .feed-box { background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md); padding:20px; }
+    #eventFeed { display:flex; flex-direction:column; gap:5px; max-height:220px; overflow-y:auto; }
+    .feed-item { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:8px;
+      background:rgba(100,223,223,.025); font-size:.83rem; transition:background .15s; }
+    .feed-item:hover { background:rgba(100,223,223,.05); }
+
+    .ann-item { background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md);
+      padding:14px 18px; margin-bottom:8px; position:relative; }
+    .ann-item.pinned { border-color:rgba(100,223,223,.3); background:rgba(100,223,223,.05); }
+    .ann-pin { font-size:.7rem; color:var(--ice); letter-spacing:1px; text-transform:uppercase; font-weight:700; margin-bottom:4px; }
+    .ann-title { font-weight:700; color:var(--text); margin-bottom:4px; }
+    .ann-body { font-size:.85rem; color:rgba(255,255,255,.65); }
+    .ann-meta { font-size:.72rem; color:var(--muted); margin-top:6px; }
+
+    .not-auth { text-align:center; padding:100px 20px; }
+    .not-auth .icon { font-size:3.5rem; margin-bottom:16px; opacity:.4; }
+
+    /* ── Admin Panel embed ─────────────────────────────────── */
+    .admin-card { background: rgba(4,15,38,.85); border:1px solid rgba(255,100,100,.2);
+      border-radius: var(--r-lg); padding: 24px; position: relative; overflow: hidden; }
+    .admin-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,100,100,.4),transparent); }
+    .admin-tab-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+    .admin-tab { padding:.4rem 1rem; border-radius:8px; border:1px solid rgba(100,223,223,.2);
+      background:transparent; color:rgba(255,255,255,.45); font-size:.8rem; cursor:pointer; transition:all .2s; }
+    .admin-tab.active { background:rgba(100,223,223,.12); color:var(--ice); border-color:rgba(100,223,223,.4); }
+    .admin-section { display:none; }
+    .admin-section.active { display:block; }
+    .a-stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:.6rem; margin-bottom:1rem; }
+    .a-stat-box { background:rgba(100,223,223,.06); border:1px solid rgba(100,223,223,.15);
+      border-radius:8px; padding:.7rem .9rem; }
+    .a-stat-val { font-size:1.4rem; font-weight:700; color:var(--ice); }
+    .a-stat-lbl { font-size:.68rem; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.08em; }
+    .tps-good { color:#64ffda; } .tps-warn { color:#ffd580; } .tps-bad { color:#ff5252; }
+    .mem-bar { height:6px; border-radius:3px; background:rgba(100,223,223,.1); margin:.3rem 0 .15rem; overflow:hidden; }
+    .mem-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#64dfdf,#64ffda); transition:width .5s; }
+    .a-input { background:rgba(100,223,223,.06); border:1px solid rgba(100,223,223,.2); border-radius:7px;
+      padding:.5rem .8rem; color:#e8f4f8; font-size:.85rem; outline:none; }
+    .a-input:focus { border-color:var(--ice); }
+    .a-row { display:flex; gap:.5rem; margin-bottom:.6rem; flex-wrap:wrap; }
+    .a-player-row { display:flex; align-items:center; justify-content:space-between;
+      padding:.45rem .8rem; border-radius:7px; background:rgba(100,223,223,.04); margin-bottom:.35rem; }
+    .a-player-name { font-weight:600; color:var(--ice); font-size:.88rem; }
+    .a-actions { display:flex; gap:.35rem; }
+    .btn-kick { background:rgba(255,213,128,.12); color:#ffd580; border:1px solid rgba(255,213,128,.25); padding:.25rem .7rem; border-radius:6px; font-size:.76rem; cursor:pointer; }
+    .btn-kick:hover { background:rgba(255,213,128,.25); }
+    .btn-ban  { background:rgba(255,82,82,.12); color:#ff5252; border:1px solid rgba(255,82,82,.25); padding:.25rem .7rem; border-radius:6px; font-size:.76rem; cursor:pointer; }
+    .btn-ban:hover { background:rgba(255,82,82,.25); }
+    .console-out { background:rgba(0,0,0,.5); border:1px solid rgba(100,223,223,.12); border-radius:7px;
+      padding:.7rem; font-family:monospace; font-size:.78rem; color:#64ffda; height:160px; overflow-y:auto;
+      white-space:pre-wrap; margin-bottom:.5rem; }
+    .a-msg { font-size:.82rem; margin-top:.3rem; }
+    .a-msg.ok { color:#64ffda; } .a-msg.err { color:#ff5252; }
+    .role-badge { display:inline-block; padding:.12rem .55rem; border-radius:20px; font-size:.68rem; font-weight:700; text-transform:uppercase; }
+    .rb-owner { background:rgba(255,213,128,.2); color:#ffd580; }
+    .rb-moderator { background:rgba(100,223,223,.2); color:#64dfdf; }
+    .rb-helper { background:rgba(100,255,218,.15); color:#64ffda; }
+    .rb-player { background:rgba(255,255,255,.08); color:rgba(255,255,255,.4); }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+    <div class="nav-links">
+    <a class="nav-link active" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+    <a class="nav-link" href="/player/leaderboard">Clasament</a>
+  </div>
+    <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container">
+    <div id="loadingState" class="loading-wrap"><div class="spinner"></div></div>
+
+    <div id="mainContent" style="display:none">
+      <div class="page-hero">
+        <div class="page-hero-title">Bun venit, <span class="accent" id="heroName">jucător</span></div>
+        <div class="page-hero-sub">Statisticile tale live, features exclusive și clasamentul serverului.</div>
+      </div>
+
+      <!-- ── Admin Panel (staff only) ───────────────────────── -->
+      <div id="adminPanel" style="display:none;margin-bottom:28px">
+        <div class="sec-label" style="color:#ff8a65">⚙ Panou Staff — <span id="adminRoleBadge"></span></div>
+        <div class="admin-card">
+          <div class="admin-tab-bar">
+            <button class="admin-tab active" onclick="adminTab('status',this)">Status</button>
+            <button class="admin-tab" onclick="adminTab('players',this)">Jucători</button>
+            <button class="admin-tab" onclick="adminTab('actions',this)">Acțiuni</button>
+            <button class="admin-tab" onclick="adminTab('analytics',this)">📊 Analytics</button>
+            <button class="admin-tab" onclick="adminTab('appeals',this)">📩 Contestații</button>
+            <button class="admin-tab" onclick="adminTab('broadcasts',this)">📅 Broadcast Prog.</button>
+            <button class="admin-tab" onclick="adminTab('announce',this)">📢 Anunțuri</button>
+            <button class="admin-tab" id="aTabConsole" onclick="adminTab('console',this)" style="display:none">Consolă</button>
+          </div>
+
+          <!-- Status -->
+          <div class="admin-section active" id="as-status">
+            <div class="a-stat-grid">
+              <div class="a-stat-box"><div class="a-stat-val" id="a-tps1">—</div><div class="a-stat-lbl">TPS 1m</div></div>
+              <div class="a-stat-box"><div class="a-stat-val" id="a-tps5">—</div><div class="a-stat-lbl">TPS 5m</div></div>
+              <div class="a-stat-box"><div class="a-stat-val" id="a-tps15">—</div><div class="a-stat-lbl">TPS 15m</div></div>
+              <div class="a-stat-box"><div class="a-stat-val" id="a-online">—</div><div class="a-stat-lbl">Online</div></div>
+              <div class="a-stat-box">
+                <div class="a-stat-val" id="a-mem">—</div><div class="a-stat-lbl">RAM MB</div>
+                <div class="mem-bar"><div class="mem-fill" id="a-mem-bar" style="width:0%"></div></div>
+              </div>
+            </div>
+            <button class="btn btn-ice btn-sm" onclick="loadAdminStatus()">↻ Refresh</button>
+          </div>
+
+          <!-- Jucatori online -->
+          <div class="admin-section" id="as-players">
+            <div id="a-players-list" style="margin-bottom:.8rem"><p style="color:rgba(255,255,255,.35);font-size:.82rem">Se încarcă...</p></div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin:.8rem 0 .4rem">Ban / Unban manual</div>
+            <div class="a-row">
+              <input class="a-input" id="a-ban-name" placeholder="Jucător" style="flex:1;min-width:100px">
+              <input class="a-input" id="a-ban-reason" placeholder="Motiv" style="flex:2;min-width:120px">
+              <button class="btn btn-red btn-sm" onclick="aBan()">Ban</button>
+              <button class="btn btn-green btn-sm" onclick="aUnban()">Unban</button>
+            </div>
+            <div class="a-msg" id="a-players-msg"></div>
+          </div>
+
+          <!-- Actiuni -->
+          <div class="admin-section" id="as-actions">
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Broadcast</div>
+            <div class="a-row">
+              <input class="a-input" id="a-bc-msg" placeholder="Mesaj global (&coduri culori)" style="flex:1">
+              <button class="btn btn-ice btn-sm" onclick="aBroadcast()">Trimite</button>
+            </div>
+            <div class="a-msg" id="a-bc-msg-result"></div>
+
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin:.9rem 0 .5rem">Whitelist</div>
+            <div class="a-row">
+              <input class="a-input" id="a-wl-name" placeholder="Jucător" style="flex:1">
+              <button class="btn btn-green btn-sm" onclick="aWlAdd()">Adaugă</button>
+              <button class="btn btn-red btn-sm" onclick="aWlRem()">Elimină</button>
+            </div>
+            <div class="a-msg" id="a-wl-msg"></div>
+
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin:.9rem 0 .5rem">Economie</div>
+            <div class="a-row">
+              <input class="a-input" id="a-eco-p" placeholder="Jucător" style="width:110px">
+              <input class="a-input" id="a-eco-amt" placeholder="Suma" type="number" style="width:90px">
+              <button class="btn btn-ice btn-sm" onclick="aEcoGive()">Dă</button>
+              <button class="btn btn-ice btn-sm" onclick="aEcoSet()">Setează</button>
+            </div>
+            <div class="a-msg" id="a-eco-msg"></div>
+          </div>
+
+          <!-- Analytics -->
+          <div class="admin-section" id="as-analytics">
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem">Ultimele 24h — Server Analytics</div>
+            <div id="analyticsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.8rem;margin-bottom:1rem"></div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Istoric TPS (ultimele 50 înregistrări)</div>
+            <div id="tpsChart" style="display:flex;align-items:flex-end;gap:2px;height:70px;background:rgba(255,255,255,.03);border-radius:8px;padding:6px;overflow-x:auto"></div>
+            <button class="btn btn-ice btn-sm" style="margin-top:.6rem" onclick="loadAnalytics()">↻ Refresh</button>
+          </div>
+
+          <!-- Contestatii (Appeals) -->
+          <div class="admin-section" id="as-appeals">
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem">Contestații Ban Primite</div>
+            <div id="appealsList" style="max-height:320px;overflow-y:auto"></div>
+            <div class="a-msg" id="a-appeals-msg"></div>
+          </div>
+
+          <!-- Broadcast Programat -->
+          <div class="admin-section" id="as-broadcasts">
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.6rem">Programează Broadcast</div>
+            <div class="a-row" style="flex-wrap:wrap;gap:.5rem">
+              <input class="a-input" id="bc-sched-msg" placeholder="Mesaj broadcast" style="flex:2;min-width:160px">
+              <input class="a-input" id="bc-sched-time" type="datetime-local" style="flex:1;min-width:160px">
+              <button class="btn btn-ice btn-sm" onclick="schedBroadcast()">Programează</button>
+            </div>
+            <div class="a-msg" id="a-sched-msg" style="margin-bottom:.8rem"></div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Broadcast-uri Programate</div>
+            <div id="schedList" style="max-height:260px;overflow-y:auto"></div>
+            <button class="btn btn-ice btn-sm" style="margin-top:.5rem" onclick="loadScheduled()">↻ Refresh</button>
+          </div>
+
+          <!-- Anunturi -->
+          <div class="admin-section" id="as-announce">
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Anunț nou</div>
+            <div class="a-row" style="flex-wrap:wrap">
+              <input class="a-input" id="ann-title" placeholder="Titlu" style="flex:2;min-width:140px">
+              <label style="display:flex;align-items:center;gap:.3rem;color:rgba(255,255,255,.5);font-size:.8rem;white-space:nowrap">
+                <input type="checkbox" id="ann-pin"> Fixat
+              </label>
+              <button class="btn btn-ice btn-sm" onclick="aPostAnn()">Publică</button>
+            </div>
+            <textarea class="a-input" id="ann-body" placeholder="Textul anunțului..." style="width:100%;box-sizing:border-box;margin:.4rem 0;min-height:70px;resize:vertical;font-family:inherit"></textarea>
+            <div class="a-msg" id="a-ann-msg" style="margin-bottom:.8rem"></div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem">Anunțuri existente</div>
+            <div id="a-ann-list" style="max-height:280px;overflow-y:auto"></div>
+            <button class="btn btn-ice btn-sm" style="margin-top:.5rem" onclick="loadAnnAdmin()">↻ Refresh</button>
+          </div>
+
+          <!-- Consola (owner only) -->
+          <div class="admin-section" id="as-console">
+            <div class="console-out" id="a-console-out">$ Gata...<br></div>
+            <div class="a-row">
+              <input class="a-input" id="a-cmd" placeholder="comandă (fără /)" style="flex:1" onkeydown="if(event.key==='Enter')aRunCmd()">
+              <button class="btn btn-ice btn-sm" onclick="aRunCmd()">Run</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ── End Admin Panel ─────────────────────────────────── -->
+
+      <!-- ── Announcements ──────────────────────────────────── -->
+      <div id="announcementsSection" style="display:none;margin-bottom:28px">
+        <div class="sec-label">📢 Anunțuri</div>
+        <div id="announcementsList"></div>
+      </div>
+
+      <div class="sec-label">Portofoliu</div>
+      <div class="balance-card" style="margin-bottom:28px">
+        <div class="balance-icon">💰</div>
+        <div>
+          <div class="balance-label">Balanța ta</div>
+          <div class="balance-val" id="balVal">0 <span>coins</span></div>
+        </div>
+      </div>
+
+      <div class="sec-label">Abilități</div>
+      <div class="g4" id="skillsGrid" style="margin-bottom:28px">
+        <div class="empty"><span class="empty-icon">📊</span><div class="empty-text">Nicio statistică încă.<br>Joacă pentru a genera date!</div></div>
+      </div>
+
+      <div class="sec-label">Features Exclusive</div>
+      <div class="g-feat" style="margin-bottom:28px">
+        <a class="feat-card" href="/player/bounties">
+          <span class="feat-icon">☠</span>
+          <div class="feat-title" style="color:#ff7070">Bounty Board</div>
+          <div class="feat-desc">Pune recompense pe capul jucătorilor</div>
+        </a>
+        <a class="feat-card" href="/player/stocks">
+          <span class="feat-icon">📈</span>
+          <div class="feat-title" style="color:#64ffda">Stock Market</div>
+          <div class="feat-desc">Investește în performanța jucătorilor</div>
+        </a>
+        <a class="feat-card" href="/player/capsule">
+          <span class="feat-icon">⏳</span>
+          <div class="feat-title" style="color:#ce93d8">Time Capsule</div>
+          <div class="feat-desc">Mesaje livrate în viitor ca cărți Minecraft</div>
+        </a>
+        <a class="feat-card" href="/player/wars">
+          <span class="feat-icon">⚔</span>
+          <div class="feat-title" style="color:#ffab40">Territory Wars</div>
+          <div class="feat-desc">Declară război cu miză de coins</div>
+        </a>
+        <a class="feat-card" href="/player/missions">
+          <span class="feat-icon">📋</span>
+          <div class="feat-title" style="color:#80deea">Misiuni Zilnice</div>
+          <div class="feat-desc">3 contracte noi în fiecare zi cu recompense</div>
+        </a>
+        <a class="feat-card" href="/player/shop">
+          <span class="feat-icon">🛒</span>
+          <div class="feat-title" style="color:#a5d6a7">Shop</div>
+          <div class="feat-desc">Cumpără și vinde resurse la prețuri fixe</div>
+        </a>
+        <a class="feat-card" href="/player/clans">
+          <span class="feat-icon">🏰</span>
+          <div class="feat-title" style="color:#ffcc80">Clanuri</div>
+          <div class="feat-desc">Creează sau alătură-te unui clan</div>
+        </a>
+        <a class="feat-card" href="/player/vote">
+          <span class="feat-icon">🗳</span>
+          <div class="feat-title" style="color:#f48fb1">Vot Server</div>
+          <div class="feat-desc">Votează zilnic și primești 500 coins</div>
+        </a>
+      </div>
+
+      <div class="sec-label">Feed Live</div>
+      <div class="feed-box" style="margin-bottom:28px">
+        <div id="eventFeed">
+          <div class="feed-item" style="justify-content:center;color:var(--muted)">Conectare la feed...</div>
+        </div>
+      </div>
+
+      <div class="sec-label">Clasament</div>
+      <div class="lb-section">
+        <div class="tab-bar">
+          <button class="tab active" onclick="switchTab('balance', event)">💰 Coins</button>
+          <button class="tab" onclick="switchTab('Pamant', event)">⛏ Pământ</button>
+          <button class="tab" onclick="switchTab('Foc', event)">🔥 Foc</button>
+          <button class="tab" onclick="switchTab('Viata', event)">🌱 Viață</button>
+          <button class="tab" onclick="switchTab('Vant', event)">🌬 Vânt</button>
+          <button class="tab" onclick="switchTab('Apa', event)">💧 Apă</button>
+        </div>
+        <input class="form-input" type="text" placeholder="Caută jucător..." id="lbSearch" oninput="renderLb()" style="margin-bottom:14px">
+        <table class="ice-table">
+          <thead><tr>
+            <th width="50">#</th><th>Jucător</th><th style="text-align:right">Valoare</th>
+          </tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="notAuth" style="display:none" class="not-auth">
+      <div class="icon">🔒</div>
+      <p style="color:var(--muted);margin-bottom:20px">Trebuie să fii autentificat pentru a vedea dashboard-ul.</p>
+      <a class="btn btn-ice" href="/player/login">→ Autentifică-te</a>
+    </div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+const SKILL_META = {
+  Pamant: { icon: '⛏', label: 'Pământ', color: '#8d6e63' },
+  Foc:    { icon: '🔥', label: 'Foc',    color: '#ef5350' },
+  Viata:  { icon: '🌱', label: 'Viață',  color: '#66bb6a' },
+  Apa:    { icon: '💧', label: 'Apă',    color: '#29b6f6' },
+  Vant:   { icon: '🌬', label: 'Vânt',   color: '#90caf9' },
+};
+let myUuid = null, lbData = [], lbTab = 'balance', myRole = 'player';
+
+function skillLevel(xp) {
+  const lv = Math.floor((-90 + Math.sqrt(8100 + 40 * xp)) / 20);
+  return Math.min(100, Math.max(0, lv || 0));
+}
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...opts });
+  return r.json();
+}
+
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials: 'include' });
+    if (!r.ok) { showNotAuth(); return; }
+    const d = await r.json();
+    myUuid = d.uuid;
+    myRole = d.role || 'player';
+    document.getElementById('navName').textContent = d.username;
+    document.getElementById('heroName').textContent = d.username;
+    renderStats(d.stats);
+
+    if (['moderator', 'admin', 'owner'].includes(myRole)) {
+      initAdminPanel(myRole);
+    }
+
+    const lb = await fetch('/api/player/leaderboard');
+    lbData = (await lb.json()) || [];
+    renderLb();
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+  } catch { showNotAuth(); }
+}
+
+function showNotAuth() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('notAuth').style.display = 'block';
+}
+
+function renderStats(stats) {
+  const balEl = document.getElementById('balVal');
+  if (stats) {
+    balEl.innerHTML = `${(stats.balance || 0).toLocaleString('ro-RO')} <span>coins</span>`;
+    const grid = document.getElementById('skillsGrid');
+    grid.innerHTML = '';
+    Object.entries(SKILL_META).forEach(([key, meta]) => {
+      const xp = stats.skills?.[key] || 0;
+      const lv = skillLevel(xp);
+      grid.innerHTML += `
+        <div class="skill-card">
+          <div class="skill-icon">${meta.icon}</div>
+          <div class="skill-name">${meta.label}</div>
+          <div class="skill-level">${lv} <span>/ 100</span></div>
+          <div class="skill-bar"><div class="skill-bar-fill" style="width:${lv}%;background:linear-gradient(90deg,#1a3a5c,${meta.color})"></div></div>
+        </div>`;
+    });
+  } else {
+    balEl.innerHTML = `— <span>coins</span>`;
+  }
+}
+
+function switchTab(tab, e) {
+  lbTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  e.target.classList.add('active');
+  renderLb();
+}
+
+function renderLb() {
+  const q = document.getElementById('lbSearch').value.toLowerCase();
+  let sorted = [...lbData];
+  if (lbTab === 'balance') sorted.sort((a,b) => (b.balance||0)-(a.balance||0));
+  else sorted.sort((a,b) => (b.skills?.[lbTab]||0)-(a.skills?.[lbTab]||0));
+  if (q) sorted = sorted.filter(p => p.name.toLowerCase().includes(q));
+  const tbody = document.getElementById('lbBody');
+  if (!sorted.length) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px">Niciun jucător găsit.</td></tr>'; return; }
+  tbody.innerHTML = sorted.slice(0, 20).map((p, i) => {
+    const rank = i + 1;
+    const cls = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
+    const val = lbTab==='balance' ? (p.balance||0).toLocaleString('ro-RO')+' coins' : `Lv ${skillLevel(p.skills?.[lbTab]||0)}`;
+    const isYou = p.uuid === myUuid;
+    return `<tr><td><span class="rank-badge ${cls}">${rank}</span></td>
+      <td>${p.name}${isYou?'<span class="you-badge">TU</span>':''}</td>
+      <td class="lb-col">${val}</td></tr>`;
+  }).join('');
+}
+
+async function logout() {
+  await fetch('/api/player/logout', { method: 'POST', credentials: 'include' });
+  window.location.href = '/player/login';
+}
+
+/* ── Admin Panel ─────────────────────────────────────────── */
+function initAdminPanel(role) {
+  document.getElementById('adminPanel').style.display = 'block';
+  const ROLE_LABELS = { owner:'owner', admin:'admin', moderator:'moderator', helper:'helper', player:'player' };
+  const cls = { owner:'rb-owner', admin:'rb-owner', moderator:'rb-moderator', helper:'rb-helper', player:'rb-player' };
+  document.getElementById('adminRoleBadge').innerHTML =
+    `<span class="role-badge ${cls[role]||'rb-player'}">${ROLE_LABELS[role]||role}</span>`;
+  if (role === 'owner' || role === 'admin') {
+    document.getElementById('aTabConsole').style.display = '';
+  }
+  loadAdminStatus();
+  setInterval(loadAdminStatus, 30000);
+}
+
+function adminTab(name, btn) {
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('as-' + name);
+  if (sec) sec.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'players') loadAdminPlayers();
+  if (name === 'analytics') loadAnalytics();
+  if (name === 'appeals') loadAppeals();
+  if (name === 'broadcasts') loadScheduled();
+  if (name === 'announce') loadAnnAdmin();
+}
+
+function tpsCls(v) { return v >= 19 ? 'tps-good' : v >= 15 ? 'tps-warn' : 'tps-bad'; }
+
+async function loadAdminStatus() {
+  try {
+    const d = await api('/api/player/admin/status');
+    if (d.error) return;
+    const [t1, t5, t15] = d.tps || [0,0,0];
+    const setTps = (id, v) => {
+      const el = document.getElementById(id);
+      el.textContent = v.toFixed ? v.toFixed(1) : v;
+      el.className = 'a-stat-val ' + tpsCls(v);
+    };
+    setTps('a-tps1', t1); setTps('a-tps5', t5); setTps('a-tps15', t15);
+    document.getElementById('a-online').textContent = Array.isArray(d.players) ? d.players.length : '—';
+    document.getElementById('a-mem').textContent = `${d.memUsed} / ${d.memMax}`;
+    const pct = d.memMax ? Math.round(d.memUsed / d.memMax * 100) : 0;
+    document.getElementById('a-mem-bar').style.width = pct + '%';
+  } catch {}
+}
+
+async function loadAdminPlayers() {
+  const el = document.getElementById('a-players-list');
+  try {
+    const d = await api('/api/player/admin/players');
+    const names = Array.isArray(d) ? d : (d.names || []);
+    if (!names.length) { el.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem">Niciun jucător online.</p>'; return; }
+    el.innerHTML = names.map(n => `
+      <div class="a-player-row">
+        <span class="a-player-name">⬡ ${n}</span>
+        <div class="a-actions">
+          <button class="btn-kick" onclick="aKick('${n}')">Kick</button>
+          <button class="btn-ban" onclick="aQuickBan('${n}')">Ban</button>
+        </div>
+      </div>`).join('');
+  } catch { el.innerHTML = '<p style="color:#ff5252;font-size:.82rem">Eroare la încărcare.</p>'; }
+}
+
+async function aKick(name) {
+  const reason = prompt(`Motiv kick pentru ${name}:`) || 'Kick de admin';
+  const r = await api(`/api/player/admin/players/${name}/kick`, { method:'POST', body:JSON.stringify({reason}) });
+  setMsg('a-players-msg', r.ok ? `${name} dat afară.` : r.error, r.ok);
+}
+async function aQuickBan(name) {
+  const reason = prompt(`Motiv ban pentru ${name}:`) || 'Ban de admin';
+  const r = await api(`/api/player/admin/players/${name}/ban`, { method:'POST', body:JSON.stringify({reason}) });
+  setMsg('a-players-msg', r.ok ? `${name} banat.` : r.error, r.ok);
+}
+async function aBan() {
+  const name = document.getElementById('a-ban-name').value.trim();
+  const reason = document.getElementById('a-ban-reason').value.trim();
+  if (!name) return;
+  const r = await api(`/api/player/admin/players/${name}/ban`, { method:'POST', body:JSON.stringify({reason}) });
+  setMsg('a-players-msg', r.ok ? `${name} banat.` : r.error, r.ok);
+}
+async function aUnban() {
+  const name = document.getElementById('a-ban-name').value.trim(); if (!name) return;
+  const r = await api(`/api/player/admin/players/${name}/unban`, { method:'POST', body:JSON.stringify({}) });
+  setMsg('a-players-msg', r.ok ? `${name} unbanat.` : r.error, r.ok);
+}
+async function aBroadcast() {
+  const message = document.getElementById('a-bc-msg').value.trim(); if (!message) return;
+  const r = await api('/api/player/admin/broadcast', { method:'POST', body:JSON.stringify({message}) });
+  setMsg('a-bc-msg-result', r.ok ? 'Mesaj trimis!' : r.error, r.ok);
+}
+async function aWlAdd() {
+  const player = document.getElementById('a-wl-name').value.trim(); if (!player) return;
+  const r = await api('/api/player/admin/whitelist/add', { method:'POST', body:JSON.stringify({player}) });
+  setMsg('a-wl-msg', r.ok ? `${player} adăugat pe whitelist.` : r.error, r.ok);
+}
+async function aWlRem() {
+  const player = document.getElementById('a-wl-name').value.trim(); if (!player) return;
+  const r = await api('/api/player/admin/whitelist/remove', { method:'POST', body:JSON.stringify({player}) });
+  setMsg('a-wl-msg', r.ok ? `${player} eliminat.` : r.error, r.ok);
+}
+async function aEcoGive() {
+  const player = document.getElementById('a-eco-p').value.trim();
+  const amount = document.getElementById('a-eco-amt').value;
+  if (!player || !amount) return;
+  const r = await api('/api/player/admin/economy/give', { method:'POST', body:JSON.stringify({player, amount}) });
+  setMsg('a-eco-msg', r.ok ? `${amount} coins dat lui ${player}.` : r.error, r.ok);
+}
+async function aEcoSet() {
+  const player = document.getElementById('a-eco-p').value.trim();
+  const amount = document.getElementById('a-eco-amt').value;
+  if (!player || amount === '') return;
+  const r = await api('/api/player/admin/economy/set', { method:'POST', body:JSON.stringify({player, amount}) });
+  setMsg('a-eco-msg', r.ok ? `${player} are acum ${amount} coins.` : r.error, r.ok);
+}
+async function aRunCmd() {
+  const cmd = document.getElementById('a-cmd').value.trim(); if (!cmd) return;
+  const out = document.getElementById('a-console-out');
+  out.textContent += `\n$ ${cmd}\n`;
+  const r = await api('/api/player/admin/command', { method:'POST', body:JSON.stringify({cmd}) });
+  out.textContent += (r.result || r.error || '(no output)') + '\n';
+  out.scrollTop = out.scrollHeight;
+  document.getElementById('a-cmd').value = '';
+}
+
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = (ok ? '✔ ' : '✘ ') + text;
+  el.className = 'a-msg ' + (ok ? 'ok' : 'err');
+  setTimeout(() => el.textContent = '', 4000);
+}
+
+/* ── Analytics ───────────────────────────────────────────── */
+async function loadAnalytics() {
+  const r = await api('/api/analytics');
+  if (!r || !r.length) return;
+  const latest = r[0];
+  const grid = document.getElementById('analyticsGrid');
+  const ramPct = latest.mem_max ? Math.round(latest.mem_used/latest.mem_max*100) : 0;
+  grid.innerHTML = `
+    <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:.6rem .8rem;text-align:center">
+      <div style="font-size:1.3rem;font-weight:700;color:var(--ice)">${(latest.tps||0).toFixed(1)}</div><div style="font-size:.72rem;color:var(--muted)">TPS</div>
+    </div>
+    <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:.6rem .8rem;text-align:center">
+      <div style="font-size:1.3rem;font-weight:700;color:var(--ice)">${latest.players_online||0}</div><div style="font-size:.72rem;color:var(--muted)">Online</div>
+    </div>
+    <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:.6rem .8rem;text-align:center">
+      <div style="font-size:1.3rem;font-weight:700;color:${ramPct>80?'#ff5050':'var(--ice)'}">${ramPct}%</div><div style="font-size:.72rem;color:var(--muted)">RAM</div>
+    </div>
+    <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:.6rem .8rem;text-align:center">
+      <div style="font-size:1.3rem;font-weight:700;color:var(--ice)">${latest.mem_used||0}</div><div style="font-size:.72rem;color:var(--muted)">RAM MB</div>
+    </div>
+  `;
+  const chart = document.getElementById('tpsChart');
+  const slice = r.slice(0,50).reverse();
+  const maxTPS = 20;
+  chart.innerHTML = slice.map(p => {
+    const h = Math.max(4, Math.round((p.tps||0)/maxTPS*64));
+    const col = p.tps >= 18 ? '#64d4d4' : p.tps >= 14 ? '#ffc832' : '#ff5050';
+    return `<div title="TPS: ${(p.tps||0).toFixed(1)}" style="flex:1;min-width:4px;height:${h}px;background:${col};border-radius:2px 2px 0 0;opacity:.85"></div>`;
+  }).join('');
+}
+
+/* ── Appeals ─────────────────────────────────────────────── */
+async function loadAppeals() {
+  const list = document.getElementById('appealsList');
+  list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem">Se încarcă...</p>';
+  const r = await api('/api/player/admin/appeals');
+  if (!r || !r.length) { list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem">Nicio contestație primită.</p>'; return; }
+  const statusLabel = { pending: '⏳ În așteptare', approved: '✅ Acceptat', rejected: '❌ Respins' };
+  list.innerHTML = r.map(a => `
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(100,210,255,.1);border-radius:8px;padding:.8rem 1rem;margin-bottom:.6rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+        <strong>${a.username}</strong>
+        <span style="font-size:.75rem;color:rgba(255,255,255,.4)">${new Date(a.submitted_at*1000).toLocaleDateString('ro-RO')}</span>
+      </div>
+      <div style="font-size:.84rem;color:rgba(255,255,255,.6);margin-bottom:.5rem">${a.reason}</div>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+        <span style="font-size:.75rem;font-weight:600">${statusLabel[a.status]||a.status}</span>
+        ${a.status==='pending' ? `
+          <button class="btn btn-green btn-sm" onclick="reviewAppeal(${a.id},'approved')">Acceptă</button>
+          <button class="btn btn-red btn-sm" onclick="reviewAppeal(${a.id},'rejected')">Respinge</button>
+          <input class="a-input" id="note-${a.id}" placeholder="Notă staff (opțional)" style="flex:1;min-width:120px;font-size:.8rem;padding:.3rem .6rem">
+        ` : `<span style="font-size:.75rem;color:rgba(255,255,255,.4)">${a.staff_note||''}</span>`}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function reviewAppeal(id, status) {
+  const note = document.getElementById('note-'+id)?.value || '';
+  const r = await api(`/api/player/admin/appeals/${id}`, { method:'PUT', body:JSON.stringify({ status, staff_note: note }) });
+  if (r.ok !== false) { setMsg('a-appeals-msg','Status actualizat',true); loadAppeals(); }
+  else setMsg('a-appeals-msg', r.error||'Eroare', false);
+}
+
+/* ── Scheduled Broadcasts ────────────────────────────────── */
+async function loadScheduled() {
+  const list = document.getElementById('schedList');
+  list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem">Se încarcă...</p>';
+  const r = await api('/api/player/admin/broadcasts');
+  if (!r || !r.length) { list.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem">Niciun broadcast programat.</p>'; return; }
+  list.innerHTML = r.map(b => `
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(100,210,255,.1);border-radius:8px;padding:.6rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.8rem">
+      <div style="flex:1">
+        <div style="font-size:.88rem;color:var(--text)">${b.message}</div>
+        <div style="font-size:.74rem;color:rgba(255,255,255,.4)">La: ${new Date(b.fire_at*1000).toLocaleString('ro-RO')} · ${b.sent ? '✅ Trimis' : '⏳ Pending'}</div>
+      </div>
+      ${!b.sent ? `<button class="btn btn-red btn-sm" onclick="deleteBroadcast(${b.id})">✕</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function schedBroadcast() {
+  const msg = document.getElementById('bc-sched-msg').value.trim();
+  const t = document.getElementById('bc-sched-time').value;
+  if (!msg || !t) { setMsg('a-sched-msg','Completează mesajul și data/ora.',false); return; }
+  const fire_at = Math.floor(new Date(t).getTime()/1000);
+  const r = await api('/api/player/admin/broadcasts', { method:'POST', body:JSON.stringify({ message:msg, fire_at }) });
+  if (r.id) { setMsg('a-sched-msg','Broadcast programat!',true); document.getElementById('bc-sched-msg').value=''; loadScheduled(); }
+  else setMsg('a-sched-msg', r.error||'Eroare',false);
+}
+
+async function deleteBroadcast(id) {
+  const r = await api(`/api/player/admin/broadcasts/${id}`, { method:'DELETE' });
+  if (r.ok !== false) { loadScheduled(); }
+}
+
+/* ── Announcements Admin ─────────────────────────────────── */
+async function loadAnnAdmin() {
+  const el = document.getElementById('a-ann-list');
+  if (!el) return;
+  el.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem">Se încarcă...</p>';
+  const r = await api('/api/announcements');
+  if (!r || !r.length) { el.innerHTML = '<p style="color:rgba(255,255,255,.3);font-size:.82rem">Niciun anunț.</p>'; return; }
+  el.innerHTML = r.map(a => `
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(100,210,255,.1);border-radius:8px;padding:.6rem .9rem;margin-bottom:.5rem;display:flex;align-items:flex-start;gap:.8rem">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.88rem">${a.pinned ? '📌 ' : ''}${escHtml(a.title)}</div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px">${escHtml(a.body.slice(0,100))}${a.body.length>100?'…':''}</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.3);margin-top:3px">de ${escHtml(a.author)} · ${new Date(a.created_at*1000).toLocaleDateString('ro-RO')}</div>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="aDelAnn(${a.id})">✕</button>
+    </div>`).join('');
+}
+async function aPostAnn() {
+  const title = document.getElementById('ann-title').value.trim();
+  const body = document.getElementById('ann-body').value.trim();
+  const pinned = document.getElementById('ann-pin').checked ? 1 : 0;
+  if (!title || !body) { setMsg('a-ann-msg','Completează titlul și textul.',false); return; }
+  const r = await api('/api/player/admin/announcements', { method:'POST', body:JSON.stringify({ title, body, pinned }) });
+  if (r.id) {
+    setMsg('a-ann-msg','Anunț publicat!',true);
+    document.getElementById('ann-title').value = '';
+    document.getElementById('ann-body').value = '';
+    document.getElementById('ann-pin').checked = false;
+    loadAnnAdmin();
+    loadAnnouncements();
+  } else setMsg('a-ann-msg', r.error||'Eroare',false);
+}
+async function aDelAnn(id) {
+  const r = await api(`/api/player/admin/announcements/${id}`, { method:'DELETE' });
+  if (r.ok !== false) { loadAnnAdmin(); loadAnnouncements(); }
+}
+
+/* ── Announcements ───────────────────────────────────────── */
+async function loadAnnouncements() {
+  try {
+    const r = await fetch('/api/announcements');
+    const list = await r.json();
+    if (!list || !list.length) return;
+    const sec = document.getElementById('announcementsSection');
+    const el = document.getElementById('announcementsList');
+    el.innerHTML = list.map(a => `
+      <div class="ann-item${a.pinned ? ' pinned' : ''}">
+        ${a.pinned ? '<div class="ann-pin">📌 Anunț important</div>' : ''}
+        <div class="ann-title">${escHtml(a.title)}</div>
+        <div class="ann-body">${escHtml(a.body)}</div>
+        <div class="ann-meta">de ${escHtml(a.author)} · ${new Date(a.created_at * 1000).toLocaleDateString('ro-RO')}</div>
+      </div>`).join('');
+    sec.style.display = 'block';
+  } catch {}
+}
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── Feed ─────────────────────────────────────────────────── */
+init();
+loadAnnouncements();
+connectFeed();
+
+function connectFeed() {
+  const feed = document.getElementById('eventFeed');
+  const ICONS = { KILL:'⚔', BOSS_KILL:'👑', QUEST:'📜', BOUNTY:'☠', BOUNTY_CLAIMED:'💰', STOCK_BUY:'📈', STOCK_SELL:'📉', WAR_DECLARED:'⚔', WAR_STARTED:'🔥', WAR_ENDED:'🏆', CAPSULE:'⏳', CAPSULE_DELIVERED:'📖' };
+  const COLORS = { KILL:'#ef5350', BOSS_KILL:'#ffd54f', QUEST:'#4fc3f7', BOUNTY:'#ef5350', BOUNTY_CLAIMED:'#ffd54f', STOCK_BUY:'#66bb6a', STOCK_SELL:'#ef5350', WAR_DECLARED:'#ff8a65', WAR_STARTED:'#ff8a65', WAR_ENDED:'#ffd54f', CAPSULE:'#ce93d8', CAPSULE_DELIVERED:'#ce93d8' };
+
+  fetch('/api/events').then(r => r.json()).then(events => {
+    if (events.length) { feed.innerHTML = ''; events.forEach(e => addFeedItem(e, feed, ICONS, COLORS)); feed.scrollTop = feed.scrollHeight; }
+  }).catch(() => {});
+
+  try {
+    const es = new EventSource('/api/events/stream');
+    es.onmessage = e => {
+      const ev = JSON.parse(e.data);
+      if (feed.children.length === 1 && feed.children[0].textContent.includes('feed')) feed.innerHTML = '';
+      addFeedItem(ev, feed, ICONS, COLORS);
+      if (feed.children.length > 50) feed.removeChild(feed.firstChild);
+      feed.scrollTop = feed.scrollHeight;
+    };
+  } catch {}
+}
+
+function addFeedItem(ev, feed, icons, colors) {
+  const el = document.createElement('div');
+  el.className = 'feed-item';
+  const time = new Date(ev.ts * 1000).toLocaleTimeString('ro-RO', { hour:'2-digit', minute:'2-digit' });
+  el.innerHTML = `<span>${icons[ev.type]||'•'}</span><span style="flex:1;color:var(--text)">${fmtEvent(ev)}</span><span style="color:var(--muted);font-size:.75rem">${time}</span>`;
+  feed.appendChild(el);
+}
+
+function fmtEvent(ev) {
+  const a = `<strong>${ev.actor||''}</strong>`;
+  const t = `<strong style="color:var(--accent)">${ev.target||''}</strong>`;
+  switch (ev.type) {
+    case 'KILL': return `${a} l-a ucis pe ${t} în PvP`;
+    case 'BOSS_KILL': return `${a} a ucis boss-ul ${t}! 👑`;
+    case 'QUEST': return `${a} a completat un contract!`;
+    case 'BOUNTY': return `${a} a pus bounty de <strong style="color:#ffd54f">${ev.detail}</strong> pe ${t}`;
+    case 'BOUNTY_CLAIMED': return `${a} a revendicat bounty-ul pe ${t} — <strong style="color:#ffd54f">${ev.detail}</strong>!`;
+    case 'STOCK_BUY': return `${a} a cumpărat acțiuni ${t} (${ev.detail})`;
+    case 'STOCK_SELL': return `${a} a vândut acțiuni ${t} (${ev.detail})`;
+    case 'WAR_DECLARED': return `${a} a declarat RĂZBOI împotriva ${t}! Miză: ${ev.detail}`;
+    case 'WAR_STARTED': return `RĂZBOI ACTIV: ${a} vs ${t} — ${ev.detail}`;
+    case 'WAR_ENDED': return `Războiul ${a} vs ${t} s-a încheiat! ${ev.detail}`;
+    case 'CAPSULE': return `${a} a trimis o capsulă temporală lui ${t}`;
+    case 'CAPSULE_DELIVERED': return `Capsula lui ${a} a ajuns la ${t}! 📖`;
+    default: return `${ev.actor} — ${ev.type}`;
+  }
+}
+</script>
+</body>
+</html>

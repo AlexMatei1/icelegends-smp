@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vot — IceLegends</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    /* ── Vote hero counter ── */
+    .vote-hero {
+      background:var(--glass); backdrop-filter:blur(20px);
+      border:1px solid var(--border-soft); border-radius:var(--r-lg);
+      padding:36px 32px; margin-bottom:24px; position:relative; overflow:hidden;
+      display:flex; align-items:center; gap:32px; flex-wrap:wrap;
+    }
+    .vote-hero::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border-bright),transparent); }
+    .vote-hero::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 80% at 20% 50%,rgba(94,223,255,.05),transparent); pointer-events:none; }
+    .vote-count-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:140px; }
+    .vote-count-num {
+      font-family:'Exo 2',sans-serif; font-size:5rem; font-weight:900; line-height:1;
+      background:linear-gradient(135deg,var(--ice),var(--glow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      filter:drop-shadow(0 0 24px rgba(94,223,255,.35));
+    }
+    .vote-count-label { font-size:.72rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+    .vote-hero-divider { width:1px; height:80px; background:var(--border); flex-shrink:0; }
+    .vote-hero-info { flex:1; min-width:200px; }
+    .vote-hero-title { font-family:'Exo 2',sans-serif; font-size:1.5rem; font-weight:900; margin-bottom:8px; }
+    .vote-hero-sub { color:var(--muted); font-size:.88rem; line-height:1.6; margin-bottom:16px; }
+    .streak-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.25);
+      border-radius:20px; padding:5px 14px;
+      font-family:'Exo 2',sans-serif; font-size:.82rem; font-weight:700; color:var(--gold);
+    }
+
+    /* ── Rewards section ── */
+    .rewards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:28px; }
+    @media(max-width:640px){ .rewards-grid{grid-template-columns:1fr 1fr;} }
+    @media(max-width:380px){ .rewards-grid{grid-template-columns:1fr;} }
+    .reward-card {
+      background:var(--glass); backdrop-filter:blur(14px);
+      border:1px solid var(--border); border-radius:var(--r-md);
+      padding:18px 14px; text-align:center;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      transition:all .2s; position:relative; overflow:hidden;
+    }
+    .reward-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border-soft),transparent); }
+    .reward-card:hover { border-color:rgba(100,223,223,.2); transform:translateY(-2px); box-shadow:0 8px 28px rgba(0,0,0,.3); }
+    .reward-icon { font-size:2rem; }
+    .reward-name { font-family:'Exo 2',sans-serif; font-size:.82rem; font-weight:700; }
+    .reward-val { font-family:'Exo 2',sans-serif; font-size:1.1rem; font-weight:900; color:var(--gold); }
+    .reward-tag { font-size:.65rem; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+
+    /* ── Vote sites grid ── */
+    .sites-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    @media(max-width:560px){ .sites-grid{grid-template-columns:1fr;} }
+    .site-card {
+      background:var(--glass); backdrop-filter:blur(20px);
+      border:1px solid var(--border); border-radius:var(--r-lg);
+      padding:22px 20px; display:flex; align-items:center; gap:16px;
+      transition:all .25s; text-decoration:none; color:inherit;
+      position:relative; overflow:hidden;
+    }
+    .site-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border-soft),transparent); }
+    .site-card::after  { content:''; position:absolute; inset:0; opacity:0; transition:opacity .25s; background:radial-gradient(ellipse at 50% 120%,rgba(94,223,255,.08),transparent 70%); pointer-events:none; }
+    .site-card:hover { border-color:rgba(100,223,223,.25); transform:translateY(-3px); box-shadow:0 12px 36px rgba(0,0,0,.35); }
+    .site-card:hover::after { opacity:1; }
+    .site-icon { font-size:2.6rem; flex-shrink:0; filter:drop-shadow(0 2px 10px rgba(0,0,0,.4)); }
+    .site-info { flex:1; min-width:0; }
+    .site-name { font-family:'Exo 2',sans-serif; font-size:1rem; font-weight:800; margin-bottom:4px; }
+    .site-desc { font-size:.78rem; color:var(--muted); line-height:1.4; margin-bottom:8px; }
+    .site-tags { display:flex; flex-wrap:wrap; gap:5px; }
+    .site-tag {
+      padding:3px 9px; border-radius:20px; font-size:.65rem; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
+      background:rgba(94,223,255,.08); border:1px solid rgba(94,223,255,.18); color:var(--ice);
+    }
+    .site-tag.gold { background:rgba(251,191,36,.08); border-color:rgba(251,191,36,.2); color:var(--gold); }
+    .site-tag.purple { background:rgba(167,139,250,.08); border-color:rgba(167,139,250,.2); color:#c4b5fd; }
+    .site-arrow { font-size:1.2rem; color:var(--muted); flex-shrink:0; transition:transform .2s; }
+    .site-card:hover .site-arrow { transform:translateX(3px); color:var(--ice); }
+
+    /* ── Info note ── */
+    .vote-note {
+      margin-top:20px; padding:14px 18px;
+      background:rgba(94,223,255,.04); border:1px solid rgba(94,223,255,.1);
+      border-radius:var(--r-md); font-size:.82rem; color:var(--muted); line-height:1.6;
+    }
+
+    /* ── Toast ── */
+    .vote-toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(80px);
+      background:var(--glass); backdrop-filter:blur(22px); border:1px solid var(--border-soft);
+      border-radius:var(--r-md); padding:12px 22px;
+      font-family:'Exo 2',sans-serif; font-size:.88rem; font-weight:700; color:var(--ice);
+      box-shadow:0 12px 40px rgba(0,0,0,.5); z-index:9999; pointer-events:none;
+      transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+      opacity:0; white-space:nowrap;
+    }
+    .vote-toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+  <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link active" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+  <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<div class="vote-toast" id="voteToast"></div>
+
+<div class="page">
+  <div class="container">
+    <div class="page-hero">
+      <div class="page-hero-title">🗳 <span class="accent">Votează pentru server</span></div>
+      <div class="page-hero-sub">Susține IceLegends pe platformele de vot și primești recompense instant în joc</div>
+    </div>
+
+    <!-- Vote counter hero -->
+    <div class="vote-hero">
+      <div class="vote-count-wrap">
+        <div class="vote-count-num" id="voteCount">—</div>
+        <div class="vote-count-label">Voturi Totale</div>
+      </div>
+      <div class="vote-hero-divider"></div>
+      <div class="vote-hero-info">
+        <div class="vote-hero-title">Mulțumim că votezi! ❄</div>
+        <div class="vote-hero-sub">Fiecare vot ajută serverul să crească și îți aduce recompense valoroase direct în inventar. Streak-urile zilnice multiplică recompensele.</div>
+        <div class="streak-badge">🔥 Votează zilnic pentru streak bonus</div>
+      </div>
+    </div>
+
+    <!-- Rewards -->
+    <div class="sec-label" style="margin-bottom:14px">🎁 Recompense per Vot</div>
+    <div class="rewards-grid">
+      <div class="reward-card">
+        <div class="reward-icon">💰</div>
+        <div class="reward-name">Coins</div>
+        <div class="reward-val">500</div>
+        <div class="reward-tag">per vot</div>
+      </div>
+      <div class="reward-card">
+        <div class="reward-icon">🍎</div>
+        <div class="reward-name">Mere Fermecate</div>
+        <div class="reward-val">2x</div>
+        <div class="reward-tag">per vot</div>
+      </div>
+      <div class="reward-card">
+        <div class="reward-icon">💠</div>
+        <div class="reward-name">Diamante</div>
+        <div class="reward-val">1x</div>
+        <div class="reward-tag">per vot</div>
+      </div>
+      <div class="reward-card">
+        <div class="reward-icon">⭐</div>
+        <div class="reward-name">XP Bonus</div>
+        <div class="reward-val">5 lvl</div>
+        <div class="reward-tag">per vot</div>
+      </div>
+      <div class="reward-card">
+        <div class="reward-icon">🎲</div>
+        <div class="reward-name">Cufăr Random</div>
+        <div class="reward-val">1x</div>
+        <div class="reward-tag">la 5 voturi</div>
+      </div>
+      <div class="reward-card">
+        <div class="reward-icon">👑</div>
+        <div class="reward-name">Titlu VIP</div>
+        <div class="reward-val">1 zi</div>
+        <div class="reward-tag">la 30 voturi</div>
+      </div>
+    </div>
+
+    <!-- Vote sites -->
+    <div class="sec-label" style="margin-bottom:14px">🌐 Platforme de Vot</div>
+    <div class="sites-grid">
+      <a class="site-card" href="https://minecraftservers.org/server/680671" target="_blank" rel="noopener" onclick="showToast('↗ Redirecționare spre MinecraftServers.org…')">
+        <div class="site-icon">🌎</div>
+        <div class="site-info">
+          <div class="site-name">MinecraftServers.org</div>
+          <div class="site-desc">Cel mai mare director de servere Minecraft. Votează o dată la 24h.</div>
+          <div class="site-tags">
+            <span class="site-tag">24h cooldown</span>
+            <span class="site-tag gold">Popular</span>
+          </div>
+        </div>
+        <div class="site-arrow">→</div>
+      </a>
+
+      <a class="site-card" href="https://topg.org/minecraft-server/id-665523" target="_blank" rel="noopener" onclick="showToast('↗ Redirecționare spre TopG.org…')">
+        <div class="site-icon">🏆</div>
+        <div class="site-info">
+          <div class="site-name">TopG.org</div>
+          <div class="site-desc">Director internațional cu milioane de jucători. Votează la fiecare 12h.</div>
+          <div class="site-tags">
+            <span class="site-tag">12h cooldown</span>
+            <span class="site-tag purple">Top Rată</span>
+          </div>
+        </div>
+        <div class="site-arrow">→</div>
+      </a>
+
+      <a class="site-card" href="https://www.planetminecraft.com/server/icelegends-smp" target="_blank" rel="noopener" onclick="showToast('↗ Redirecționare spre Planet Minecraft…')">
+        <div class="site-icon">🪐</div>
+        <div class="site-info">
+          <div class="site-name">Planet Minecraft</div>
+          <div class="site-desc">Comunitatea creativă Minecraft. Voturi valorează dublu în weekend.</div>
+          <div class="site-tags">
+            <span class="site-tag">24h cooldown</span>
+            <span class="site-tag gold">2x Weekend</span>
+          </div>
+        </div>
+        <div class="site-arrow">→</div>
+      </a>
+
+      <a class="site-card" href="https://minecraft-mp.com/server/icelegends" target="_blank" rel="noopener" onclick="showToast('↗ Redirecționare spre Minecraft-mp.com…')">
+        <div class="site-icon">⚡</div>
+        <div class="site-info">
+          <div class="site-name">Minecraft-mp.com</div>
+          <div class="site-desc">Director european cu focus pe servere noi. Votează la fiecare 12h.</div>
+          <div class="site-tags">
+            <span class="site-tag">12h cooldown</span>
+            <span class="site-tag purple">EU Focus</span>
+          </div>
+        </div>
+        <div class="site-arrow">→</div>
+      </a>
+    </div>
+
+    <div class="vote-note">
+      ℹ️ Recompensele sunt acordate automat dacă ești online în momentul votului sau la următoarea conectare. Asigură-te că username-ul introdus la vot coincide exact cu cel din joc.
+    </div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+'use strict';
+function showToast(msg) {
+  const t = document.getElementById('voteToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials:'include' });
+    if (!r.ok) { location.href = '/player/login'; return; }
+    const me = await r.json();
+    document.getElementById('navName').textContent = me.username || me.name || '?';
+    try {
+      const s = await fetch(`/api/player/profile/${me.username}`, { credentials:'include' });
+      if (s.ok) {
+        const d = await s.json();
+        const v = d.votes ?? d.stats?.votes ?? 0;
+        document.getElementById('voteCount').textContent = Number(v).toLocaleString('ro-RO');
+      }
+    } catch {}
+  } catch { location.href = '/player/login'; }
+}
+
+async function logout() {
+  await fetch('/api/player/logout', { method:'POST', credentials:'include' });
+  location.href = '/player/login';
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# ============================================================
+# IceLegends — Reward Zilnic (Daily Login Reward)
+# Primul login al zilei = 50 coins + mesaj
+# Ziua se calculeaza ca floor(unix / 86400) — UTC day number
+# ============================================================
+
+options:
+    DAILY_COINS: 50
+    PREFIX: &8[&6Daily&8]
+
+on join:
+    set {_uuid} to "%player's uuid%"
+    set {_today} to floor(unix timestamp of now / 86400)
+    set {_last} to {daily::last::%{_uuid}%} ? 0
+    if {_today} > {_last}:
+        set {daily::last::%{_uuid}%} to {_today}
+        set {daily::streak::%{_uuid}%} to ({daily::streak::%{_uuid}%} ? 0) + 1
+        set {_streak} to {daily::streak::%{_uuid}%}
+        # Bonus coins pentru streak (max 5x)
+        set {_bonus} to min({_streak}, 5) * {@DAILY_COINS}
+        add {_bonus} to player's balance
+        wait 30 ticks
+        send colored "" to player
+        send colored "{@PREFIX} &aReward zilnic primit! &7Zi %{_streak}% la rand." to player
+        send colored "{@PREFIX} &6+%{_bonus}% coins &7au fost adaugati in contul tau." to player
+        if {_streak} >= 7:
+            send colored "{@PREFIX} &d★ &7Streak de &d7+ zile&7! Bonus special deblocat." to player
+        send colored "" to player
+
+command /daily:
+    description: Afiseaza statusul reward-ului zilnic.
+    trigger:
+        set {_uuid} to "%player's uuid%"
+        set {_today} to floor(unix timestamp of now / 86400)
+        set {_last} to {daily::last::%{_uuid}%} ? 0
+        set {_streak} to {daily::streak::%{_uuid}%} ? 0
+        send colored "&6&l[Daily Reward]" to player
+        send colored "  &7Streak curent: &e%{_streak}% zile" to player
+        if {_today} <= {_last}:
+            send colored "  &aAi primit deja reward-ul de azi!" to player
+            send colored "  &7Urmatorul reward: &emaine la login." to player
+        else:
+            send colored "  &7Logheaza-te zilnic pentru a primi reward-uri!" to player
+            set {_nxt} to min({_streak} + 1, 5) * 50
+            send colored "  &7Urmatorul reward: &6+%{_nxt}% coins" to player

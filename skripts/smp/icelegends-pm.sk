@@ -1,0 +1,81 @@
+# ============================================================
+# IceLegends — Mesaje Private
+# Unic: Title subtil la destinatar + spy staff + /ignore
+# Inlocuieste EssentialsX /msg /r /reply
+# ============================================================
+
+options:
+    PREFIX: &8[&bPM&8]
+
+command /msg <player> <text>:
+    trigger:
+        set {_to} to arg-1
+        if {_to} is not set:
+            send colored "{@PREFIX} &c/msg <jucator> <mesaj>" to player
+            stop
+        if {_to}'s uuid is player's uuid:
+            send colored "{@PREFIX} &cNu-ti poti trimite mesaj tie insuti." to player
+            stop
+        if {pm::ignore::%{_to}'s uuid%::%player's uuid%} is true:
+            send colored "{@PREFIX} &c%{_to}% te-a ignorat." to player
+            stop
+        if {pm::toggle::%{_to}'s uuid%} is true:
+            send colored "{@PREFIX} &c%{_to}% a dezactivat mesajele private." to player
+            stop
+        send colored "&8[&7Tu &8→ &b%{_to}%&8] &f%arg-2%" to player
+        send colored "&8[&b%player% &8→ &7Tu&8] &f%arg-2%" to {_to}
+        send title "" with subtitle colored "&8PM de la &b%player%&8: &7%arg-2%" to {_to} for 2 seconds
+        loop all players:
+            if {pm::spy::%loop-player's uuid%} is true:
+                if loop-player is not player:
+                    if loop-player is not {_to}:
+                        send colored "&8[&4SPY&8] &7%player% &8→ &7%{_to}%&8: &f%arg-2%" to loop-player
+        set {pm::last::%player's uuid%} to "%{_to}'s uuid%"
+        set {pm::last::%{_to}'s uuid%} to "%player's uuid%"
+
+command /r <text>:
+    aliases: /reply
+    trigger:
+        if arg-1 is not set:
+            send colored "{@PREFIX} &c/r <mesaj>" to player
+            stop
+        if {pm::last::%player's uuid%} is not set:
+            send colored "{@PREFIX} &cNu ai mesaje recente." to player
+            stop
+        set {_target} to player({pm::last::%player's uuid%})
+        if {_target} is not online:
+            send colored "{@PREFIX} &cJucatorul nu mai e online." to player
+            stop
+        execute player command "msg %{_target}'s name% %arg-1%"
+
+command /msgtoggle:
+    trigger:
+        if {pm::toggle::%player's uuid%} is true:
+            delete {pm::toggle::%player's uuid%}
+            send colored "{@PREFIX} &aPM-urile sunt acum activate." to player
+        else:
+            set {pm::toggle::%player's uuid%} to true
+            send colored "{@PREFIX} &cPM-urile sunt dezactivate. Nimeni nu-ti poate scrie." to player
+
+command /ignore <player>:
+    trigger:
+        set {_t} to arg-1
+        if {_t} is not set:
+            send colored "{@PREFIX} &c/ignore <jucator>" to player
+            stop
+        if {pm::ignore::%player's uuid%::%{_t}'s uuid%} is true:
+            delete {pm::ignore::%player's uuid%::%{_t}'s uuid%}
+            send colored "{@PREFIX} &a%{_t}% nu mai este ignorat." to player
+        else:
+            set {pm::ignore::%player's uuid%::%{_t}'s uuid%} to true
+            send colored "{@PREFIX} &c%{_t}% a fost ignorat." to player
+
+command /spy:
+    permission: smp.staff
+    trigger:
+        if {pm::spy::%player's uuid%} is true:
+            delete {pm::spy::%player's uuid%}
+            send colored "&c[Spy] Dezactivat — nu mai interceptezi PM-uri." to player
+        else:
+            set {pm::spy::%player's uuid%} to true
+            send colored "&a[Spy] Activat — vei vedea toate mesajele private!" to player

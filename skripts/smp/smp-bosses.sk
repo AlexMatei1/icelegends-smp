@@ -1,0 +1,152 @@
+# ============================================================
+# IceLegends — Sefi (Custom Boss System)
+# Unic: 3 sefi cu faze de lupta si abilitati speciale
+#   Regele Ghetii (Wither Skeleton) — faza 2 la 50% HP
+#   Demonul Focului (Blaze) — incendiere in zona
+#   Umbra Abisului (Giant) — pull + debuff
+# Inlocuieste MythicMobs
+# ============================================================
+
+options:
+    PREFIX_BOSS: &8[&4Sefi&8]
+    COIN_REWARD_ICE: 800
+    COIN_REWARD_FIRE: 600
+    COIN_REWARD_ABYSS: 1000
+
+# ── Spawner comenzi ───────────────────────────────────────────
+
+command /spawnboss <text> [<player>]:
+    permission: smp.admin
+    trigger:
+        set {_type} to arg-1 in lower case
+        set {_loc} to player's location
+        if arg-2 is set:
+            set {_loc} to arg-2's location
+        if {_type} is "gheata" or "ice" or "rege":
+            spawnBossIce({_loc})
+        else if {_type} is "foc" or "fire" or "demon":
+            spawnBossFire({_loc})
+        else if {_type} is "umbra" or "abyss":
+            spawnBossAbyss({_loc})
+        else:
+            send colored "{@PREFIX_BOSS} &c/spawnboss <gheata|foc|umbra> [jucator]" to player
+            stop
+        send colored "{@PREFIX_BOSS} &aSef &e%{_type}% &aspanat!" to player
+
+command /bosslist:
+    trigger:
+        set {_found} to false
+        loop all entities:
+            if {boss::%loop-entity's uuid%::type} is set:
+                set {_found} to true
+                set {_hp} to floor(health of loop-entity)
+                set {_maxhp} to floor(max health of loop-entity)
+                send colored "  &c%{boss::%loop-entity's uuid%::type}% &8— &e%{_hp}%&8/&e%{_maxhp}% HP" to player
+        if {_found} is false:
+            send colored "{@PREFIX_BOSS} &7Niciun sef activ momentan." to player
+
+# ── Boss: Regele Ghetii ────────────────────────────────────────
+
+function spawnBossIce(loc: location):
+    spawn wither skeleton at {_loc}
+    set {_boss} to last spawned entity
+    set {_uuid} to "%{_boss}'s uuid%"
+    set max health of {_boss} to 300
+    heal {_boss}
+    set name of {_boss} to colored "§b❄ Regele Ghetii §8[§aFaza 1§8]"
+    set {boss::%{_uuid}%::type} to "Regele Ghetii"
+    set {boss::%{_uuid}%::phase} to 1
+    broadcast colored "{@PREFIX_BOSS} &b❄ Regele Ghetii &7a aparut! Elimina-l pentru &6{@COIN_REWARD_ICE} coins&7!"
+
+function tickBossIce(boss: entity):
+    set {_uuid} to "%{_boss}'s uuid%"
+    set {_pct} to health of {_boss} / max health of {_boss}
+    # Faza 2 sub 50% HP
+    if {_pct} < 0.5:
+        if {boss::%{_uuid}%::phase} is 1:
+            set {boss::%{_uuid}%::phase} to 2
+            set name of {_boss} to colored "§c❄ Regele Ghetii §8[§cFaza 2§8]"
+            broadcast colored "{@PREFIX_BOSS} &cRegele Ghetii &7intra in &c&lFaza 2&7!"
+            # Spawn zombies ca servitori
+            spawn zombie at location of {_boss}
+            spawn zombie at location of {_boss}
+            set name of last spawned entity to colored "§7Servitor de Gheata"
+    # Abilitate: incetineste jucatorii apropiati
+    loop all players in radius 10 around {_boss}:
+        apply slowness 2 to loop-player for 3 seconds
+        apply weakness 1 to loop-player for 3 seconds
+
+# ── Boss: Demonul Focului ─────────────────────────────────────
+
+function spawnBossFire(loc: location):
+    spawn blaze at {_loc}
+    set {_boss} to last spawned entity
+    set {_uuid} to "%{_boss}'s uuid%"
+    set max health of {_boss} to 200
+    heal {_boss}
+    set name of {_boss} to colored "§c☄ Demonul Focului"
+    set {boss::%{_uuid}%::type} to "Demonul Focului"
+    set {boss::%{_uuid}%::phase} to 1
+    broadcast colored "{@PREFIX_BOSS} &c☄ Demonul Focului &7a aparut! Elimina-l pentru &6{@COIN_REWARD_FIRE} coins&7!"
+
+function tickBossFire(boss: entity):
+    # Aprinde jucatorii apropiati
+    loop all players in radius 6 around {_boss}:
+        set loop-player on fire for 5 seconds
+        apply blindness 1 to loop-player for 2 seconds
+
+# ── Boss: Umbra Abisului ──────────────────────────────────────
+
+function spawnBossAbyss(loc: location):
+    spawn elder guardian at {_loc}
+    set {_boss} to last spawned entity
+    set {_uuid} to "%{_boss}'s uuid%"
+    set max health of {_boss} to 400
+    heal {_boss}
+    set name of {_boss} to colored "§5◈ Umbra Abisului"
+    set {boss::%{_uuid}%::type} to "Umbra Abisului"
+    set {boss::%{_uuid}%::phase} to 1
+    broadcast colored "{@PREFIX_BOSS} &5◈ Umbra Abisului &7a aparut! Elimina-l pentru &6{@COIN_REWARD_ABYSS} coins&7!"
+
+function tickBossAbyss(boss: entity):
+    set {_pct} to health of {_boss} / max health of {_boss}
+    loop all players in radius 12 around {_boss}:
+        apply mining fatigue 3 to loop-player for 10 seconds
+        if {_pct} < 0.3:
+            apply blindness 1 to loop-player for 3 seconds
+
+# ── Ticker principal (la fiecare 5 secunde) ───────────────────
+
+every 5 seconds:
+    loop all entities:
+        if {boss::%loop-entity's uuid%::type} is set:
+            if health of loop-entity > 0:
+                set {_btype} to {boss::%loop-entity's uuid%::type}
+                if {_btype} is "Regele Ghetii":
+                    tickBossIce(loop-entity)
+                if {_btype} is "Demonul Focului":
+                    tickBossFire(loop-entity)
+                if {_btype} is "Umbra Abisului":
+                    tickBossAbyss(loop-entity)
+
+# ── Moartea boss-ului ─────────────────────────────────────────
+
+on death:
+    if {boss::%victim's uuid%::type} is set:
+        set {_btype} to {boss::%victim's uuid%::type}
+        set {_reward} to {@COIN_REWARD_ICE}
+        if {_btype} is "Demonul Focului":
+            set {_reward} to {@COIN_REWARD_FIRE}
+        if {_btype} is "Umbra Abisului":
+            set {_reward} to {@COIN_REWARD_ABYSS}
+        delete {boss::%victim's uuid%::type}
+        delete {boss::%victim's uuid%::phase}
+        broadcast colored "{@PREFIX_BOSS} &b%{_btype}% &7a fost invins!"
+        if attacker is a player:
+            execute console command "eco give %attacker% %{_reward}%"
+            broadcast colored "{@PREFIX_BOSS} &b%attacker% &7a eliminat &c%{_btype}%&7! Recompensa: &6+%{_reward}% coins&7."
+            send colored "" to attacker
+            send colored "&4☠ Ai invins &c%{_btype}%&4!" to attacker
+            send colored "&7  Recompensa: &6+%{_reward}% coins" to attacker
+            send colored "" to attacker
+            send title colored "&4☠ Boss eliminat!" with subtitle colored "&6+%{_reward}% coins" to attacker for 4 seconds

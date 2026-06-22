@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — IceLegends SMP</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    :root { --page-accent: #ff6b6b; }
+    .section-title { color: var(--ice); font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; margin: 1.6rem 0 .7rem; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .75rem; margin-bottom: 1rem; }
+    .stat-box { background: rgba(100,223,223,.07); border: 1px solid rgba(100,223,223,.18); border-radius: 10px; padding: .8rem 1rem; }
+    .stat-box .val { font-size: 1.5rem; font-weight: 700; color: var(--ice); }
+    .stat-box .lbl { font-size: .72rem; color: rgba(255,255,255,.5); text-transform: uppercase; letter-spacing: .08em; }
+    .tps-good { color: #64ffda; }
+    .tps-warn { color: #ffd580; }
+    .tps-bad  { color: #ff5252; }
+    .player-row { display: flex; align-items: center; justify-content: space-between; padding: .55rem .9rem; border-radius: 8px; background: rgba(100,223,223,.05); margin-bottom: .4rem; }
+    .player-row .pname { font-weight: 600; color: var(--ice); }
+    .player-row .actions { display: flex; gap: .4rem; }
+    .btn-kick { background: rgba(255,213,128,.15); color: #ffd580; border: 1px solid rgba(255,213,128,.3); }
+    .btn-kick:hover { background: rgba(255,213,128,.3); }
+    .btn-ban  { background: rgba(255,82,82,.15); color: #ff5252; border: 1px solid rgba(255,82,82,.3); }
+    .btn-ban:hover { background: rgba(255,82,82,.3); }
+    .btn-unban { background: rgba(100,255,218,.15); color: #64ffda; border: 1px solid rgba(100,255,218,.3); }
+    .btn-unban:hover { background: rgba(100,255,218,.3); }
+    .input-row { display: flex; gap: .5rem; margin-bottom: .75rem; }
+    .input-row input { flex: 1; }
+    .form-input { background: rgba(100,223,223,.07); border: 1px solid rgba(100,223,223,.22); border-radius: 8px; padding: .55rem .9rem; color: #e8f4f8; font-size: .9rem; outline: none; }
+    .form-input:focus { border-color: var(--ice); }
+    .audit-row { display: flex; gap: .75rem; padding: .45rem .7rem; border-radius: 6px; font-size: .82rem; border-bottom: 1px solid rgba(100,223,223,.08); }
+    .audit-row:last-child { border-bottom: none; }
+    .audit-ts { color: rgba(255,255,255,.35); min-width: 130px; }
+    .audit-admin { color: var(--ice); min-width: 90px; }
+    .audit-action { color: #ffd580; min-width: 80px; }
+    .audit-detail { color: rgba(255,255,255,.65); }
+    .tab-bar { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tab-bar .tab { padding: .4rem .9rem; border-radius: 8px; border: 1px solid rgba(100,223,223,.2); background: transparent; color: rgba(255,255,255,.5); cursor: pointer; font-size: .82rem; transition: all .2s; }
+    .tab-bar .tab.active { background: rgba(100,223,223,.15); color: var(--ice); border-color: rgba(100,223,223,.4); }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+    .mem-bar { height: 8px; border-radius: 4px; background: rgba(100,223,223,.12); margin: .4rem 0 .2rem; overflow: hidden; }
+    .mem-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #64dfdf, #64ffda); transition: width .5s; }
+    .console-out { background: rgba(0,0,0,.5); border: 1px solid rgba(100,223,223,.15); border-radius: 8px; padding: .8rem; font-family: monospace; font-size: .8rem; color: #64ffda; height: 200px; overflow-y: auto; white-space: pre-wrap; margin-bottom: .5rem; }
+    .role-badge { display: inline-block; padding: .15rem .6rem; border-radius: 20px; font-size: .7rem; font-weight: 700; text-transform: uppercase; }
+    .role-owner     { background: rgba(255,213,128,.2); color: #ffd580; }
+    .role-moderator { background: rgba(100,223,223,.2); color: #64dfdf; }
+    .role-helper    { background: rgba(100,255,218,.2); color: #64ffda; }
+    .role-player    { background: rgba(255,255,255,.1); color: rgba(255,255,255,.5); }
+    .web-accounts-list .account-row { display: flex; align-items: center; gap: .75rem; padding: .5rem .8rem; border-radius: 8px; background: rgba(100,223,223,.05); margin-bottom: .4rem; }
+    .account-row .aname { flex: 1; font-weight: 600; }
+    .role-select { background: rgba(100,223,223,.07); border: 1px solid rgba(100,223,223,.22); border-radius: 6px; padding: .3rem .6rem; color: #e8f4f8; font-size: .82rem; }
+  </style>
+</head>
+<body>
+  <div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+
+  <nav class="ice-nav">
+    <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+      <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+  </nav>
+
+  <main class="container">
+    <div class="card" style="max-width:900px;margin:0 auto">
+      <h2 style="margin:0 0 .3rem;color:var(--ice)">Panou Admin</h2>
+      <p style="color:rgba(255,255,255,.45);font-size:.85rem;margin:0 0 1.2rem">Gestionare server IceLegends SMP</p>
+
+      <div class="tab-bar">
+        <button class="tab active" onclick="switchTab('status',this)">Status</button>
+        <button class="tab" onclick="switchTab('players',this)">Jucători</button>
+        <button class="tab" onclick="switchTab('economy',this)">Economie</button>
+        <button class="tab" onclick="switchTab('whitelist',this)">Whitelist</button>
+        <button class="tab" onclick="switchTab('broadcast',this)">Broadcast</button>
+        <button class="tab" id="tab-console-btn" onclick="switchTab('console',this)" style="display:none">Consolă</button>
+        <button class="tab" id="tab-roles-btn"   onclick="switchTab('roles',this)"   style="display:none">Roluri</button>
+        <button class="tab" onclick="switchTab('audit',this)">Audit</button>
+      </div>
+
+      <!-- STATUS -->
+      <div class="tab-section active" id="tab-status">
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-box"><div class="val" id="s-tps1">—</div><div class="lbl">TPS 1m</div></div>
+          <div class="stat-box"><div class="val" id="s-tps5">—</div><div class="lbl">TPS 5m</div></div>
+          <div class="stat-box"><div class="val" id="s-tps15">—</div><div class="lbl">TPS 15m</div></div>
+          <div class="stat-box"><div class="val" id="s-players">—</div><div class="lbl">Online</div></div>
+          <div class="stat-box">
+            <div class="val" id="s-mem">—</div><div class="lbl">RAM MB</div>
+            <div class="mem-bar"><div class="mem-fill" id="s-mem-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <button class="btn btn-ice btn-sm" onclick="loadStatus()">↻ Refresh</button>
+      </div>
+
+      <!-- JUCATORI -->
+      <div class="tab-section" id="tab-players">
+        <div class="section-title">Jucători Online</div>
+        <div id="players-list"><p style="color:rgba(255,255,255,.4);font-size:.85rem">Se încarcă...</p></div>
+        <div class="section-title" style="margin-top:1.5rem">Ban / Unban</div>
+        <div class="input-row">
+          <input class="form-input" id="ban-name" placeholder="Nume jucător">
+          <input class="form-input" id="ban-reason" placeholder="Motiv (opțional)">
+          <button class="btn btn-red btn-sm" onclick="banPlayer()">Ban</button>
+          <button class="btn btn-green btn-sm" onclick="unbanPlayer()">Unban</button>
+        </div>
+        <div id="players-msg"></div>
+      </div>
+
+      <!-- ECONOMIE -->
+      <div class="tab-section" id="tab-economy">
+        <div class="section-title">Dă Coins</div>
+        <div class="input-row">
+          <input class="form-input" id="eco-give-player" placeholder="Jucător">
+          <input class="form-input" id="eco-give-amount" placeholder="Suma" type="number" min="1">
+          <button class="btn btn-ice btn-sm" onclick="ecoGive()">Dă</button>
+        </div>
+        <div class="section-title">Setează Coins</div>
+        <div class="input-row">
+          <input class="form-input" id="eco-set-player" placeholder="Jucător">
+          <input class="form-input" id="eco-set-amount" placeholder="Suma" type="number" min="0">
+          <button class="btn btn-ice btn-sm" onclick="ecoSet()">Setează</button>
+        </div>
+        <div id="eco-msg"></div>
+      </div>
+
+      <!-- WHITELIST -->
+      <div class="tab-section" id="tab-whitelist">
+        <div class="section-title">Adaugă la Whitelist</div>
+        <div class="input-row">
+          <input class="form-input" id="wl-add-name" placeholder="Nume jucător">
+          <button class="btn btn-green btn-sm" onclick="wlAdd()">Adaugă</button>
+        </div>
+        <div class="section-title">Elimină din Whitelist</div>
+        <div class="input-row">
+          <input class="form-input" id="wl-rem-name" placeholder="Nume jucător">
+          <button class="btn btn-red btn-sm" onclick="wlRemove()">Elimină</button>
+        </div>
+        <div id="wl-msg"></div>
+      </div>
+
+      <!-- BROADCAST -->
+      <div class="tab-section" id="tab-broadcast">
+        <div class="section-title">Mesaj Global</div>
+        <div class="input-row">
+          <input class="form-input" id="bc-msg" placeholder="Mesajul tău (suportă &coduri culori)">
+          <button class="btn btn-ice btn-sm" onclick="sendBroadcast()">Trimite</button>
+        </div>
+        <div id="bc-result"></div>
+      </div>
+
+      <!-- CONSOLA (owner only) -->
+      <div class="tab-section" id="tab-console">
+        <div class="section-title">Consolă RCON</div>
+        <div class="console-out" id="console-out">$ Gata. Tastează o comandă...<br></div>
+        <div class="input-row">
+          <input class="form-input" id="cmd-input" placeholder="/comandă (fără /)">
+          <button class="btn btn-ice btn-sm" onclick="runCmd()">Run</button>
+        </div>
+      </div>
+
+      <!-- ROLURI (owner only) -->
+      <div class="tab-section" id="tab-roles">
+        <div class="section-title">Conturi Web</div>
+        <div class="web-accounts-list" id="accounts-list"><p style="color:rgba(255,255,255,.4);font-size:.85rem">Se încarcă...</p></div>
+        <button class="btn btn-ice btn-sm" onclick="loadAccounts()" style="margin-top:.5rem">↻ Refresh</button>
+      </div>
+
+      <!-- AUDIT -->
+      <div class="tab-section" id="tab-audit">
+        <div class="section-title">Jurnal Acțiuni</div>
+        <div id="audit-list"><p style="color:rgba(255,255,255,.4);font-size:.85rem">Se încarcă...</p></div>
+        <button class="btn btn-ice btn-sm" onclick="loadAudit()">↻ Refresh</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="/player/ice.js"></script>
+  <script>
+    const ROLES = ['player', 'helper', 'moderator', 'admin', 'owner'];
+    let myRole = 'moderator';
+
+    async function api(path, opts = {}) {
+      const r = await fetch(path, { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...opts });
+      return r.json();
+    }
+
+    async function init() {
+      const me = await api('/api/player/me');
+      if (!me || !me.username) { location.href = '/player/login'; return; }
+      myRole = me.role || 'player';
+      if (!['moderator','admin','owner'].includes(myRole)) {
+        location.href = '/player/dashboard'; return;
+      }
+      if (myRole === 'owner') {
+        document.getElementById('tab-console-btn').style.display = '';
+        document.getElementById('tab-roles-btn').style.display = '';
+      }
+      await loadStatus();
+    }
+
+    function tpsClass(v) {
+      if (v >= 19) return 'tps-good';
+      if (v >= 15) return 'tps-warn';
+      return 'tps-bad';
+    }
+
+    async function loadStatus() {
+      const d = await api('/api/player/admin/status');
+      if (d.error) return;
+      const [t1, t5, t15] = d.tps || [0,0,0];
+      const setTps = (id, v) => {
+        const el = document.getElementById(id);
+        el.textContent = v.toFixed(1);
+        el.className = 'val ' + tpsClass(v);
+      };
+      setTps('s-tps1', t1); setTps('s-tps5', t5); setTps('s-tps15', t15);
+      document.getElementById('s-players').textContent = Array.isArray(d.players) ? d.players.length : (d.players ?? '—');
+      document.getElementById('s-mem').textContent = `${d.memUsed} / ${d.memMax}`;
+      const pct = d.memMax ? Math.round(d.memUsed / d.memMax * 100) : 0;
+      document.getElementById('s-mem-bar').style.width = pct + '%';
+    }
+
+    async function loadPlayers() {
+      const d = await api('/api/player/admin/players');
+      const el = document.getElementById('players-list');
+      const names = Array.isArray(d) ? d : (d.names || []);
+      if (names.length === 0) {
+        el.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem">Niciun jucător online.</p>'; return;
+      }
+      el.innerHTML = names.map(n => `
+        <div class="player-row">
+          <span class="pname">⬡ ${n}</span>
+          <div class="actions">
+            <button class="btn btn-sm btn-kick" onclick="kick('${n}')">Kick</button>
+            <button class="btn btn-sm btn-ban"  onclick="quickBan('${n}')">Ban</button>
+          </div>
+        </div>`).join('');
+    }
+
+    async function kick(name) {
+      const reason = prompt(`Motiv kick pentru ${name}:`) || 'Dat afară de admin';
+      const r = await api(`/api/player/admin/players/${name}/kick`, { method: 'POST', body: JSON.stringify({ reason }) });
+      showMsg('players-msg', r.ok ? `✔ ${name} a fost dat afară.` : r.error, r.ok);
+    }
+    async function quickBan(name) {
+      const reason = prompt(`Motiv ban pentru ${name}:`) || 'Banat de admin';
+      const r = await api(`/api/player/admin/players/${name}/ban`, { method: 'POST', body: JSON.stringify({ reason }) });
+      showMsg('players-msg', r.ok ? `✔ ${name} a fost banat.` : r.error, r.ok);
+    }
+    async function banPlayer() {
+      const name = document.getElementById('ban-name').value.trim();
+      const reason = document.getElementById('ban-reason').value.trim();
+      if (!name) return;
+      const r = await api(`/api/player/admin/players/${name}/ban`, { method: 'POST', body: JSON.stringify({ reason }) });
+      showMsg('players-msg', r.ok ? `✔ ${name} banat.` : r.error, r.ok);
+    }
+    async function unbanPlayer() {
+      const name = document.getElementById('ban-name').value.trim(); if (!name) return;
+      const r = await api(`/api/player/admin/players/${name}/unban`, { method: 'POST', body: JSON.stringify({}) });
+      showMsg('players-msg', r.ok ? `✔ ${name} unbanat.` : r.error, r.ok);
+    }
+
+    async function ecoGive() {
+      const player = document.getElementById('eco-give-player').value.trim();
+      const amount = document.getElementById('eco-give-amount').value;
+      if (!player || !amount) return;
+      const r = await api('/api/player/admin/economy/give', { method: 'POST', body: JSON.stringify({ player, amount }) });
+      showMsg('eco-msg', r.ok ? `✔ ${amount} coins dat lui ${player}.` : r.error, r.ok);
+    }
+    async function ecoSet() {
+      const player = document.getElementById('eco-set-player').value.trim();
+      const amount = document.getElementById('eco-set-amount').value;
+      if (!player || amount === '') return;
+      const r = await api('/api/player/admin/economy/set', { method: 'POST', body: JSON.stringify({ player, amount }) });
+      showMsg('eco-msg', r.ok ? `✔ ${player} are acum ${amount} coins.` : r.error, r.ok);
+    }
+
+    async function wlAdd() {
+      const player = document.getElementById('wl-add-name').value.trim(); if (!player) return;
+      const r = await api('/api/player/admin/whitelist/add', { method: 'POST', body: JSON.stringify({ player }) });
+      showMsg('wl-msg', r.ok ? `✔ ${player} adăugat pe whitelist.` : r.error, r.ok);
+    }
+    async function wlRemove() {
+      const player = document.getElementById('wl-rem-name').value.trim(); if (!player) return;
+      const r = await api('/api/player/admin/whitelist/remove', { method: 'POST', body: JSON.stringify({ player }) });
+      showMsg('wl-msg', r.ok ? `✔ ${player} eliminat de pe whitelist.` : r.error, r.ok);
+    }
+
+    async function sendBroadcast() {
+      const message = document.getElementById('bc-msg').value.trim(); if (!message) return;
+      const r = await api('/api/player/admin/broadcast', { method: 'POST', body: JSON.stringify({ message }) });
+      const el = document.getElementById('bc-result');
+      el.textContent = r.ok ? '✔ Mesaj trimis!' : ('✘ ' + r.error);
+      el.style.color = r.ok ? '#64ffda' : '#ff5252';
+    }
+
+    async function runCmd() {
+      const cmd = document.getElementById('cmd-input').value.trim(); if (!cmd) return;
+      const out = document.getElementById('console-out');
+      out.textContent += `\n$ ${cmd}\n`;
+      const r = await api('/api/player/admin/command', { method: 'POST', body: JSON.stringify({ cmd }) });
+      out.textContent += (r.result || r.error || '(niciun output)') + '\n';
+      out.scrollTop = out.scrollHeight;
+      document.getElementById('cmd-input').value = '';
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && document.getElementById('cmd-input') === document.activeElement) runCmd();
+    });
+
+    async function loadAccounts() {
+      const accounts = await api('/api/player/admin/accounts');
+      const el = document.getElementById('accounts-list');
+      if (!Array.isArray(accounts)) { el.innerHTML = '<p style="color:#ff5252">' + (accounts.error||'Eroare') + '</p>'; return; }
+      el.innerHTML = accounts.map(a => `
+        <div class="account-row">
+          <span class="aname">${a.username}</span>
+          <span class="role-badge role-${a.role}">${a.role}</span>
+          <select class="role-select" onchange="setRole('${a.username}', this.value)">
+            ${ROLES.map(r => `<option value="${r}" ${r===a.role?'selected':''}>${r}</option>`).join('')}
+          </select>
+        </div>`).join('');
+    }
+    async function setRole(username, role) {
+      const r = await api('/api/player/admin/setrole', { method: 'POST', body: JSON.stringify({ username, role }) });
+      if (!r.ok) alert('Eroare: ' + r.error);
+    }
+
+    async function loadAudit() {
+      const logs = await api('/api/player/admin/audit');
+      const el = document.getElementById('audit-list');
+      if (!Array.isArray(logs)) { el.innerHTML = '<p style="color:#ff5252">Eroare</p>'; return; }
+      el.innerHTML = logs.map(l => `
+        <div class="audit-row">
+          <span class="audit-ts">${new Date(l.ts*1000).toLocaleString('ro-RO')}</span>
+          <span class="audit-admin">${l.admin}</span>
+          <span class="audit-action">${l.action}</span>
+          <span class="audit-detail">${l.detail||''}</span>
+        </div>`).join('') || '<p style="color:rgba(255,255,255,.4);font-size:.85rem">Niciun log.</p>';
+    }
+
+    function showMsg(id, text, ok) {
+      const el = document.getElementById(id);
+      el.textContent = (ok ? '✔ ' : '✘ ') + text;
+      el.style.color = ok ? '#64ffda' : '#ff5252';
+      el.style.fontSize = '.85rem';
+      setTimeout(() => el.textContent = '', 4000);
+    }
+
+    let activeTab = 'status';
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+      activeTab = name;
+      if (name === 'players')   loadPlayers();
+      if (name === 'audit')     loadAudit();
+      if (name === 'roles')     loadAccounts();
+    }
+
+    init();
+    setInterval(loadStatus, 30000);
+  </script>
+</body>
+</html>

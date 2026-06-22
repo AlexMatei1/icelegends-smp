@@ -1,0 +1,59 @@
+# ============================================================
+# SMP Cleaner — Înlocuire ClearLag
+# Curăță dropped items și entități în exces periodic
+# Avertizează jucătorii cu 1 minut înainte
+# ============================================================
+
+options:
+    CLEAN_INTERVAL: 20 minutes
+    PREFIX: &8[&bClearLag&8]
+
+# Curățare periodică cu avertizare
+every {@CLEAN_INTERVAL}:
+    # Avertizare cu 60 secunde înainte
+    broadcast "{@PREFIX} &7Curățare automată în &e60 secunde&7. Ridică obiectele de pe jos!"
+    wait 50 seconds
+    broadcast "{@PREFIX} &7Curățare în &e10 secunde&7!"
+    wait 10 seconds
+    # Curățare dropped items în toate lumile
+    set {_count} to 0
+    loop all entities in world "world":
+        if loop-entity is a dropped item:
+            kill loop-entity
+            add 1 to {_count}
+    loop all entities in world "world_nether":
+        if loop-entity is a dropped item:
+            kill loop-entity
+            add 1 to {_count}
+    loop all entities in world "world_the_end":
+        if loop-entity is a dropped item:
+            kill loop-entity
+            add 1 to {_count}
+    if {_count} > 0:
+        broadcast "{@PREFIX} &aAu fost curățate &e%{_count}% &aobiecte de pe jos."
+    else:
+        broadcast "{@PREFIX} &aNimic de curățat. Server curat!"
+
+# Comandă admin pentru curățare manuală
+command /clearlag:
+    permission: smp.admin
+    permission message: "&cNu ai permisiunea."
+    trigger:
+        set {_count} to 0
+        loop all entities in all worlds:
+            if loop-entity is a dropped item:
+                kill loop-entity
+                add 1 to {_count}
+        send "&a[ClearLag] Curățate &e%{_count}% &aobiecte." to player
+        if {_count} > 0:
+            broadcast "&8[&bClearLag&8] &aAdmin a curățat &e%{_count}% &aobiecte de pe jos."
+
+# Limitare spawn animale per chunk (anti-lag)
+on spawn of a pig or sheep or cow or chicken or mooshroom:
+    set {_chunk} to chunk of event-location
+    set {_animals} to 0
+    loop entities in {_chunk}:
+        if loop-entity is a pig, sheep, cow, chicken or mooshroom:
+            add 1 to {_animals}
+    if {_animals} > 20:
+        cancel event

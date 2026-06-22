@@ -1,0 +1,92 @@
+# ============================================================
+# IceLegends — Economie (Economy Commands)
+# Inlocuieste comenzile /bal /pay /baltop din EssentialsX
+# Unic: istoric tranzactii per jucator + /baltop online
+# ============================================================
+
+options:
+    PREFIX: &8[&6Coins&8]
+    CURRENCY: coins
+    MAX_PAY: 100000
+
+on join:
+    set {eco::name::%player's uuid%} to player's name
+
+# ── /bal ─────────────────────────────────────────────────────
+
+command /bal [<player>]:
+    aliases: /balance, /coins
+    trigger:
+        if arg-1 is set:
+            set {_t} to arg-1
+            if {_t} is online:
+                send colored "{@PREFIX} &b%{_t}% &8— &7Balanta: &6%floor({_t}'s balance)% {@CURRENCY}" to player
+            else:
+                send colored "{@PREFIX} &cJucatorul nu este online. Balanta afisata doar pentru jucatori online." to player
+        else:
+            send colored "{@PREFIX} &7Balanta ta: &6%floor(player's balance)% {@CURRENCY}" to player
+            set {_key} to "%player's uuid%"
+            if {eco::tx::%{_key}%::1} is set:
+                send colored "&8  Ultima tranzactie: &7%{eco::tx::%{_key}%::1}%" to player
+
+# ── /pay ─────────────────────────────────────────────────────
+
+command /pay <player> <number>:
+    trigger:
+        set {_to} to arg-1
+        if {_to} is not set:
+            send colored "{@PREFIX} &c/pay <jucator> <suma>" to player
+            stop
+        set {_amount} to arg-2
+        if {_amount} is not set:
+            send colored "{@PREFIX} &c/pay <jucator> <suma>" to player
+            stop
+        if {_to}'s uuid is player's uuid:
+            send colored "{@PREFIX} &cNu poti plati tie insuti." to player
+            stop
+        if {_amount} <= 0:
+            send colored "{@PREFIX} &cSuma trebuie sa fie pozitiva." to player
+            stop
+        if {_amount} > {@MAX_PAY}:
+            send colored "{@PREFIX} &cMaximum per tranzactie: &e{@MAX_PAY} {@CURRENCY}&c." to player
+            stop
+        if player's balance < {_amount}:
+            send colored "{@PREFIX} &cFondsuri insuficiente. Balanta ta: &e%floor(player's balance)% {@CURRENCY}&c." to player
+            stop
+        remove {_amount} from player's balance
+        add {_amount} to {_to}'s balance
+        set {_ts} to floor(unix timestamp of now)
+        # Istoricul tranzactiilor (ultimele 3)
+        set {_mykey} to "%player's uuid%"
+        set {_tokey} to "%{_to}'s uuid%"
+        set {eco::tx::%{_mykey}%::3} to {eco::tx::%{_mykey}%::2}
+        set {eco::tx::%{_mykey}%::2} to {eco::tx::%{_mykey}%::1}
+        set {eco::tx::%{_mykey}%::1} to "-%{_amount}% -> %{_to}% (ts:%{_ts}%)"
+        set {eco::tx::%{_tokey}%::3} to {eco::tx::%{_tokey}%::2}
+        set {eco::tx::%{_tokey}%::2} to {eco::tx::%{_tokey}%::1}
+        set {eco::tx::%{_tokey}%::1} to "+%{_amount}% <- %player% (ts:%{_ts}%)"
+        send colored "{@PREFIX} &aAi trimis &6%{_amount}% {@CURRENCY} &acatre &b%{_to}%&a." to player
+        send colored "{@PREFIX} &aAi primit &6%{_amount}% {@CURRENCY} &ade la &b%player%&a." to {_to}
+
+# ── /baltop ──────────────────────────────────────────────────
+
+command /baltop:
+    trigger:
+        send colored "&6&lTop Coins — Jucatori Online:" to player
+        set {_rank} to 0
+        loop all players:
+            add 1 to {_rank}
+            send colored "  &e%{_rank}%. &f%loop-player% &8— &6%floor(loop-player's balance)% coins" to player
+
+command /tranzactii:
+    trigger:
+        set {_key} to "%player's uuid%"
+        send colored "&7Ultimele tranzactii ale tale:" to player
+        set {_found} to false
+        loop 3 times:
+            set {_entry} to {eco::tx::%{_key}%::%loop-number%}
+            if {_entry} is set:
+                send colored "  &8[%loop-number%] &7%{_entry}%" to player
+                set {_found} to true
+        if {_found} is false:
+            send colored "  &7Nicio tranzactie inregistrata." to player

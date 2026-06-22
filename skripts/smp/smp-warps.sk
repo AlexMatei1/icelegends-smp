@@ -1,0 +1,96 @@
+# ============================================================
+# SMP Warps — Înlocuire PlayerWarps
+# Jucătorii pot crea și folosi warp-uri publice
+# Limita: 2 warp-uri per jucător (rang jucator)
+#         5 warp-uri per jucător (rang helper+)
+# ============================================================
+
+options:
+    PREFIX: &8[&dWarps&8]
+    MAX_WARPS_DEFAULT: 2
+    MAX_WARPS_STAFF: 5
+    WARP_COST: 0
+
+# ── Funcții ───────────────────────────────────────────────────
+function getWarpLimit(p: player) :: number:
+    if {_p} has permission "smp.warps.staff":
+        return {@MAX_WARPS_STAFF}
+    return {@MAX_WARPS_DEFAULT}
+
+function warpCount(p: player) :: number:
+    return size of {warps::%{_p}'s uuid%::*}
+
+# ── Comenzi ───────────────────────────────────────────────────
+command /setwarp <text>:
+    permission: smp.warp.set
+    permission message: "&cNu ai permisiunea de a seta warp-uri."
+    trigger:
+        set {_name} to arg-1 in lower case
+        if {_name} contains " ":
+            send "{@PREFIX} &cNume invalid. Nu folosi spații." to player
+            stop
+        if length of {_name} > 20:
+            send "{@PREFIX} &cNumele e prea lung (maxim 20 caractere)." to player
+            stop
+        set {_limit} to getWarpLimit(player)
+        set {_current} to warpCount(player)
+        if {_current} >= {_limit}:
+            send "{@PREFIX} &cAi atins limita de &e%{_limit}% &cwarp-uri." to player
+            stop
+        # Verifică dacă există deja un warp cu acest nume
+        if {warps::all::%{_name}%::owner} is set:
+            if {warps::all::%{_name}%::owner} is not player's uuid:
+                send "{@PREFIX} &cExistă deja un warp cu numele &e%{_name}%&c." to player
+                stop
+        # Setează warp-ul
+        set {warps::%player's uuid%::%{_name}%} to true
+        set {warps::all::%{_name}%::loc} to player's location
+        set {warps::all::%{_name}%::owner} to player's uuid
+        set {warps::all::%{_name}%::ownername} to player's name
+        if {_name} is not in {warps::names::*}:
+            add {_name} to {warps::names::*}
+        send "{@PREFIX} &aWarp &e%{_name}% &acreat cu succes!" to player
+
+command /warp <text>:
+    permission: smp.warp.use
+    permission message: "&cNu ai permisiunea de a folosi warp-uri."
+    trigger:
+        set {_name} to arg-1 in lower case
+        if {warps::all::%{_name}%::loc} is set:
+            teleport player to {warps::all::%{_name}%::loc}
+            send "{@PREFIX} &aTelportat la &e%{_name}% &a(creat de &7%{warps::all::%{_name}%::ownername}%&a)." to player
+        else:
+            send "{@PREFIX} &cWarp-ul &e%{_name}% &cnu există. Folosește &e/warps &cpentru listă." to player
+
+command /delwarp <text>:
+    permission: smp.warp.set
+    permission message: "&cNu ai permisiunea."
+    trigger:
+        set {_name} to arg-1 in lower case
+        if {warps::all::%{_name}%::owner} is player's uuid:
+            delete {warps::%player's uuid%::%{_name}%}
+            delete {warps::all::%{_name}%::loc}
+            delete {warps::all::%{_name}%::owner}
+            delete {warps::all::%{_name}%::ownername}
+            remove {_name} from {warps::names::*}
+            send "{@PREFIX} &aWarp &e%{_name}% &așters." to player
+        else if player has permission "smp.admin":
+            set {_owner} to {warps::all::%{_name}%::ownername}
+            delete {warps::all::%{_name}%::loc}
+            delete {warps::all::%{_name}%::owner}
+            delete {warps::all::%{_name}%::ownername}
+            remove {_name} from {warps::names::*}
+            send "{@PREFIX} &aWarp &e%{_name}% &al lui &7%{_owner}% &asters de admin." to player
+        else:
+            send "{@PREFIX} &cPoți șterge doar warp-urile tale." to player
+
+command /warps:
+    permission: smp.warp.use
+    trigger:
+        if {warps::names::*} is not set:
+            send "&7Niciun warp creat încă. Folosește &e/setwarp <nume>&7." to player
+            stop
+        send "&d&lWarp-uri disponibile:" to player
+        loop {warps::names::*}:
+            set {_wname} to loop-value
+            send "&e/warp %{_wname}% &7— de &f%{warps::all::%{_wname}%::ownername}%" to player

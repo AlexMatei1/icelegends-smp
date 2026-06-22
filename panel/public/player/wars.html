@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Territory Wars</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    :root { --accent: var(--ice); --surface: var(--glass); --page-accent: #ffab40; --page-glow: rgba(255,171,64,0.18); }
+
+    /* Tab bar */
+    .tab-bar { display:flex; gap:3px; background:rgba(0,8,22,.5); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:16px; }
+    .tab { flex:1; padding:9px 14px; border-radius:9px; border:none; background:transparent; color:var(--muted);
+      font-family:'Exo 2',sans-serif; font-size:.76rem; font-weight:700; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+    .tab.active { background:rgba(255,171,64,.1); border:1px solid rgba(255,171,64,.3); color:#ffab40; }
+
+    /* War cards (built from JS innerHTML) */
+    .war-card {
+      background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md);
+      padding:22px 24px; margin-bottom:12px; transition:border-color .25s, box-shadow .25s;
+    }
+    .war-card:hover { border-color:rgba(255,171,64,.18); box-shadow:0 8px 30px rgba(0,0,0,.3); }
+    .war-header { display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+    .war-vs { font-family:'Exo 2',sans-serif; font-size:1.1rem; font-weight:900; }
+    .war-vs .name { color:#ffab40; }
+    .war-vs .vs { color:var(--muted); margin:0 8px; font-size:.8rem; }
+    .badge-active  { background:rgba(255,82,82,.1);   color:#ff7070; border:1px solid rgba(255,82,82,.25); border-radius:4px; padding:3px 9px; font-size:.72rem; font-weight:700; letter-spacing:1px; }
+    .badge-pending { background:rgba(255,213,80,.1);  color:var(--gold); border:1px solid rgba(255,213,80,.25); border-radius:4px; padding:3px 9px; font-size:.72px; font-weight:700; letter-spacing:1px; }
+    .badge-ended   { background:rgba(100,255,200,.07); color:var(--green); border:1px solid rgba(100,255,200,.18); border-radius:4px; padding:3px 9px; font-size:.72rem; font-weight:700; letter-spacing:1px; }
+    .kills-bar { display:flex; border-radius:8px; overflow:hidden; height:30px; margin-bottom:12px; }
+    .kills-left  { background:rgba(255,138,100,.22); display:flex; align-items:center; justify-content:flex-start; padding:0 12px; font-weight:700; font-size:.85rem; color:#ffab40; transition:flex .5s; min-width:0; }
+    .kills-right { background:rgba(100,223,223,.14); display:flex; align-items:center; justify-content:flex-end; padding:0 12px; font-weight:700; font-size:.85rem; color:var(--ice); transition:flex .5s; min-width:0; }
+    .war-meta { font-size:.8rem; color:var(--muted); display:flex; gap:16px; flex-wrap:wrap; }
+    .war-actions { display:flex; gap:10px; margin-top:14px; }
+    .stake-tag { background:rgba(255,213,80,.08); border:1px solid rgba(255,213,80,.22); border-radius:4px; padding:2px 8px; font-size:.75rem; color:var(--gold); }
+    .winner-tag { color:var(--gold); font-weight:700; margin-top:10px; }
+    .empty { text-align:center; padding:48px 24px; color:var(--muted); }
+
+    /* Not logged */
+    .not-logged { text-align:center; padding:20px; color:var(--muted); font-size:.88rem;
+      background:rgba(255,171,64,.04); border:1px solid rgba(255,171,64,.15); border-radius:var(--r-sm); }
+    .not-logged a { color:#ffab40; text-decoration:none; }
+
+    /* Accept/decline buttons in JS HTML */
+    .btn-orange { background:linear-gradient(135deg,#6d3500,#e65100,#ff8a65); color:#fff; }
+    .btn-decline { background:rgba(255,82,82,.08); border:1px solid rgba(255,82,82,.22); color:rgba(255,140,140,.85); }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+    <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link active" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+    <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container">
+    <div class="page-hero">
+      <div class="page-hero-title">⚔ <span class="accent" style="color:#ffab40">Territory Wars</span></div>
+      <div class="page-hero-sub">Declară război unui alt jucător. 24 de ore de lupte — cel cu mai multe kill-uri câștigă miza.</div>
+    </div>
+
+    <div class="info-box" style="margin-bottom:24px">
+      ⚔ <strong>Regulile:</strong> Ambii jucători pun o miză egală la declarare/acceptare. Kill-urile sunt urmărite automat în PvP.
+      La finalul celor 24h, câștigătorul primește ambele mize. La egalitate, mizele sunt returnate.
+    </div>
+
+    <div class="sec-label">Declară război</div>
+    <div class="card" style="margin-bottom:24px">
+      <div class="not-logged" id="notLogMsg" style="display:none">
+        <a href="/player/login">Autentifică-te</a> pentru a declara război.
+      </div>
+      <div id="declareForm">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end">
+          <div>
+            <label class="form-label">Adversar (username)</label>
+            <input class="form-input" type="text" id="targetName" placeholder="Cine ești gata să înfrunți?">
+          </div>
+          <div>
+            <label class="form-label">Miză per jucător (coins)</label>
+            <input class="form-input" type="number" id="stake" placeholder="0 = fără miză" min="0" max="10000">
+          </div>
+          <button class="btn btn-orange" onclick="declareWar()" style="padding:12px 20px">DECLARĂ</button>
+        </div>
+        <div id="declareMsg" class="alert"></div>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab('active', this)">Active / Pending</button>
+      <button class="tab" onclick="switchTab('history', this)">Istoric</button>
+    </div>
+    <div id="warList"></div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+let myUsername = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials: 'include' });
+    if (r.ok) {
+      const d = await r.json();
+      myUsername = d.username;
+      document.getElementById('navName').textContent = d.username;
+    } else {
+      document.getElementById('navName').textContent = 'Neautentificat';
+      document.getElementById('notLogMsg').style.display = 'block';
+      document.getElementById('declareForm').style.display = 'none';
+    }
+  } catch {}
+  loadWars('active');
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  loadWars(tab);
+}
+
+async function loadWars(tab) {
+  const url = tab === 'history' ? '/api/wars/history' : '/api/wars';
+  const r = await fetch(url);
+  const data = await r.json();
+  const el = document.getElementById('warList');
+  if (!data.length) { el.innerHTML = `<div class="empty">⚔<br><br>Niciun război ${tab === 'history' ? 'în istoric' : 'activ sau în așteptare'}.</div>`; return; }
+  el.innerHTML = data.map(w => renderWar(w)).join('');
+}
+
+function renderWar(w) {
+  const total = w.challenger_kills + w.target_kills;
+  const leftPct = total ? Math.max(10, Math.round(w.challenger_kills / total * 100)) : 50;
+  const rightPct = 100 - leftPct;
+  const statusBadge = w.status === 'active'
+    ? `<span class="badge-active">⚔ ACTIV</span>`
+    : w.status === 'pending'
+    ? `<span class="badge-pending">⏳ AȘTEPTARE</span>`
+    : `<span class="badge-ended">✓ ÎNCHEIAT</span>`;
+  const endsAt = w.ends_at ? `Ends: ${new Date(w.ends_at * 1000).toLocaleString('ro-RO')}` : '';
+  let actions = '';
+  if (myUsername && w.status === 'pending' && w.target_name.toLowerCase() === myUsername.toLowerCase()) {
+    actions = `<div class="war-actions">
+      <button class="btn btn-green" onclick="respond(${w.id},'accept')">ACCEPTĂ${w.stake > 0 ? ` (miză: ${w.stake} coins)` : ''}</button>
+      <button class="btn btn-decline" onclick="respond(${w.id},'decline')">REFUZĂ</button>
+    </div>`;
+  }
+  const winnerRow = w.winner_name ? `<div class="winner-tag">🏆 Câștigător: ${w.winner_name}</div>` : '';
+  const stakeTag = w.stake > 0 ? `<span class="stake-tag">💰 Miză: ${w.stake * 2} coins total</span>` : '';
+  return `<div class="war-card">
+    <div class="war-header">
+      <div class="war-vs">
+        <span class="name">${w.challenger_name}</span>
+        <span class="vs">VS</span>
+        <span class="name">${w.target_name}</span>
+      </div>
+      ${statusBadge} ${stakeTag}
+    </div>
+    <div class="kills-bar">
+      <div class="kills-left" style="flex:${leftPct}">${w.challenger_name}: ${w.challenger_kills} kills</div>
+      <div class="kills-right" style="flex:${rightPct}">${w.target_kills} kills :${w.target_name}</div>
+    </div>
+    <div class="war-meta">
+      ${endsAt}
+      <span>Declarat: ${new Date(w.declared_at * 1000).toLocaleDateString('ro-RO')}</span>
+    </div>
+    ${winnerRow}
+    ${actions}
+  </div>`;
+}
+
+async function declareWar() {
+  const msg = document.getElementById('declareMsg');
+  msg.className = 'alert';
+  const target = document.getElementById('targetName').value.trim();
+  const stake = parseInt(document.getElementById('stake').value) || 0;
+  if (!target) { msg.className='alert alert-err show'; msg.textContent='Introdu numele adversarului.'; return; }
+  const r = await fetch('/api/wars/declare', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({target_name:target,stake}) });
+  const d = await r.json();
+  if (d.ok) { msg.className='alert alert-ok show'; msg.textContent=`Război declarat împotriva lui ${target}! Așteptă confirmarea.`; loadWars('active'); }
+  else { msg.className='alert alert-err show'; msg.textContent=d.error; }
+}
+
+async function respond(id, action) {
+  const r = await fetch(`/api/wars/${id}/${action}`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include' });
+  const d = await r.json();
+  if (d.ok) loadWars('active');
+  else alert(d.error);
+}
+
+init();
+setInterval(() => loadWars('active'), 15000);
+</script>
+</body>
+</html>

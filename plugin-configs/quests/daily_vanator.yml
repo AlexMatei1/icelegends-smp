@@ -1,0 +1,47 @@
+# ============================================================
+# Quest Zilnic — Vânătorul de Noapte
+# Plugin: Quests by PikaMug
+# Reset: 24h — repetabil zilnic
+# Reward: 100 coins — puțin mai mult ca Culegătorul (risc > reward)
+# ============================================================
+
+quests:
+  vanator-de-noapte:
+    name: "Vânătorul de Noapte"
+    description: "Omoară 20 de monștri în timpul nopții."
+
+    ask-message: "&7Noaptea e periculoasă. Câți poți omorî?"
+    finish-message: "&a✓ Quest zilnic finalizat: Vânătorul de Noapte! (+100 coins)"
+
+    # NPC — Bătrânul
+    npc-giver-id: 1
+
+    stages:
+      ordered:
+        '1':
+          objectives:
+            # Monștri nocturni standard
+            - type: killMob
+              names:
+                - ZOMBIE
+                - SKELETON
+                - CREEPER
+                - SPIDER
+                - ENDERMAN
+                - WITCH
+                - PHANTOM
+                - DROWNED
+                - HUSK
+                - STRAY
+              amount: 20
+          start-message: "&7Omoară &e20 de monștri &7în timpul nopții."
+          complete-message: "&a✓ 20 monștri eliminați! Întoarce-te la Bătrânul."
+
+    rewards:
+      money: 100
+      message: "&a+100 coins"
+
+    # Repetabil zilnic — 86400 secunde = 24h
+    repeat: true
+    cooldown: 86400
+    time-limit: 0

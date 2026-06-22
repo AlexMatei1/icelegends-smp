@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Portal Jucători</title>
+  <link rel="stylesheet" href="/player/ice.css">
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-icon">❄</span>
+      <div class="auth-title">ICELEGENDS</div>
+      <div class="auth-subtitle">Portal Jucători</div>
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Username Minecraft</label>
+        <input class="form-input" type="text" id="username" placeholder="Numele tău din joc" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parolă</label>
+        <input class="form-input" type="password" id="password" placeholder="Parola contului web" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-ice btn-full" style="margin-top:4px">INTRĂ ÎN CONT</button>
+      <div id="msg" class="alert"></div>
+    </form>
+
+    <div class="crystal-line">sau</div>
+
+    <div class="auth-footer">
+      Nu ai cont? <a class="ice-link" href="/player/register">Înregistrează-te</a><br>
+      <a class="ice-link" href="/" style="color:var(--muted);font-size:.78rem;margin-top:10px;display:inline-block">← Înapoi acasă</a>
+    </div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    msg.className = 'alert';
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    try {
+      const r = await fetch('/api/player/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include'
+      });
+      const d = await r.json();
+      if (d.ok) {
+        window.location.href = '/player/dashboard';
+      } else {
+        msg.className = 'alert alert-err show';
+        msg.textContent = d.error || 'Eroare necunoscută.';
+      }
+    } catch {
+      msg.className = 'alert alert-err show';
+      msg.textContent = 'Eroare de rețea. Încearcă din nou.';
+    }
+  });
+</script>
+</body>
+</html>

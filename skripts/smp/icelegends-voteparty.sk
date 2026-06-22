@@ -1,0 +1,69 @@
+# ============================================================
+# IceLegends — Vote Party
+# La fiecare 50 voturi totale → party pentru toti jucatorii online
+# Integrat cu sistemul de vot (vote count stocat in {vote::total})
+# ============================================================
+
+options:
+    PREFIX: &8[&b★ VoteParty&8]
+    THRESHOLD: 50
+    PARTY_COINS: 200
+
+# Incrementare la fiecare vot (chemata din icelegends-misc sau plugin de vot)
+function countVote(voter: text):
+    if {vote::total} is not set:
+        set {vote::total} to 0
+    add 1 to {vote::total}
+    set {_total} to {vote::total}
+    set {_thresh} to {@THRESHOLD}
+    set {_div} to floor({_total} / {_thresh})
+    set {_modval} to {_total} - ({_div} * {_thresh})
+    set {_remaining} to {_thresh} - {_modval}
+    if {_remaining} is {_thresh}:
+        set {_remaining} to 0
+    if {_remaining} is 0:
+        triggerVoteParty()
+    else:
+        broadcast colored "{@PREFIX} &b%{_voter}% &7a votat! &e%{_remaining}% &7voturi pana la &b★ Vote Party&7!"
+
+function triggerVoteParty():
+    broadcast colored ""
+    broadcast colored "{@PREFIX} &b&l★★★ VOTE PARTY! ★★★"
+    broadcast colored "{@PREFIX} &7Serverul a atins %{vote::total}% voturi totale!"
+    broadcast colored "{@PREFIX} &6+{@PARTY_COINS} coins &7pentru toti jucatorii online!"
+    broadcast colored ""
+    loop all players:
+        add {@PARTY_COINS} to loop-player's balance
+        send title colored "&b★ Vote Party!" with subtitle colored "&7+{@PARTY_COINS} coins primit!" to loop-player for 4 seconds
+        give loop-player 1 golden apple
+
+command /voteparty:
+    description: Afiseaza progresul Vote Party.
+    trigger:
+        set {_total} to {vote::total} ? 0
+        set {_thresh} to {@THRESHOLD}
+        set {_div} to floor({_total} / {_thresh})
+        set {_modval} to {_total} - ({_div} * {_thresh})
+        set {_remaining} to {_thresh} - {_modval}
+        if {_remaining} is {_thresh}:
+            set {_remaining} to 0
+        send colored "{@PREFIX} &7Voturi totale: &e%{_total}%" to player
+        if {_remaining} is 0:
+            send colored "{@PREFIX} &aVote Party activ acum!" to player
+        else:
+            send colored "{@PREFIX} &7Mai sunt &e%{_remaining}% &7voturi pana la urmatoarea petrecere!" to player
+
+command /vptrigger:
+    permission: smp.admin
+    description: Declanseaza manual Vote Party.
+    trigger:
+        triggerVoteParty()
+        send colored "{@PREFIX} &aVote Party declansat manual!" to player
+
+# Console command called via RCON from panel/vote plugin when a player votes
+command /icl_vote <text>:
+    trigger:
+        if sender is a player:
+            send "&cComanda rezervata consolei." to sender
+            stop
+        countVote(arg-1)

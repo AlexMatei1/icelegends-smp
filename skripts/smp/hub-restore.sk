@@ -1,0 +1,66 @@
+# ============================================================
+# Hub Restore — IceLegends SMP
+# Protejare completa a hub-ului + auto-rebuild dupa distrugere
+# ============================================================
+
+options:
+    HUB_WORLD: hub
+    RESTORE_DELAY: 5 seconds
+    ADMIN_PERM: smp.admin
+
+# ── Protectie spargere blocuri ────────────────────────────────
+on break:
+    if world of player is world "{@HUB_WORLD}":
+        if player has permission "{@ADMIN_PERM}":
+            set {_type} to type of block
+            set {_bd} to block data of block
+            set {_loc} to location of block
+            send action bar "&e[Hub] Bloc sters — se reface in 5 secunde" to player
+            wait {@RESTORE_DELAY}
+            if type of block at {_loc} is air:
+                set block at {_loc} to {_type}
+                set block data of block at {_loc} to {_bd}
+        else:
+            cancel event
+            send action bar "&c&l✘ &7Blocurile hub-ului sunt protejate!" to player
+
+# ── Protectie plasare blocuri ─────────────────────────────────
+on place:
+    if world of player is world "{@HUB_WORLD}":
+        if player does not have permission "{@ADMIN_PERM}":
+            cancel event
+            send action bar "&c&l✘ &7Nu poti plasa blocuri in hub!" to player
+
+# ── Explozii anulate in hub ───────────────────────────────────
+on explosion:
+    loop exploded blocks:
+        if world of loop-block is world "{@HUB_WORLD}":
+            remove loop-block from exploded blocks
+
+# ── Foc oprit in hub ──────────────────────────────────────────
+on block burn:
+    if world of event-block is world "{@HUB_WORLD}":
+        cancel event
+
+on block ignite:
+    if world of event-block is world "{@HUB_WORLD}":
+        cancel event
+
+# ── Frunze / zapada / gheata — nu se degradeaza ───────────────
+on block fade:
+    if world of event-block is world "{@HUB_WORLD}":
+        cancel event
+
+# ── Piston oprit in hub ───────────────────────────────────────
+on piston extend:
+    if world of event-block is world "{@HUB_WORLD}":
+        cancel event
+
+on piston retract:
+    if world of event-block is world "{@HUB_WORLD}":
+        cancel event
+
+# ── Enderman — nu ridica blocuri din hub ──────────────────────
+on enderman pickup:
+    if world of event-block is world "{@HUB_WORLD}":
+        cancel event

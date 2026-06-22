@@ -1,0 +1,121 @@
+# ============================================================
+# EssentialsX — Configurație SMP Românesc
+# Versiune: EssentialsX 2.x pentru PaperMC 1.21.x
+# Filozofie: /home /tpa /spawn ACTIVAT — totul altceva DEZACTIVAT
+# ============================================================
+
+# Limba interfaței — mesaje în română
+locale: ro
+
+# ── Economie ──────────────────────────────────────────────────
+# DEZACTIVAT — Vault + ShopGUI+ gestionează economia
+# EssentialsX economy nu este folosit
+economy:
+  # Balanta inițială la prima conectare (gestionată de Vault)
+  starting-balance: 200
+  # Simbol monedă — ⛃ custom
+  currency-symbol: "⛃"
+  currency-symbol-suffix: false
+  # Zecimale afișate
+  currency-symbol-num-decimals: 2
+
+# ── Homes ─────────────────────────────────────────────────────
+# Maximum 3 home-uri pentru jucători obișnuiți
+# Poate fi suprascris per grup prin LuckPerms
+max-homes: 3
+
+# Dezactivat teleportare automată la spawn la login
+# Jucătorii revin la ultimul loc / pat
+spawn-on-join: none
+
+# ── Teleportare ───────────────────────────────────────────────
+# Cooldown între teleportări (secunde)
+teleport-cooldown: 5
+# Delay de așteptare înainte de teleportare (secunde)
+teleport-delay: 3
+# Invulnerabilitate după teleportare (secunde)
+teleport-invulnerability: 3
+# Timeout pentru acceptarea unui /tpa (secunde)
+tpa-accept-cancellation: 60
+# Anulează /tpa dacă jucătorul se mișcă în timpul delay-ului
+teleport-to-center: true
+
+# ── AFK ───────────────────────────────────────────────────────
+# Kick automat după 15 minute de inactivitate (eliberează slot-uri)
+afk-kick: 15
+# Nu afișa în lista de jucători ca AFK în TAB
+afk-list-names:
+  enabled: true
+# Mesaj în chat la intrarea în AFK
+afk-broadcast-away: "&8[&7AFK&8] &7{DISPLAYNAME} este acum AFK."
+# Mesaj în chat la ieșirea din AFK
+afk-broadcast-back: "&8[&7AFK&8] &7{DISPLAYNAME} s-a întors."
+# Protecție AFK — nu primești damage în AFK (opțional)
+afk-kick-exempt-permission: essentials.afk.kickexempt
+
+# ── Chat ──────────────────────────────────────────────────────
+# Format chat — gestionat de DiscordSRV / TAB plugin
+# EssentialsX formatare dezactivată dacă TAB este instalat
+change-displayname: true
+add-prefix-suffix: true
+
+# ── Spawn ─────────────────────────────────────────────────────
+# Spawn implicit pentru jucători noi
+spawn-join-on-first-join: true
+# Spawn la moarte — jucătorii revin la spawn dacă nu au pat
+respawn-at-home: false
+
+# ── Comenzi Dezactivate ───────────────────────────────────────
+# CRITIC: Dezactivează comenzile care interferează cu alte plugin-uri
+disabled-commands:
+  # Economia EssentialsX — Vault + ShopGUI+ gestionează
+  - pay
+  - bal
+  - balance
+  - balancetop
+  - baltop
+  - eco
+  - economy
+  - bank
+  # Kit system — jucătorii trebuie să câștige itemele
+  - kit
+  - kits
+  # Mail — Discord gestionează mesajele
+  - mail
+  # Warp management — Multiverse-Core gestionează
+  - warp
+  - setwarp
+  - delwarp
+  # Comenzi OP — Admin folosește LuckPerms
+  - op
+  - deop
+  - sudo
+  # Fly — Moderator+ prin LuckPerms
+  - fly
+  # Unlimited consumabile — vandalism potențial
+  - unlimited
+
+# ── Mesaje Custom Română ──────────────────────────────────────
+# Mesaje personalizate pentru evenimente comune
+messages:
+  # La prima conectare
+  first-join: "&a&lBun venit pe server, {DISPLAYNAME}! &7Vorbește cu &6Bătrânul &7pentru prima ta misiune."
+  # La conectare (nu prima oară)
+  join: "&8► &7{DISPLAYNAME} s-a conectat."
+  # La deconectare
+  quit: "&8◄ &7{DISPLAYNAME} a ieșit."
+
+# ── Protecție ─────────────────────────────────────────────────
+# Previne modificarea inventarului altui jucător fără permisiune
+protect:
+  prevent:
+    # Previne folosirea /enderchest pe alți jucători fără permisiune
+    enderpearl: false
+
+# ── Misc ──────────────────────────────────────────────────────
+# Interval salvare date jucători (minute)
+save-data-delay-in-ticks: 6000
+# Logging conectări/deconectări în consola serverului
+log-command-usage-level: 0
+# Notify la update EssentialsX
+update-check: false

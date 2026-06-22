@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — SMP Românesc</title>
+  <meta name="description" content="IceLegends — server Minecraft românesc. Conectează-te la play.ice4legends.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Inter:wght@300;400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Ticker bar -->
+<div class="ticker-bar">
+  <div class="ticker-inner">
+    <span>❄ SEZONUL 1 — ACTIV</span>
+    <span class="ticker-dot">◆</span>
+    <span id="ticker-players">? jucători online</span>
+    <span class="ticker-dot">◆</span>
+    <span>play.ice4legends.com</span>
+    <span class="ticker-dot">◆</span>
+    <span>TPS: <span id="ticker-tps">—</span></span>
+    <span class="ticker-dot">◆</span>
+    <span>❄ SEZONUL 1 — ACTIV</span>
+    <span class="ticker-dot">◆</span>
+    <span id="ticker-players2">? jucători online</span>
+    <span class="ticker-dot">◆</span>
+    <span>play.ice4legends.com</span>
+    <span class="ticker-dot">◆</span>
+    <span>TPS: <span id="ticker-tps2">—</span></span>
+    <span class="ticker-dot">◆</span>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav id="main-nav">
+  <a href="/" class="nav-logo">
+    <span class="logo-ice">ICE</span><span class="logo-legends">LEGENDS</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#jucatori">Jucători</a>
+    <a href="#echipa">Echipa</a>
+    <a href="#reguli">Reguli</a>
+    <a href="#join">Conectare</a>
+    <a href="#changelog">Update-uri</a>
+    <a href="https://mc.ice4legends.com" target="_blank" rel="noopener">Forum</a>
+  </div>
+  <div class="nav-right">
+    <div id="nav-status" class="nav-status offline">
+      <span class="ns-dot"></span>
+      <span id="nav-status-text">—</span>
+    </div>
+    <a href="/player/login.html" class="nav-portal">Portal ↗</a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger">☰</button>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#features" onclick="closeMobileMenu()">Features</a>
+  <a href="#jucatori" onclick="closeMobileMenu()">Jucători</a>
+  <a href="#echipa" onclick="closeMobileMenu()">Echipa</a>
+  <a href="#reguli" onclick="closeMobileMenu()">Reguli</a>
+  <a href="#join" onclick="closeMobileMenu()">Conectare</a>
+  <a href="#changelog" onclick="closeMobileMenu()">Update-uri</a>
+  <a href="https://mc.ice4legends.com" target="_blank" rel="noopener" onclick="closeMobileMenu()">Forum</a>
+  <a href="/player/login.html" class="nav-portal" style="margin-top:0.5rem">Portal →</a>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span> SEZONUL 1 ACTIV
+    </div>
+
+    <h1 class="hero-title">
+      <span class="ht-ice">Ice</span><span class="ht-legends">Legends</span>
+    </h1>
+    <p class="hero-sub">SMP Românesc &nbsp;·&nbsp; Java 1.8–1.21 &nbsp;·&nbsp; PaperMC</p>
+
+    <div class="hero-ip-block">
+      <span class="hip-label">Server IP</span>
+      <div class="hip-row">
+        <code id="server-ip">play.ice4legends.com</code>
+        <button class="hip-copy" onclick="copyIP()">
+          <span id="copy-label">COPIAZA</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="hero-stats-row">
+      <div class="hs-item">
+        <span class="hs-val green" id="hero-players">—</span>
+        <span class="hs-label">Online</span>
+      </div>
+      <div class="hs-sep">|</div>
+      <div class="hs-item">
+        <span class="hs-val" id="hero-tps">—</span>
+        <span class="hs-label">TPS</span>
+      </div>
+      <div class="hs-sep">|</div>
+      <div class="hs-item">
+        <span class="hs-val" style="color:var(--accent)">S1</span>
+        <span class="hs-label">Sezon</span>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <a href="#join" class="btn btn-primary">Cum mă conectez</a>
+      <a href="#features" class="btn btn-ghost">Descoperă →</a>
+    </div>
+  </div>
+
+  <!-- Minecraft terrain silhouette -->
+  <div class="hero-terrain">
+    <svg viewBox="0 0 1440 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#c8e8ff" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#90caf9" stop-opacity="0.5"/>
+        </linearGradient>
+      </defs>
+      <rect x="0"    y="72" width="1440" height="28" fill="#040b14"/>
+      <rect x="0"    y="56" width="48"  height="44" fill="#0c1e32"/><rect x="0"    y="50" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="48"   y="44" width="32"  height="56" fill="#0a1a2c"/><rect x="48"   y="38" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="80"   y="60" width="48"  height="40" fill="#0d2038"/><rect x="80"   y="54" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="128"  y="36" width="32"  height="64" fill="#0e2240"/><rect x="128"  y="30" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="160"  y="52" width="48"  height="48" fill="#0b1c34"/><rect x="160"  y="46" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="208"  y="42" width="32"  height="58" fill="#0c1e36"/><rect x="208"  y="36" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="240"  y="18" width="48"  height="82" fill="#102444"/><rect x="240"  y="12" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="288"  y="56" width="32"  height="44" fill="#0a1a2e"/><rect x="288"  y="50" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="320"  y="46" width="48"  height="54" fill="#0d2038"/><rect x="320"  y="40" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="368"  y="32" width="32"  height="68" fill="#0f2240"/><rect x="368"  y="26" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="400"  y="62" width="48"  height="38" fill="#0b1c32"/><rect x="400"  y="56" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="448"  y="8"  width="48"  height="92" fill="#112646"/><rect x="448"  y="2"  width="48"  height="8" fill="url(#sg)"/>
+      <rect x="496"  y="48" width="32"  height="52" fill="#0c1e36"/><rect x="496"  y="42" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="528"  y="40" width="48"  height="60" fill="#0e2038"/><rect x="528"  y="34" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="576"  y="58" width="32"  height="42" fill="#0a1a2c"/><rect x="576"  y="52" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="608"  y="26" width="48"  height="74" fill="#102440"/><rect x="608"  y="20" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="656"  y="50" width="32"  height="50" fill="#0c1e34"/><rect x="656"  y="44" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="688"  y="14" width="64"  height="86" fill="#122848"/><rect x="688"  y="8"  width="64"  height="8" fill="url(#sg)"/>
+      <rect x="752"  y="44" width="32"  height="56" fill="#0d1f38"/><rect x="752"  y="38" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="784"  y="34" width="48"  height="66" fill="#0e2240"/><rect x="784"  y="28" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="832"  y="60" width="32"  height="40" fill="#0b1c30"/><rect x="832"  y="54" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="864"  y="40" width="48"  height="60" fill="#0c2038"/><rect x="864"  y="34" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="912"  y="22" width="32"  height="78" fill="#112442"/><rect x="912"  y="16" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="944"  y="52" width="48"  height="48" fill="#0a1c34"/><rect x="944"  y="46" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="992"  y="36" width="32"  height="64" fill="#0f2240"/><rect x="992"  y="30" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="1024" y="48" width="48"  height="52" fill="#0d1e38"/><rect x="1024" y="42" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="1072" y="12" width="48"  height="88" fill="#122646"/><rect x="1072" y="6"  width="48"  height="8" fill="url(#sg)"/>
+      <rect x="1120" y="46" width="32"  height="54" fill="#0c1e36"/><rect x="1120" y="40" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="1152" y="32" width="48"  height="68" fill="#0e2140"/><rect x="1152" y="26" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="1200" y="58" width="32"  height="42" fill="#0b1c30"/><rect x="1200" y="52" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="1232" y="38" width="48"  height="62" fill="#0d2038"/><rect x="1232" y="32" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="1280" y="50" width="32"  height="50" fill="#0c1e36"/><rect x="1280" y="44" width="32"  height="8" fill="url(#sg)"/>
+      <rect x="1312" y="28" width="48"  height="72" fill="#102442"/><rect x="1312" y="22" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="1360" y="48" width="48"  height="52" fill="#0d1f38"/><rect x="1360" y="42" width="48"  height="8" fill="url(#sg)"/>
+      <rect x="1408" y="54" width="32"  height="46" fill="#0a1c32"/><rect x="1408" y="48" width="32"  height="8" fill="url(#sg)"/>
+    </svg>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="section">
+  <div class="section-head">
+    <h2 class="section-title">Ce oferă <span>IceLegends</span></h2>
+    <p class="section-sub">Un server complet cu sisteme unice pentru comunitatea românească</p>
+  </div>
+  <div class="features-grid">
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/diamond_sword.png" alt=""></div>
+      <h3>SMP Survival</h3>
+      <p>Lume de supraviețuire cu economie, ranguri, PvP consensual și resurse infinite.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/gold_ingot.png" alt=""></div>
+      <h3>Economie reală</h3>
+      <p>Câștigă coins jucând, votând sau vânzând resurse în Magazin. Clasament live.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/blaze_powder.png" alt=""></div>
+      <h3>Abilități & Skills</h3>
+      <p>Sistem de skills cu levelup, abilități pasive și active care cresc prin joc.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/iron_chestplate.png" alt=""></div>
+      <h3>Clanuri</h3>
+      <p>Creează sau intri într-un clan, protejează teritoriu și luptă cu alianțe.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/arrow.png" alt=""></div>
+      <h3>Misiuni zilnice</h3>
+      <p>Misiuni cu recompense zilnice, săptămânale și sezoniere. Nu te plictisești.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/feather.png" alt=""></div>
+      <h3>Parkour</h3>
+      <p>Trasee de parkour cu dificultăți multiple, recorduri și premii exclusive.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/map.png" alt=""></div>
+      <h3>Hartă live</h3>
+      <p>Vizualizează lumea SMP în timp real prin harta interactivă.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon"><img src="/img/mc/ender_eye.png" alt=""></div>
+      <h3>Portal jucători</h3>
+      <p>Gestionează contul, vizualizează statistici și cumpără din portal web.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Jucători online -->
+<section id="jucatori" class="section section-dark">
+  <div class="section-head">
+    <h2 class="section-title">Cine e <span>online</span></h2>
+    <p class="section-sub" id="online-summary">Se verifică serverul...</p>
+  </div>
+  <div class="players-grid" id="players-list">
+    <span class="no-content">Se încarcă...</span>
+  </div>
+  <div class="top-divider"></div>
+  <h3 class="subsection-title">Top <span>economie</span></h3>
+  <div class="top-list" id="top-list">
+    <span class="no-content">Se încarcă...</span>
+  </div>
+</section>
+
+<!-- Echipa -->
+<section id="echipa" class="section">
+  <div class="section-head">
+    <h2 class="section-title">Echipa <span>IceLegends</span></h2>
+    <p class="section-sub">Oamenii din spatele serverului</p>
+  </div>
+  <div class="staff-grid">
+    <div class="staff-card reveal">
+      <div class="staff-glow owner-glow"></div>
+      <img src="https://crafatar.com/avatars/Matei?size=80&overlay" class="staff-avatar" alt="Matei" onerror="this.style.opacity='0.3'">
+      <div class="staff-info">
+        <div class="staff-name">Matei</div>
+        <span class="staff-badge owner">OWNER</span>
+        <div class="staff-desc">Fondator IceLegends, developer principal, admin server.</div>
+      </div>
+    </div>
+    <div class="staff-card reveal vacant">
+      <div class="staff-glow admin-glow"></div>
+      <img src="https://crafatar.com/avatars/MHF_Steve?size=80&overlay" class="staff-avatar" alt="Liber" onerror="this.style.opacity='0.2'">
+      <div class="staff-info">
+        <div class="staff-name">— Poziție liberă —</div>
+        <span class="staff-badge admin">ADMIN</span>
+        <div class="staff-desc">Aplicã pe Discord dacă ești interesat.</div>
+      </div>
+    </div>
+    <div class="staff-card reveal vacant">
+      <div class="staff-glow mod-glow"></div>
+      <img src="https://crafatar.com/avatars/MHF_Alex?size=80&overlay" class="staff-avatar" alt="Liber" onerror="this.style.opacity='0.2'">
+      <div class="staff-info">
+        <div class="staff-name">— Poziție liberă —</div>
+        <span class="staff-badge moderator">MODERATOR</span>
+        <div class="staff-desc">Aplicã pe Discord dacă ești interesat.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Reguli -->
+<section id="reguli" class="section section-dark">
+  <div class="section-head">
+    <h2 class="section-title">Regulile <span>serverului</span></h2>
+    <p class="section-sub">Respectă-le și vei fi binevenit oricând</p>
+  </div>
+  <div class="rules-grid">
+    <div class="rule-card good reveal">
+      <span class="rule-num">01</span>
+      <div class="rule-icon">🤝</div>
+      <div class="rule-title">Respect reciproc</div>
+      <div class="rule-desc">Tratează toți jucătorii cu respect, indiferent de nivel sau experiență.</div>
+    </div>
+    <div class="rule-card good reveal">
+      <span class="rule-num">02</span>
+      <div class="rule-icon">⚔️</div>
+      <div class="rule-title">PvP consensual</div>
+      <div class="rule-desc">PvP-ul este permis doar cu acordul ambelor părți în SMP.</div>
+    </div>
+    <div class="rule-card good reveal">
+      <span class="rule-num">03</span>
+      <div class="rule-icon">🏠</div>
+      <div class="rule-title">Proprietate protejată</div>
+      <div class="rule-desc">Nu distruge, modifica sau fura din construcțiile altor jucători.</div>
+    </div>
+    <div class="rule-card bad reveal">
+      <span class="rule-num">04</span>
+      <div class="rule-icon">🚫</div>
+      <div class="rule-title">Zero hack-uri</div>
+      <div class="rule-desc">Orice client modificat sau cheat = ban permanent, fără excepție.</div>
+    </div>
+    <div class="rule-card bad reveal">
+      <span class="rule-num">05</span>
+      <div class="rule-icon">💬</div>
+      <div class="rule-title">Fără toxicitate</div>
+      <div class="rule-desc">Spam, rasism, discriminare sau ură = ban. Jocul e pentru toți.</div>
+    </div>
+    <div class="rule-card bad reveal">
+      <span class="rule-num">06</span>
+      <div class="rule-icon">🔧</div>
+      <div class="rule-title">Nu exploata bug-uri</div>
+      <div class="rule-desc">Găsești un bug? Raportează-l pe Discord. Exploatarea = sancțiune.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Cum te conectezi -->
+<section id="join" class="section">
+  <div class="section-head">
+    <h2 class="section-title">Cum te <span>conectezi</span></h2>
+    <p class="section-sub">Patru pași simpli și ești în legendă</p>
+  </div>
+  <div class="join-timeline">
+    <div class="jt-item reveal">
+      <div class="jt-num">01</div>
+      <div class="jt-body">
+        <h3>Java Edition</h3>
+        <p>Ai nevoie de Minecraft <strong>Java Edition</strong>. Versiunile <strong>1.8 – 1.21</strong> sunt acceptate prin ViaVersion.</p>
+      </div>
+    </div>
+    <div class="jt-item reveal">
+      <div class="jt-num">02</div>
+      <div class="jt-body">
+        <h3>Multiplayer → Add Server</h3>
+        <p>Din meniul principal apasă <strong>Multiplayer</strong> → <strong>Add Server</strong> și completează câmpurile de mai jos.</p>
+      </div>
+    </div>
+    <div class="jt-item reveal">
+      <div class="jt-num">03</div>
+      <div class="jt-body">
+        <h3>Introdu adresa</h3>
+        <div class="jt-ip-box">
+          <code>play.ice4legends.com</code>
+          <button class="hip-copy small" onclick="copyIP()"><span id="copy-label-2">COPIAZA</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="jt-item reveal">
+      <div class="jt-num">04</div>
+      <div class="jt-body">
+        <h3>Intră în legendă!</h3>
+        <p>Hub-ul te întâmpină cu Busola Lumilor. Navighează spre SMP, Shop sau Parkour. Distracție bună!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Vote -->
+<section id="vote" class="section section-dark">
+  <div class="section-head">
+    <h2 class="section-title">Votează &amp; <span>câștigă</span></h2>
+    <p class="section-sub">Votează zilnic și primești recompense automate în joc</p>
+  </div>
+  <div class="vote-grid">
+    <div class="vote-card reveal">
+      <div class="vote-rank">🏆</div>
+      <div class="vote-site">Minecraft-List.ro</div>
+      <div class="vote-rewards">
+        <span class="vr-tag">+500 Coins</span>
+        <span class="vr-tag">Cheie Crate</span>
+      </div>
+      <a href="https://minecraft-list.ro" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;justify-content:center">VOTEAZA →</a>
+    </div>
+    <div class="vote-card reveal">
+      <div class="vote-rank">⭐</div>
+      <div class="vote-site">TopG.org</div>
+      <div class="vote-rewards">
+        <span class="vr-tag">+500 Coins</span>
+        <span class="vr-tag">Cheie Crate</span>
+      </div>
+      <a href="https://topg.org" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;justify-content:center">VOTEAZA →</a>
+    </div>
+    <div class="vote-card reveal">
+      <div class="vote-rank">🌟</div>
+      <div class="vote-site">MC-Server.eu</div>
+      <div class="vote-rewards">
+        <span class="vr-tag">+500 Coins</span>
+        <span class="vr-tag">Cheie Crate</span>
+      </div>
+      <a href="https://minecraft-server.eu" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;justify-content:center">VOTEAZA →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Changelog -->
+<section id="changelog" class="section">
+  <div class="section-head">
+    <h2 class="section-title">Ultimele <span>update-uri</span></h2>
+    <p class="section-sub">Ce s-a schimbat recent pe IceLegends</p>
+  </div>
+  <div class="cl-list">
+    <div class="cl-entry reveal">
+      <div class="cl-left">
+        <div class="cl-date">18.06.2026</div>
+        <span class="cl-tag fix">FIX</span>
+      </div>
+      <div class="cl-right">
+        <div class="cl-title">Optimizare server — memorie și TPS</div>
+        <div class="cl-desc">Heap JVM redus la 2.5G, chunk-saves asincrone, lumi fara jucatori nu mai tickuie. TPS stabil, lag eliminat.</div>
+      </div>
+    </div>
+    <div class="cl-entry reveal">
+      <div class="cl-left">
+        <div class="cl-date">17.06.2026</div>
+        <span class="cl-tag new">NOU</span>
+      </div>
+      <div class="cl-right">
+        <div class="cl-title">Inventar comun între lumi</div>
+        <div class="cl-desc">Busola Lumilor apare automat în hub, dispare când pleci. Itemele rămân la tine indiferent de lume.</div>
+      </div>
+    </div>
+    <div class="cl-entry reveal">
+      <div class="cl-left">
+        <div class="cl-date">15.06.2026</div>
+        <span class="cl-tag new">NOU</span>
+      </div>
+      <div class="cl-right">
+        <div class="cl-title">Portal jucători — ice4legends.com/player</div>
+        <div class="cl-desc">Dashboard cu statistici, shop web, misiuni, clanuri, contestații ban și vot. Fără download, direct din browser.</div>
+      </div>
+    </div>
+    <div class="cl-entry reveal">
+      <div class="cl-left">
+        <div class="cl-date">07.06.2026</div>
+        <span class="cl-tag launch">LANSARE</span>
+      </div>
+      <div class="cl-right">
+        <div class="cl-title">🎉 IceLegends Sezonul 1 — GO LIVE</div>
+        <div class="cl-desc">Hub arctic, SMP survival, economie, shop, parkour, skills, clanuri, misiuni zilnice și suport 1.8–1.21.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <span class="footer-logo">❄ ICELEGENDS</span>
+      <p>SMP Românesc · Sezonul 1 · PaperMC 1.21</p>
+      <p class="footer-ip">play.ice4legends.com</p>
+    </div>
+    <div class="footer-links">
+      <span class="fl-head">Server</span>
+      <a href="#features">Features</a>
+      <a href="#jucatori">Jucători</a>
+      <a href="#reguli">Reguli</a>
+      <a href="#join">Conectare</a>
+    </div>
+    <div class="footer-links">
+      <span class="fl-head">Comunitate</span>
+      <a href="https://mc.ice4legends.com" target="_blank" rel="noopener">Forum</a>
+      <a href="https://discord.gg/icelegends" target="_blank" rel="noopener">Discord</a>
+      <a href="https://map.ice4legends.com" target="_blank" rel="noopener">Hartă Live</a>
+      <a href="#vote">Votează</a>
+      <a href="/player/login.html">Portal Jucători</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 IceLegends — Toate drepturile rezervate</span>
+    <span>Creat cu ❄ în România</span>
+  </div>
+</footer>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

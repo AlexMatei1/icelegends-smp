@@ -1,0 +1,39 @@
+# ============================================================
+# IceLegends — Rucsac (Backpack)
+# /bp — deschide un inventar virtual de 27 sloturi
+# Continutul persista intre sesiuni (stocat in variabile Skript)
+# ============================================================
+
+options:
+    PREFIX: &8[&9Rucsac&8]
+    SLOTS: 27
+
+command /bp:
+    aliases: /backpack, /rucsac
+    permission: smp.shop
+    description: Deschide rucsacul virtual.
+    trigger:
+        openBackpack(player)
+
+function openBackpack(p: player):
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_inv} to a new chest inventory with 3 rows named "&9&lRucsac &8— &7%{_p}%"
+    loop 27 times:
+        set {_item} to {bp::%{_uuid}%::%loop-number%}
+        if {_item} is set:
+            set slot (loop-number - 1) of {_inv} to {_item}
+    set {bp::open::%{_uuid}%} to true
+    open {_inv} to {_p}
+
+on inventory close:
+    set {_uuid} to "%player's uuid%"
+    if {bp::open::%{_uuid}%} is true:
+        set {bp::open::%{_uuid}%} to false
+        if name of event-inventory starts with "&9&lRucsac":
+            loop 27 times:
+                set {bp::%{_uuid}%::%loop-number%} to slot (loop-number - 1) of event-inventory
+
+on inventory click:
+    if name of player's current inventory starts with "&9&lRucsac":
+        if event-inventory is player's current inventory:
+            stop

@@ -1,0 +1,47 @@
+# ============================================================
+# Quest Zilnic — Culegătorul
+# Plugin: Quests by PikaMug
+# Reset: 24h — repetabil zilnic
+# Reward: 80 coins — aproape 1 zi de casual play
+# ============================================================
+
+quests:
+  culegator:
+    name: "Culegătorul"
+    description: "Colectează 64 de recolte de orice tip."
+
+    # Dialog scurt — quest zilnic, fără poveste elaborată
+    ask-message: "&7Recoltele nu se culeg singure. Ajută-mă azi."
+    finish-message: "&a✓ Quest zilnic finalizat: Culegătorul! (+80 coins)"
+
+    # NPC — Bătrânul (același NPC, dialog contextual)
+    npc-giver-id: 1
+
+    stages:
+      ordered:
+        '1':
+          objectives:
+            # Orice tip de recoltă — grâu, morcov, cartofi, sfeclă etc.
+            - type: harvestBlock
+              names:
+                - WHEAT
+                - CARROTS
+                - POTATOES
+                - BEETROOTS
+                - MELON
+                - PUMPKIN
+                - SUGAR_CANE
+                - CACTUS
+                - COCOA
+              amount: 64
+          start-message: "&7Recoltează &e64 de plante &7de orice tip."
+          complete-message: "&a✓ Recoltă completă! Întoarce-te la Bătrânul."
+
+    rewards:
+      money: 80
+      message: "&a+80 coins"
+
+    # Repetabil zilnic — 86400 secunde = 24h
+    repeat: true
+    cooldown: 86400
+    time-limit: 0

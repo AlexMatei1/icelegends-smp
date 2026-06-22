@@ -1,0 +1,112 @@
+# ============================================================
+# AureliumSkills — Configurație SMP Românesc
+# Versiune: AuraSkills 2.x pentru PaperMC 1.21.x
+# Filozofie: pasive ONLY, cresc din gameplay normal, nu grind
+# ============================================================
+
+# Nivelul maxim per skill — 100 pentru progresia pe tot sezonul
+max-skill-level: 100
+
+# CRITIC: Active abilities DEZACTIVATE — combat vanilla nemodificat
+# P-01: Dacă plugin-ul dispare mâine, jocul continuă identic
+enable-active-abilities: false
+
+# ── Skills Dezactivate ────────────────────────────────────────
+# Aceste skill-uri modifică mecanicile vanilla de bază
+disabled-skills:
+  # Alchemy — înlocuiește brăsatul vanilla (cauldron, potions)
+  - alchemy
+  # Enchanting — înlocuiește masa de enchantment vanilla
+  - enchanting
+  # Sorcery — prea RPG-heavy, violează principiul P-01
+  - sorcery
+
+# ── Boss Bar (Level-Up Notification) ─────────────────────────
+boss-bar:
+  # Activat — notificare subtilă la level-up
+  enabled: true
+  # Durata afișării (secunde) — 3s = subtil, nu intruziv
+  duration: 3
+  # Culoare boss bar la level-up
+  color: YELLOW
+  # Stil boss bar
+  style: SOLID
+
+# ── Skills Active (Bonusuri Pasive) ──────────────────────────
+# Toate bonusurile sunt ADITIVE față de vanilla — nu înlocuiesc nimic
+skills:
+  mining:
+    # Șanse bonus la drop de minereuri — activat
+    enabled: true
+    # Bonus viteză de minare la niveluri mari
+    double-drop-enabled: true
+  farming:
+    # Recoltă extra la cultiverait — activat
+    enabled: true
+    # Auto-replant — uneori recultivează automat
+    auto-replant: true
+  foraging:
+    # Drop bonus la copaci
+    enabled: true
+  fishing:
+    # Drops rare din pescuit — activat
+    enabled: true
+    # Tezaur la pescuit (treasure fishing)
+    treasure-hunter: true
+  excavation:
+    # Drops bonus din săpat (nisip, pietriș)
+    enabled: true
+  fighting:
+    # Damage bonus melee per nivel
+    enabled: true
+  archery:
+    # Damage bonus arc + recuperare săgeți
+    enabled: true
+    arrow-retrieval: true
+  defense:
+    # Reducere damage cu armor per nivel
+    enabled: true
+
+# ── XP Multiplieri ───────────────────────────────────────────
+# Toți la 1.0 — vanilla rate, nu grind accelerat
+xp-multipliers:
+  mining: 1.0
+  farming: 1.0
+  foraging: 1.0
+  fishing: 1.0
+  excavation: 1.0
+  fighting: 1.0
+  archery: 1.0
+  defense: 1.0
+
+# ── Leaderboard ───────────────────────────────────────────────
+# Boss bar leaderboard DEZACTIVAT — comparație constantă intruzivă
+leaderboard:
+  boss-bar:
+    enabled: false
+
+# ── Meniu Skills ──────────────────────────────────────────────
+menus:
+  # Acces meniu prin /skills
+  enabled: true
+
+# ── Salvare Date ──────────────────────────────────────────────
+# Interval salvare date jucători (minute)
+save-interval: 10
+
+# ── Mesaje ────────────────────────────────────────────────────
+# Fișier mesaje în română — generat separat (messages_ro.yml)
+language: ro
+
+# ── Acțiuni Dezactivate ───────────────────────────────────────
+# Asigură că nu modifică comportamente vanilla importante
+action-bar:
+  # Action bar cu XP curent — dezactivat (prea intruziv)
+  enabled: false
+
+# ── Compatibilitate ───────────────────────────────────────────
+hooks:
+  # Integrare cu Towny — skills cresc și în teritorii protejate
+  towny: true
+  # Integrare cu Vault pentru rewards monetare (nu folosim direct)
+  vault: false

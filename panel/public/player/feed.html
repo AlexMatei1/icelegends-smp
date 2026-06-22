@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feed — IceLegends</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    .feed-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 1.5rem;
+      max-width: 960px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      align-items: start;
+    }
+    /* ── Sidebar ── */
+    .sidebar { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 80px; }
+    .sidebar-card {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1.1rem;
+    }
+    .sidebar-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+    }
+    .add-friend-row { display: flex; gap: 0.4rem; }
+    .add-friend-row input {
+      flex: 1;
+      background: rgba(0,8,22,0.65);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.7rem;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .add-friend-row button {
+      background: var(--ice);
+      color: var(--deep);
+      border: none;
+      border-radius: 6px;
+      padding: 0.4rem 0.7rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .friend-list { display: flex; flex-direction: column; gap: 0.4rem; }
+    .friend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .friend-item:hover { background: var(--bg); }
+    .friend-item img { width: 26px; height: 26px; image-rendering: pixelated; border-radius: 4px; }
+    .friend-item-name { flex: 1; font-size: 0.88rem; font-weight: 500; }
+    .friend-remove {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 0.8rem; padding: 0;
+      opacity: 0.5;
+    }
+    .friend-remove:hover { opacity: 1; color: #f44336; }
+    .request-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.5rem;
+      background: rgba(100,181,246,0.06);
+      border-radius: 6px;
+      margin-bottom: 0.3rem;
+    }
+    .request-item img { width: 24px; height: 24px; image-rendering: pixelated; border-radius: 3px; }
+    .req-name { flex: 1; font-size: 0.84rem; }
+    .req-btns { display: flex; gap: 0.3rem; }
+    .req-accept { background: var(--accent); color: var(--bg); border: none; border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .req-decline { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.5rem; font-size: 0.75rem; color: var(--muted); cursor: pointer; }
+    .empty-msg { color: var(--muted); font-size: 0.82rem; text-align: center; padding: 0.5rem 0; }
+
+    /* ── Feed center ── */
+    .feed-center { display: flex; flex-direction: column; gap: 1rem; }
+    .composer {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1rem;
+    }
+    .composer-top { display: flex; gap: 0.7rem; align-items: flex-start; }
+    .composer-avatar { width: 36px; height: 36px; image-rendering: pixelated; border-radius: 6px; flex-shrink: 0; }
+    .composer textarea {
+      flex: 1;
+      background: rgba(0,8,22,0.65);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      resize: none;
+      min-height: 70px;
+      line-height: 1.5;
+      transition: border-color 0.2s;
+    }
+    .composer textarea:focus { outline: none; border-color: var(--accent); }
+    .composer-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; padding-left: 44px; }
+    .char-count { font-size: 0.75rem; color: var(--muted); }
+    .char-count.near { color: #ff9800; }
+    .char-count.over { color: #f44336; }
+    .post-btn {
+      background: var(--ice);
+      color: var(--deep);
+      border: none;
+      border-radius: 7px;
+      padding: 0.45rem 1.1rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .post-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Post card ── */
+    .post-card {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 1rem;
+      transition: border-color 0.2s;
+    }
+    .post-card:hover { border-color: rgba(100,181,246,0.25); }
+    .post-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.7rem; }
+    .post-avatar { width: 36px; height: 36px; image-rendering: pixelated; border-radius: 6px; }
+    .post-meta { flex: 1; }
+    .post-author { font-weight: 700; font-size: 0.9rem; }
+    .post-time { font-size: 0.75rem; color: var(--muted); }
+    .post-delete {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 0.85rem; opacity: 0.5;
+      padding: 0.2rem 0.4rem; border-radius: 4px;
+    }
+    .post-delete:hover { opacity: 1; color: #f44336; background: rgba(244,67,54,0.08); }
+    .post-content { font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; margin-bottom: 0.7rem; }
+    .post-actions { display: flex; gap: 1rem; }
+    .like-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.8rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s;
+    }
+    .like-btn.liked { border-color: #e91e63; color: #e91e63; background: rgba(233,30,99,0.06); }
+    .like-btn:hover:not(.liked) { border-color: var(--accent); color: var(--accent); }
+
+    .feed-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .feed-empty-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+    .feed-empty p { font-size: 0.9rem; line-height: 1.6; }
+
+    .sb-msg {
+      font-size: 0.78rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 5px;
+      margin-top: 0.5rem;
+    }
+    .sb-msg.ok { background: rgba(105,240,174,0.1); color: #69f0ae; }
+    .sb-msg.err { background: rgba(244,67,54,0.1); color: #f44336; }
+
+    @media (max-width: 700px) {
+      .feed-layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a href="/player/dashboard" class="nav-brand">❄ ICELEGENDS</a>
+  <div class="nav-links">
+    <a href="/player/dashboard" class="nav-link">Dashboard</a>
+    <a href="/player/feed" class="nav-link active">Feed</a>
+  </div>
+  <div class="nav-right">
+    <a href="/" style="font-size:.75rem;color:var(--muted);padding:5px 10px;border:1px solid var(--border);border-radius:8px;text-decoration:none;white-space:nowrap">← Acasă</a>
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span id="navName" class="nav-name"></span>
+    <button class="btn-logout" id="nav-logout">Deconectare</button>
+  </div>
+</nav>
+
+<div class="feed-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-card">
+      <div class="sidebar-title">Adaugă prieten</div>
+      <div class="add-friend-row">
+        <input type="text" id="addFriendInput" placeholder="Nume jucător..." maxlength="32">
+        <button onclick="sendFriendRequest()">+</button>
+      </div>
+      <div id="addFriendMsg"></div>
+    </div>
+
+    <div class="sidebar-card" id="requests-card" style="display:none">
+      <div class="sidebar-title">Cereri primite <span id="req-count"></span></div>
+      <div id="requests-list"></div>
+    </div>
+
+    <div class="sidebar-card">
+      <div class="sidebar-title">Prieteni <span id="friends-count" style="color:var(--muted);font-weight:400"></span></div>
+      <div class="friend-list" id="friends-list">
+        <div class="empty-msg">Se încarcă...</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Feed -->
+  <main class="feed-center">
+    <!-- Composer -->
+    <div class="composer">
+      <div class="composer-top">
+        <img class="composer-avatar" id="composerAvatar" src="" alt="">
+        <textarea id="postContent" placeholder="Ce mai faci pe IceLegends? (max 280 caractere)" maxlength="280" onInput="updateCharCount()"></textarea>
+      </div>
+      <div class="composer-footer">
+        <span class="char-count" id="charCount">0 / 280</span>
+        <button class="post-btn" id="postBtn" onclick="submitPost()">Postează</button>
+      </div>
+    </div>
+
+    <!-- Posts -->
+    <div id="feed-posts">
+      <div class="feed-empty">
+        <div class="feed-empty-icon">📡</div>
+        <p>Se încarcă feed-ul...</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+'use strict';
+
+let myName = '';
+let myUuid = '';
+
+async function loadMe() {
+  const r = await fetch('/api/player/me', { credentials: 'include' });
+  if (!r.ok) { location.href = '/player/login'; return; }
+  const d = await r.json();
+  myName = d.username || d.name || '';
+  myUuid = d.uuid || '';
+  document.getElementById('composerAvatar').src = `https://mc-heads.net/avatar/${encodeURIComponent(myUuid||myName)}/36`;
+  document.getElementById('nav-logout').onclick = async () => {
+    await fetch('/api/player/logout', { method:'POST', credentials:'include' });
+    location.href = '/player/login';
+  };
+}
+
+// ── Friends ───────────────────────────────────────────────────
+
+async function loadFriends() {
+  const r = await fetch('/api/player/friends', { credentials: 'include' });
+  if (!r.ok) return;
+  const { accepted, incoming, outgoing } = await r.json();
+
+  // Pending requests
+  const reqCard = document.getElementById('requests-card');
+  const reqList = document.getElementById('requests-list');
+  if (incoming.length > 0) {
+    reqCard.style.display = '';
+    document.getElementById('req-count').textContent = `(${incoming.length})`;
+    reqList.innerHTML = incoming.map(f => `
+      <div class="request-item" id="req-${f.id}">
+        <img src="https://mc-heads.net/avatar/${encodeURIComponent(f.name)}/24" alt="${f.name}">
+        <span class="req-name">${f.name}</span>
+        <div class="req-btns">
+          <button class="req-accept" onclick="acceptRequest(${f.id})">✓</button>
+          <button class="req-decline" onclick="declineRequest('${f.name}')">✗</button>
+        </div>
+      </div>`).join('');
+  } else {
+    reqCard.style.display = 'none';
+  }
+
+  // Friends list
+  const fl = document.getElementById('friends-list');
+  document.getElementById('friends-count').textContent = accepted.length > 0 ? `(${accepted.length})` : '';
+  if (accepted.length === 0) {
+    fl.innerHTML = '<div class="empty-msg">Niciun prieten încă.<br>Adaugă pe cineva!</div>';
+  } else {
+    fl.innerHTML = accepted.map(f => `
+      <div class="friend-item">
+        <img src="https://mc-heads.net/avatar/${encodeURIComponent(f.name)}/26" alt="${f.name}">
+        <span class="friend-item-name">${f.name}</span>
+        <button class="friend-remove" title="Elimină prieten" onclick="removeFriend('${f.name}')">✕</button>
+      </div>`).join('');
+  }
+}
+
+async function sendFriendRequest() {
+  const input = document.getElementById('addFriendInput');
+  const msgEl = document.getElementById('addFriendMsg');
+  const target = input.value.trim();
+  if (!target) return;
+  const r = await fetch('/api/player/friends/add', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target })
+  });
+  const d = await r.json();
+  msgEl.className = 'sb-msg ' + (r.ok ? 'ok' : 'err');
+  msgEl.textContent = r.ok ? `Cerere trimisă lui ${d.to}!` : (d.error || 'Eroare');
+  if (r.ok) { input.value = ''; loadFriends(); }
+  setTimeout(() => msgEl.textContent = '', 3000);
+}
+
+async function acceptRequest(id) {
+  await fetch(`/api/player/friends/accept/${id}`, { method:'POST', credentials:'include' });
+  loadFriends();
+  loadFeed();
+}
+
+async function declineRequest(name) {
+  await fetch(`/api/player/friends/${encodeURIComponent(name)}`, { method:'DELETE', credentials:'include' });
+  loadFriends();
+}
+
+async function removeFriend(name) {
+  if (!confirm(`Elimini prietenul ${name}?`)) return;
+  await fetch(`/api/player/friends/${encodeURIComponent(name)}`, { method:'DELETE', credentials:'include' });
+  loadFriends();
+  loadFeed();
+}
+
+// ── Feed ──────────────────────────────────────────────────────
+
+function timeAgo(ts) {
+  const diff = Math.floor(Date.now()/1000) - ts;
+  if (diff < 60) return 'acum câteva secunde';
+  if (diff < 3600) return `acum ${Math.floor(diff/60)} min`;
+  if (diff < 86400) return `acum ${Math.floor(diff/3600)}h`;
+  return `acum ${Math.floor(diff/86400)} zile`;
+}
+
+function renderPost(p) {
+  const isOwn = p.author_name === myName;
+  const lookup = p.author_name;
+  return `
+    <div class="post-card" id="post-${p.id}">
+      <div class="post-header">
+        <img class="post-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(lookup)}/36" alt="${p.author_name}">
+        <div class="post-meta">
+          <div class="post-author">${p.author_name}</div>
+          <div class="post-time">${timeAgo(p.created_at)}</div>
+        </div>
+        ${isOwn ? `<button class="post-delete" title="Șterge" onclick="deletePost(${p.id})">🗑</button>` : ''}
+      </div>
+      <div class="post-content">${escapeHtml(p.content)}</div>
+      <div class="post-actions">
+        <button class="like-btn ${p.liked_by_me ? 'liked' : ''}" id="like-${p.id}" onclick="toggleLike(${p.id})">
+          ❤ <span id="likes-${p.id}">${p.likes}</span>
+        </button>
+      </div>
+    </div>`;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadFeed() {
+  const r = await fetch('/api/player/feed', { credentials: 'include' });
+  if (!r.ok) return;
+  const posts = await r.json();
+  const container = document.getElementById('feed-posts');
+  if (posts.length === 0) {
+    container.innerHTML = `
+      <div class="feed-empty">
+        <div class="feed-empty-icon">📡</div>
+        <p>Feed-ul tău e gol.<br>Adaugă prieteni sau postează ceva!</p>
+      </div>`;
+  } else {
+    container.innerHTML = posts.map(renderPost).join('');
+  }
+}
+
+function updateCharCount() {
+  const ta = document.getElementById('postContent');
+  const cc = document.getElementById('charCount');
+  const len = ta.value.length;
+  cc.textContent = `${len} / 280`;
+  cc.className = 'char-count' + (len > 250 ? ' near' : '') + (len >= 280 ? ' over' : '');
+  document.getElementById('postBtn').disabled = len === 0 || len > 280;
+}
+
+async function submitPost() {
+  const content = document.getElementById('postContent').value.trim();
+  if (!content) return;
+  const r = await fetch('/api/player/feed/post', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+  if (!r.ok) { const d = await r.json(); alert(d.error); return; }
+  const post = await r.json();
+  document.getElementById('postContent').value = '';
+  updateCharCount();
+  const container = document.getElementById('feed-posts');
+  const emptyEl = container.querySelector('.feed-empty');
+  if (emptyEl) container.innerHTML = '';
+  container.insertAdjacentHTML('afterbegin', renderPost(post));
+}
+
+async function toggleLike(id) {
+  const r = await fetch(`/api/player/feed/like/${id}`, { method:'POST', credentials:'include' });
+  if (!r.ok) return;
+  const { liked } = await r.json();
+  const btn = document.getElementById(`like-${id}`);
+  const count = document.getElementById(`likes-${id}`);
+  const cur = parseInt(count.textContent);
+  btn.className = 'like-btn' + (liked ? ' liked' : '');
+  count.textContent = liked ? cur+1 : cur-1;
+}
+
+async function deletePost(id) {
+  if (!confirm('Ștergi această postare?')) return;
+  await fetch(`/api/player/feed/${id}`, { method:'DELETE', credentials:'include' });
+  document.getElementById(`post-${id}`)?.remove();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+(async () => {
+  await loadMe();
+  await Promise.all([loadFriends(), loadFeed()]);
+  setInterval(loadFeed, 60000);
+})();
+
+document.getElementById('addFriendInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendFriendRequest();
+});
+</script>
+</body>
+</html>

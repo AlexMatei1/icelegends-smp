@@ -1,0 +1,31 @@
+teleportenabled: true
+teleportauto: false
+godmode: false
+flymode: false
+muted: false
+jailed: false
+ip-address: 172.19.0.1
+afk: false
+socialspy: false
+npc: false
+powertoolsenabled: true
+accepting-pay: true
+baltop-exempt: false
+timestamps:
+  lastteleport: 0
+  lastheal: 0
+  mute: 0
+  jail: 0
+  onlinejail: 0
+  logout: 1781210536851
+  login: 1781209215950
+money: '0'
+last-account-name: kiwiboss47
+logoutlocation:
+  world: 276cb75c-3969-4613-9e17-6a02c9572010
+  world-name: world
+  x: -723.4760349632087
+  y: 69.0
+  z: 448.26666790556425
+  yaw: -149.4001007080078
+  pitch: -1.5000234842300415

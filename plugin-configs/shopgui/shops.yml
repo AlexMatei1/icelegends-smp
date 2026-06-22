@@ -1,0 +1,301 @@
+# ============================================================
+# ShopGUI+ — Shop Configuration SMP Românesc
+# REGULĂ ECONOMIE: sell_price ≤ 40% din buy_price (FĂRĂ excepții)
+# Scopul: shop este ultima soluție, nu prima — comerțul P2P e mai bun
+# Activare: /shop sau click pe NPC Negustorul la spawn
+# ============================================================
+
+# Versiunea config
+config-version: 2
+
+# ── Categorie 1: Resurse ──────────────────────────────────────
+# Materiale de bază — prețuri mici pentru acces ușor
+Resources:
+  name: "&6Resurse"
+  item:
+    type: IRON_PICKAXE
+    name: "&6Resurse"
+  # Slot în meniul principal (0-8, row 0)
+  slot: 0
+  page: 1
+  rows: 6
+  items:
+    # Lemn — buy=3, sell=1 (33% ratio ✓)
+    OakLog:
+      type: OAK_LOG
+      name: "&fButean de Stejar"
+      slot: 10
+      buy-price: 3
+      sell-price: 1
+      quantity: 64
+    BirchLog:
+      type: BIRCH_LOG
+      name: "&fButean de Mesteacăn"
+      slot: 11
+      buy-price: 3
+      sell-price: 1
+      quantity: 64
+    SpruceLog:
+      type: SPRUCE_LOG
+      name: "&fButean de Molid"
+      slot: 12
+      buy-price: 3
+      sell-price: 1
+      quantity: 64
+    # Piatră — buy=2, sell=0 (nu se poate vinde → evită farme)
+    Stone:
+      type: STONE
+      name: "&7Piatră"
+      slot: 13
+      buy-price: 2
+      sell-price: 0
+      quantity: 64
+    # Cobblestone — buy=1, sell=0 (farme de cobblestone dezincurajate)
+    Cobblestone:
+      type: COBBLESTONE
+      name: "&7Piatră brută"
+      slot: 14
+      buy-price: 1
+      sell-price: 0
+      quantity: 64
+    # Iron Ingot — buy=20, sell=7 (35% ratio ✓)
+    IronIngot:
+      type: IRON_INGOT
+      name: "&fLingou de Fier"
+      slot: 19
+      buy-price: 20
+      sell-price: 7
+      quantity: 16
+    # Gold Ingot — buy=35, sell=12 (34% ratio ✓)
+    GoldIngot:
+      type: GOLD_INGOT
+      name: "&6Lingou de Aur"
+      slot: 20
+      buy-price: 35
+      sell-price: 12
+      quantity: 16
+    # Diamond — buy=200, sell=70 (35% ratio ✓)
+    Diamond:
+      type: DIAMOND
+      name: "&bDiamant"
+      slot: 21
+      buy-price: 200
+      sell-price: 70
+      quantity: 1
+    # Coal — buy=3, sell=1 (33% ratio ✓)
+    Coal:
+      type: COAL
+      name: "&8Cărbune"
+      slot: 22
+      buy-price: 3
+      sell-price: 1
+      quantity: 32
+
+# ── Categorie 2: Hrană ────────────────────────────────────────
+# Alimente de bază — prețuri accesibile pentru jucători noi
+Food:
+  name: "&aHrană"
+  item:
+    type: BREAD
+    name: "&aHrană"
+  slot: 1
+  page: 1
+  rows: 6
+  items:
+    # Bread — buy=5, sell=2 (40% ratio ✓)
+    Bread:
+      type: BREAD
+      name: "&fPâine"
+      slot: 10
+      buy-price: 5
+      sell-price: 2
+      quantity: 32
+    # Carrot — buy=3, sell=1 (33% ratio ✓)
+    Carrot:
+      type: CARROT
+      name: "&6Morcov"
+      slot: 11
+      buy-price: 3
+      sell-price: 1
+      quantity: 32
+    # Cooked Beef — buy=12, sell=4 (33% ratio ✓)
+    CookedBeef:
+      type: COOKED_BEEF
+      name: "&cBiftek Fiert"
+      slot: 12
+      buy-price: 12
+      sell-price: 4
+      quantity: 16
+    # Cooked Chicken — buy=8, sell=3 (37.5% ratio ✓)
+    CookedChicken:
+      type: COOKED_CHICKEN
+      name: "&fPui Fiert"
+      slot: 13
+      buy-price: 8
+      sell-price: 3
+      quantity: 16
+    # Apple — buy=4, sell=1 (25% ratio ✓)
+    Apple:
+      type: APPLE
+      name: "&cMăr"
+      slot: 14
+      buy-price: 4
+      sell-price: 1
+      quantity: 16
+
+# ── Categorie 3: Drops Mob-uri ───────────────────────────────
+# Materiale de la monștri — vândute de jucători activi la combat
+MobDrops:
+  name: "&cDrops Mob-uri"
+  item:
+    type: BONE
+    name: "&cDrops Mob-uri"
+  slot: 2
+  page: 1
+  rows: 6
+  items:
+    # Leather — buy=8, sell=3 (37.5% ratio ✓)
+    Leather:
+      type: LEATHER
+      name: "&6Piele"
+      slot: 10
+      buy-price: 8
+      sell-price: 3
+      quantity: 16
+    # Bone — buy=5, sell=2 (40% ratio ✓)
+    Bone:
+      type: BONE
+      name: "&fOs"
+      slot: 11
+      buy-price: 5
+      sell-price: 2
+      quantity: 16
+    # String — buy=6, sell=2 (33% ratio ✓)
+    String:
+      type: STRING
+      name: "&fFir"
+      slot: 12
+      buy-price: 6
+      sell-price: 2
+      quantity: 16
+    # Blaze Rod — buy=40, sell=14 (35% ratio ✓)
+    BlazeRod:
+      type: BLAZE_ROD
+      name: "&eBăț de Blaze"
+      slot: 13
+      buy-price: 40
+      sell-price: 14
+      quantity: 8
+    # Slimeball — buy=15, sell=5 (33% ratio ✓)
+    Slimeball:
+      type: SLIME_BALL
+      name: "&aBilă de Slime"
+      slot: 14
+      buy-price: 15
+      sell-price: 5
+      quantity: 8
+    # Ender Pearl — buy=30, sell=10 (33% ratio ✓)
+    EnderPearl:
+      type: ENDER_PEARL
+      name: "&5Perlă de Ender"
+      slot: 19
+      buy-price: 30
+      sell-price: 10
+      quantity: 4
+
+# ── Categorie 4: Agricultură ──────────────────────────────────
+# Semințe și materiale pentru ferme — prețuri mici
+Agriculture:
+  name: "&2Agricultură"
+  item:
+    type: WHEAT_SEEDS
+    name: "&2Agricultură"
+  slot: 3
+  page: 1
+  rows: 6
+  items:
+    # Wheat Seeds — buy=2, sell=0 (nu promovăm farm spam)
+    WheatSeeds:
+      type: WHEAT_SEEDS
+      name: "&fSemințe de Grâu"
+      slot: 10
+      buy-price: 2
+      sell-price: 0
+      quantity: 32
+    # Bone Meal — buy=4, sell=1 (25% ratio ✓)
+    BoneMeal:
+      type: BONE_MEAL
+      name: "&fFăină de Os"
+      slot: 11
+      buy-price: 4
+      sell-price: 1
+      quantity: 32
+    # Sugar Cane — buy=3, sell=1 (33% ratio ✓)
+    SugarCane:
+      type: SUGAR_CANE
+      name: "&aTrestie de Zahăr"
+      slot: 12
+      buy-price: 3
+      sell-price: 1
+      quantity: 32
+    # Cactus — buy=3, sell=1 (33% ratio ✓)
+    Cactus:
+      type: CACTUS
+      name: "&2Cactus"
+      slot: 13
+      buy-price: 3
+      sell-price: 1
+      quantity: 32
+
+# ── Categorie 5: Special (Fără Vânzare) ─────────────────────
+# Item-e rare — cumpărare only, fără sell (nu sunt produse organic)
+Special:
+  name: "&5Special"
+  item:
+    type: ELYTRA
+    name: "&5Special"
+  slot: 4
+  page: 1
+  rows: 6
+  items:
+    # Elytra — 5000 coins, end-game item, nu se vinde
+    Elytra:
+      type: ELYTRA
+      name: "&dElitre"
+      slot: 10
+      buy-price: 5000
+      sell-price: 0
+      quantity: 1
+    # Totem of Undying — 3000 coins, nu se vinde
+    Totem:
+      type: TOTEM_OF_UNDYING
+      name: "&6Totem al Nemuririi"
+      slot: 11
+      buy-price: 3000
+      sell-price: 0
+      quantity: 1
+    # Shulker Shell — 1000 coins, nu se vinde
+    ShulkerShell:
+      type: SHULKER_SHELL
+      name: "&5Cochilie Shulker"
+      slot: 12
+      buy-price: 1000
+      sell-price: 0
+      quantity: 1
+    # Name Tag — 200 coins, nu se vinde
+    NameTag:
+      type: NAME_TAG
+      name: "&fEtichetă Nume"
+      slot: 13
+      buy-price: 200
+      sell-price: 0
+      quantity: 1
+
+# ============================================================
+# Reload configurație fără restart:
+#   /shopgui reload
+#
+# Review economie:
+#   Week 2: /baltop — dacă top > 50k coins, reduce sell cu 20%
+#   Week 6: verifica inflația și ajustează prețurile
+# ============================================================

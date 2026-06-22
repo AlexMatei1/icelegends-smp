@@ -1,0 +1,129 @@
+# ============================================================
+# MythicMobs — Boss de Sezon 1: Umbra Senină
+# Invocare manuală de Admin: /mm m spawn UmbraSenina
+# IMPORTANT: Construiește arena înainte! /warp arena trebuie setat.
+# Cerință arena: spațiu deschis 30x30 blocuri, fără tavan
+# ============================================================
+
+UmbraSenina:
+  # Tip mob de bază: Wither (zboară, atac puternic, distruge blocuri)
+  Type: WITHER
+  # Display name cu health bar dinamică
+  Display: '&4&lUmbra Senină &8[&c{health}&4/{maxhealth}&8]'
+  # 3000 HP — durată boss fight ~15-30 minute cu 5+ jucători
+  Health: 3000
+  # 15 damage per hit — lethal fără armor bun
+  Damage: 15
+  Options:
+    # Previne drops vanilla ale Witherului (skull, XP etc.)
+    PreventOtherDrops: true
+    # Nu ia damage de la soare — Wither normal ia damage la lumina zilei
+    PreventSunburn: true
+    # Nu dispare niciodată singur — trebuie ucis
+    Despawn: false
+    # Mișcare normală Wither
+    MovementSpeed: 0.6
+    # Imun la efectele potion standard
+    Immune:
+      Lightning: true
+    # Nu poate fi împins de knockback
+    KnockbackResistance: 0.8
+
+  # ── Faza 1: 100% → 60% HP ────────────────────────────────
+  # Comportament normal + anunț la intrare
+  # Mesaj afișat la spawn (via broadcast skill)
+  Skills:
+    - skill{s=BossSpawnAnnounce} ~onSpawn
+
+    # Faza 1 — anunț la 60% HP
+    - skill{s=Phase2Announce} ~onHealthPercent{hp=60} ?phase{phase=1}
+    # Faza 2 — spawn skeleton minions + AoE slow
+    - skill{s=SpawnMinions} ~onTimer{t=600} ?phase{phase=2}
+    - skill{s=AoESlow} ~onTimer{t=600} ?phase{phase=2}
+    # Faza 3 — anunț la 30% HP + imunitate temporară + dash
+    - skill{s=Phase3Announce} ~onHealthPercent{hp=30} ?phase{phase=1} ?phase{phase=2}
+    - skill{s=TemporaryImmunity} ~onTimer{t=400} ?phase{phase=3}
+    - skill{s=DashToPlayer} ~onTimer{t=100} ?phase{phase=3}
+
+  # Phases definite prin health percent
+  Phases:
+    # Faza 1: 100% → 60% HP (spawn + comportament normal)
+    1:
+      Health: 60%
+    # Faza 2: 60% → 30% HP (skeleton minions + AoE slow)
+    2:
+      Health: 30%
+    # Faza 3: 30% → 0% HP (imunitate temporară + dash agresiv)
+    3:
+      Health: 0%
+
+  # ── Loot ─────────────────────────────────────────────────
+  # Drop-uri conform specificației — la player-ul cu killing blow
+  Drops:
+    # Sabia Sezonului — 100% șansă, item cosmetic de prestigiu
+    - DIAMOND_SWORD{name:'&6Sabia Sezonului 1';lore:'&7Câștigată în bătălia cu Umbra Senină\n&7Sezonul 1'} 1 1
+    # Sticle de XP — 100% șansă, utile dar nu game-breaking
+    - EXPERIENCE_BOTTLE 64 1
+    # 1000 coins via Vault — 100% șansă (~5 zile de quest zilnice)
+    - MONEY 1000 1
+    # Cap de jucător trofeu — 30% șansă (colecționabil rar)
+    - PLAYER_HEAD{name:'&5Trofeu: Umbra Senină';skull:'UmbraSenina'} 1 0.3
+
+# ============================================================
+# Skills definite pentru Umbra Senină
+# ============================================================
+
+BossSpawnAnnounce:
+  Skills:
+    # Broadcast în chat la spawn
+    - broadcast{m='&4&l[Boss] &cUmbra Senină a apărut! &4"Ați construit. Bine. Acum distrugeți."'}
+    # Title pe ecranul tuturor jucătorilor
+    - titlemessage{t='&4&lUmbra Senină';s='&c"Ați construit. Bine. Acum distrugeți."';ti=20;st=60;ot=20} @AllPlayers
+
+Phase2Announce:
+  Skills:
+    # Broadcast faza 2
+    - broadcast{m='&4[Boss] &cUmbra Senină: &4"Tăcerea nu era un accident. Era mila mea."'}
+    - titlemessage{t='&4Faza 2!';s='&c"Tăcerea nu era un accident. Era mila mea."';ti=20;st=60;ot=20} @AllPlayers
+    # Spawn 5 schelete skeleton minioni
+    - summon{type=SKELETON;amount=5;radius=5}
+
+Phase3Announce:
+  Skills:
+    # Broadcast faza 3 — cel mai dramatic
+    - broadcast{m='&4[Boss] &c&lUmbra Senină: &4&l"Dacă mă distrugeți... vă amintiți. Tot."'}
+    - titlemessage{t='&4&lFaza 3!';s='&4&l"Dacă mă distrugeți... vă amintiți. Tot."';ti=20;st=80;ot=20} @AllPlayers
+
+SpawnMinions:
+  Skills:
+    # 5 schelete skeleton ca minioni la fiecare 30 secunde în faza 2
+    - summon{type=SKELETON;amount=5;radius=8;name='&8Umbra Mică'}
+
+AoESlow:
+  Skills:
+    # AoE slow pulse — afectează toți jucătorii în raza 15 blocuri
+    - potion{t=SLOW;d=60;l=2} @EIR{r=15}
+    - effect{t=LARGE_SMOKE} @SelfLocation{r=15}
+
+TemporaryImmunity:
+  Skills:
+    # 3 secunde imunitate la damage la fiecare 20 secunde în faza 3
+    - invincible{d=60} @Self
+    - broadcast{m='&4[Boss] &cUmbra Senină devine temporar invincibilă!'}
+
+DashToPlayer:
+  Skills:
+    # Dash rapid către cel mai aproape jucător
+    - velocity{yv=0.5;multiplier=2.0} @NearestPlayer
+    - teleport{} @NearestPlayer{r=20}
+
+# ============================================================
+# Procedura de invocare:
+#   1. Asigură-te că arena este construită (/warp arena setat)
+#   2. Anunță în Discord cu 24h înainte
+#   3. /broadcast &cBoss fight în 1 oră! /warp arena
+#   4. /mm m spawn UmbraSenina    (la locul în care stai în arenă)
+#   5. Staff monitorizează pentru exploituri
+#   6. Distribuie recompense bonus manual dacă necesar:
+#      /eco give <player> 200   (participanți activi)
+# ============================================================

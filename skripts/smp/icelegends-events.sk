@@ -1,0 +1,16 @@
+# ============================================================
+# IceLegends — Events Logger
+# Logs structured events to server console so the panel's
+# global log tailer can pick them up for:
+#   - Bounty payouts
+#   - War kill tracking
+#   - Live event feed
+# ============================================================
+
+on death:
+    if attacker is a player:
+        if victim is a player:
+            if world of victim is world "world":
+                set {_vu} to "%victim's uuid%"
+                set {_au} to "%attacker's uuid%"
+                log "[ICELEGENDS_KILL] %victim% %{_vu}% %attacker% %{_au}%"

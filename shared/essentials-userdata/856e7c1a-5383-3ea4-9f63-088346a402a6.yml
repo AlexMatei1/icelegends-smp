@@ -1,0 +1,39 @@
+teleportenabled: true
+teleportauto: false
+godmode: false
+flymode: false
+muted: false
+jailed: false
+ip-address: 172.19.0.1
+afk: false
+socialspy: false
+npc: false
+powertoolsenabled: true
+accepting-pay: true
+baltop-exempt: false
+timestamps:
+  lastteleport: 1780964204565
+  lastheal: 0
+  mute: 0
+  jail: 0
+  onlinejail: 0
+  logout: 1781272459015
+  login: 1781272209283
+money: '0'
+last-account-name: Matei
+logoutlocation:
+  world: 5b5bbeea-f7de-4741-87ce-2a98990669d3
+  world-name: hub
+  x: 0.5
+  y: 68.0
+  z: 0.5
+  yaw: 12.450088500976562
+  pitch: 13.499727249145508
+lastlocation:
+  world: 7fb42820-0655-4665-9312-a59225bf5043
+  world-name: shop
+  x: -8479.626597085498
+  y: 72.0625
+  z: -1171.357422941855
+  yaw: -106.65058898925781
+  pitch: 17.250167846679688

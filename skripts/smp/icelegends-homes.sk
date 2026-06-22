@@ -1,0 +1,106 @@
+# ============================================================
+# IceLegends — Adaposturi (Homes System)
+# Unic: Home-uri legate de lume (SMP homes nu merg din Hub)
+#        + limite bazate pe rang + lista cu lume si coordonate
+# Inlocuieste EssentialsX /home /sethome /homes /delhome
+# ============================================================
+
+options:
+    HOME_DEFAULT: 1
+    HOME_HELPER: 3
+    HOME_MOD: 5
+    HOME_ADMIN: 10
+    PREFIX: &8[&e⌂ Home&8]
+
+function homeLimit(p: player) :: number:
+    if {_p} has permission "smp.admin":
+        return {@HOME_ADMIN}
+    if {_p} has permission "smp.mod":
+        return {@HOME_MOD}
+    if {_p} has permission "smp.helper":
+        return {@HOME_HELPER}
+    return {@HOME_DEFAULT}
+
+function homeCount(p: player) :: number:
+    return size of {home::%{_p}'s uuid%::*}
+
+command /sethome [<text>]:
+    trigger:
+        if world of player is world "hub":
+            send colored "{@PREFIX} &cNu poti seta home in Hub." to player
+            stop
+        set {_name} to "home"
+        if arg-1 is set:
+            set {_name} to arg-1 in lower case
+        if {_name} contains " ":
+            send colored "{@PREFIX} &cNumele nu poate contine spatii." to player
+            stop
+        if length of {_name} > 16:
+            send colored "{@PREFIX} &cNume prea lung (max 16 caractere)." to player
+            stop
+        set {_limit} to homeLimit(player)
+        if homeCount(player) >= {_limit}:
+            if {home::%player's uuid%::%{_name}%} is not set:
+                send colored "{@PREFIX} &cAi atins limita de &e%{_limit}% &chome-uri. &7/rankup pentru mai multe!" to player
+                stop
+        set {home::%player's uuid%::%{_name}%} to player's location
+        send colored "{@PREFIX} &aHome &e%{_name}% &asetat in &b%name of world of player%&a!" to player
+
+command /home [<text>]:
+    trigger:
+        set {_name} to "home"
+        if arg-1 is set:
+            set {_name} to arg-1 in lower case
+        if {home::%player's uuid%::%{_name}%} is not set:
+            send colored "{@PREFIX} &cHome &e%{_name}% &cnu exista. &7/homes pentru lista." to player
+            stop
+        set {_hloc} to {home::%player's uuid%::%{_name}%}
+        set {_hworld} to name of world of {_hloc}
+        # Restrict cross-world home access to SMP → Hub or Park jump
+        if {_hworld} is "world":
+            if world of player is world "hub":
+                send colored "{@PREFIX} &cHomeul e in SMP. Intra prin portal sau /smp pentru a-l accesa." to player
+                stop
+        teleport player to {_hloc}
+        send colored "{@PREFIX} &b✦ &aTeleportat la &e%{_name}% &8(&7%{_hworld}%&8)!" to player
+
+command /homes:
+    trigger:
+        set {_limit} to homeLimit(player)
+        set {_count} to homeCount(player)
+        if {_count} is 0:
+            send colored "{@PREFIX} &7Nu ai home-uri. Foloseste &e/sethome [nume]&7." to player
+            stop
+        send colored "&e&l⌂ Home-urile tale &8(&e%{_count}%&8/&e%{_limit}%&8):" to player
+        loop indices of {home::%player's uuid%::*}:
+            set {_loc} to {home::%player's uuid%::%loop-value%}
+            set {_w} to name of world of {_loc}
+            set {_x} to floor(x-coordinate of {_loc})
+            set {_y} to floor(y-coordinate of {_loc})
+            set {_z} to floor(z-coordinate of {_loc})
+            send colored "  &b» &e/home %loop-value% &8— &7%{_w}% &8(%{_x}%, %{_y}%, %{_z}%)" to player
+
+command /delhome [<text>]:
+    trigger:
+        set {_name} to "home"
+        if arg-1 is set:
+            set {_name} to arg-1 in lower case
+        if {home::%player's uuid%::%{_name}%} is not set:
+            send colored "{@PREFIX} &cHome &e%{_name}% &cnu exista." to player
+            stop
+        delete {home::%player's uuid%::%{_name}%}
+        send colored "{@PREFIX} &cHome &e%{_name}% &sters." to player
+
+command /adminhome <player> [<text>]:
+    permission: smp.admin
+    trigger:
+        set {_p} to arg-1
+        set {_name} to "home"
+        if arg-2 is set:
+            set {_name} to arg-2 in lower case
+        if {home::%{_p}'s uuid%::%{_name}%} is not set:
+            send colored "{@PREFIX} &c%{_p}% nu are home &e%{_name}%&c." to player
+            send colored "{@PREFIX} &7Home-urile lui: &e%homeCount({_p})%" to player
+            stop
+        teleport player to {home::%{_p}'s uuid%::%{_name}%}
+        send colored "{@PREFIX} &aTeleportat la home-ul &e%{_name}% &aal lui &b%{_p}%&a." to player

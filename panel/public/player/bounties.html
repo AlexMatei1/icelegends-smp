@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Bounty Board</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    :root { --accent: var(--ice); --surface: var(--glass); }
+
+    /* Tab bar (JS uses .tab / .tab.active) */
+    .tab-bar { display:flex; gap:3px; background:rgba(0,8,22,.5); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:16px; }
+    .tab { flex:1; padding:9px 14px; border-radius:9px; border:none; background:transparent; color:var(--muted);
+      font-family:'Exo 2',sans-serif; font-size:.76rem; font-weight:700; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+    .tab.active { background:rgba(255,82,82,.1); border:1px solid rgba(255,82,82,.3); color:#ff7070; }
+
+    /* Bounty list items (built from JS innerHTML) */
+    .bounty-list { display:flex; flex-direction:column; gap:10px; }
+    .bounty-item {
+      background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md);
+      padding:18px 22px; display:flex; align-items:center; gap:18px;
+      transition:border-color .25s, box-shadow .25s;
+    }
+    .bounty-item:hover { border-color:rgba(255,82,82,.25); box-shadow:0 8px 30px rgba(0,0,0,.3), 0 0 20px rgba(255,82,82,.04); }
+    .skull { font-size:1.8rem; filter:drop-shadow(0 0 8px rgba(255,82,82,.3)); }
+    .bounty-info { flex:1; }
+    .bounty-target { font-family:'Exo 2',sans-serif; font-size:1rem; font-weight:700; color:#ff7070; margin-bottom:3px; }
+    .bounty-meta { font-size:.8rem; color:var(--muted); }
+    .bounty-amount { font-family:'Exo 2',sans-serif; font-size:1.45rem; font-weight:900; color:var(--gold);
+      text-shadow:0 0 20px rgba(255,213,128,.3); white-space:nowrap; }
+    .bounty-amount span { font-size:.7rem; color:var(--muted); font-weight:400; }
+    .badge-claimed { background:rgba(100,255,200,.07); color:var(--green); border:1px solid rgba(100,255,200,.2);
+      border-radius:4px; padding:2px 8px; font-size:.72rem; font-weight:700; letter-spacing:1px; }
+    .empty { text-align:center; padding:48px 24px; color:var(--muted); }
+
+    /* Not logged */
+    .not-logged { text-align:center; padding:20px; color:var(--muted); font-size:.88rem;
+      background:rgba(255,82,82,.04); border:1px solid rgba(255,82,82,.15); border-radius:var(--r-sm); }
+    .not-logged a { color:#ff7070; text-decoration:none; }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+    <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link active" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+    <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container">
+    <div class="page-hero">
+      <div class="page-hero-title">☠ <span class="accent">Bounty Board</span></div>
+      <div class="page-hero-sub">Pune o recompensă pe capul unui jucător. Primul care îl omoară în PvP câștigă coins automat.</div>
+    </div>
+
+    <div class="sec-label">Plasează bounty</div>
+    <div class="card" id="placeForm" style="margin-bottom:24px">
+      <div class="not-logged" id="notLoggedMsg" style="display:none">
+        <a href="/player/login">Autentifică-te</a> pentru a plasa un bounty.
+      </div>
+      <div id="formInner">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end">
+          <div>
+            <label class="form-label">Țintă (username)</label>
+            <input class="form-input" type="text" id="targetName" placeholder="Numele jucătorului">
+          </div>
+          <div>
+            <label class="form-label">Sumă (min 100 coins)</label>
+            <input class="form-input" type="number" id="amount" placeholder="ex: 500" min="100" max="100000">
+          </div>
+          <button class="btn btn-red" onclick="placeBounty()" style="padding:12px 20px">PLASEAZĂ</button>
+        </div>
+        <div id="placeMsg" class="alert"></div>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab('active', this)">Active</button>
+      <button class="tab" onclick="switchTab('history', this)">Istoricul recompenselor</button>
+    </div>
+    <div id="listActive" class="bounty-list"></div>
+    <div id="listHistory" class="bounty-list" style="display:none"></div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+let myUsername = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials: 'include' });
+    if (r.ok) {
+      const d = await r.json();
+      myUsername = d.username;
+      document.getElementById('navName').textContent = d.username;
+    } else {
+      document.getElementById('navName').textContent = 'Neautentificat';
+      document.getElementById('notLoggedMsg').style.display = 'block';
+      document.getElementById('formInner').style.display = 'none';
+    }
+  } catch {}
+  loadActive();
+}
+
+async function loadActive() {
+  const r = await fetch('/api/bounties');
+  const data = await r.json();
+  const el = document.getElementById('listActive');
+  if (!data.length) { el.innerHTML = '<div class="empty">☠<br><br>Niciun bounty activ momentan.</div>'; return; }
+  el.innerHTML = data.map(b => `
+    <div class="bounty-item">
+      <div class="skull">💀</div>
+      <div class="bounty-info">
+        <div class="bounty-target">${b.target_name}</div>
+        <div class="bounty-meta">Pus de <strong>${b.placer_name}</strong></div>
+      </div>
+      <div class="bounty-amount">${b.amount.toLocaleString('ro-RO')} <span>coins</span></div>
+    </div>`).join('');
+}
+
+async function loadHistory() {
+  const r = await fetch('/api/bounties/history');
+  const data = await r.json();
+  const el = document.getElementById('listHistory');
+  if (!data.length) { el.innerHTML = '<div class="empty">💰<br><br>Niciun bounty revendicat încă.</div>'; return; }
+  el.innerHTML = data.map(b => `
+    <div class="bounty-item">
+      <div class="skull">💰</div>
+      <div class="bounty-info">
+        <div class="bounty-target">${b.target_name} <span class="badge-claimed">REVENDICAT</span></div>
+        <div class="bounty-meta">Ucis de <strong>${b.claimed_by}</strong> · Pus de ${b.placer_name}</div>
+      </div>
+      <div class="bounty-amount">${b.amount.toLocaleString('ro-RO')} <span>coins</span></div>
+    </div>`).join('');
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('listActive').style.display = tab === 'active' ? 'flex' : 'none';
+  document.getElementById('listHistory').style.display = tab === 'history' ? 'flex' : 'none';
+  if (tab === 'active') loadActive(); else loadHistory();
+}
+
+async function placeBounty() {
+  const msg = document.getElementById('placeMsg');
+  msg.className = 'alert';
+  const target = document.getElementById('targetName').value.trim();
+  const amount = parseInt(document.getElementById('amount').value);
+  if (!target || !amount) { msg.className='alert alert-err show'; msg.textContent='Completează toate câmpurile.'; return; }
+  const r = await fetch('/api/bounties', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({target_name:target,amount}) });
+  const d = await r.json();
+  if (d.ok) { msg.className='alert alert-ok show'; msg.textContent=`Bounty de ${amount} coins plasat pe ${target}!`; loadActive(); }
+  else { msg.className='alert alert-err show'; msg.textContent=d.error; }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Login — Umbra Senina</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .login-box {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+      padding:2.5rem; width:100%; max-width:380px;
+    }
+    .login-logo { text-align:center; margin-bottom:2rem; }
+    .login-logo div { font-size:1.8rem; font-weight:900; color:var(--accent); letter-spacing:2px; }
+    .login-logo p { color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem; }
+    .form-group { margin-bottom:1.2rem; }
+    .form-group label { display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:1px; }
+    .form-group input {
+      width:100%; padding:0.7rem 1rem; background:var(--bg);
+      border:1px solid var(--border); border-radius:6px; color:var(--text);
+      font-size:0.95rem; outline:none; transition:border-color 0.2s;
+    }
+    .form-group input:focus { border-color:var(--primary); }
+    .login-btn {
+      width:100%; padding:0.8rem; background:var(--primary); color:#fff;
+      border:none; border-radius:6px; font-size:1rem; font-weight:700;
+      cursor:pointer; transition:background 0.2s; margin-top:0.5rem;
+    }
+    .login-btn:hover { background:var(--primary-l); }
+    .login-error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:var(--danger); padding:0.7rem 1rem; border-radius:6px; font-size:0.85rem; margin-bottom:1rem; display:none; }
+    .back-link { text-align:center; margin-top:1.2rem; font-size:0.8rem; color:var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="login-logo">
+      <div>✦ ADMIN</div>
+      <p>Umbra Senina Panel</p>
+    </div>
+    <div class="login-error" id="err"></div>
+    <form id="login-form">
+      <div class="form-group">
+        <label>Utilizator</label>
+        <input type="text" id="username" autocomplete="username" placeholder="admin" required>
+      </div>
+      <div class="form-group">
+        <label>Parolă</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="login-btn">Autentificare</button>
+    </form>
+    <div class="back-link"><a href="/">← Înapoi la site</a></div>
+  </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('err');
+      err.style.display = 'none';
+      const body = {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+      };
+      try {
+        const r = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const d = await r.json();
+        if (d.ok) { window.location.href = '/admin/dashboard.html'; }
+        else { err.textContent = d.error || 'Eroare necunoscută'; err.style.display = 'block'; }
+      } catch {
+        err.textContent = 'Eroare de rețea.'; err.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

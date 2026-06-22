@@ -1,0 +1,149 @@
+# ============================================================
+# IceLegends — Chemare (TPA System)
+# Unic: Teleportarea se anuleaza daca te misti in warmup
+#        + afiseaza distanta + confirmare vizuala action bar
+# Inlocuieste EssentialsX /tpa /tpahere /tpaccept /tpdeny
+# ============================================================
+
+options:
+    TPA_TIMEOUT: 60
+    TPA_WARMUP: 5
+    TPA_COOLDOWN: 3
+
+command /tpa <player>:
+    trigger:
+        set {_to} to arg-1
+        if {_to} is not set:
+            send "&c/tpa <jucator>" to player
+            stop
+        if {_to}'s uuid is player's uuid:
+            send "&c[Chemare] Nu-ti poti cere teleportarea la tine insuti." to player
+            stop
+        if {tpa::cd::%player's uuid%} is set:
+            if difference between {tpa::cd::%player's uuid%} and now < {@TPA_COOLDOWN} minutes:
+                send "&c[Chemare] Asteapta {@TPA_COOLDOWN} minute intre cereri." to player
+                stop
+        set {tpa::req::%{_to}'s uuid%::from} to "%player's uuid%"
+        set {tpa::req::%{_to}'s uuid%::type} to "tpa"
+        set {tpa::req::%{_to}'s uuid%::time} to now
+        set {tpa::out::%player's uuid%} to "%{_to}'s uuid%"
+        set {tpa::cd::%player's uuid%} to now
+        set {_dist} to floor(distance between player's location and {_to}'s location)
+        send colored "&a[Chemare] Cerere trimisa catre &b%{_to}%&a. Expira in {@TPA_TIMEOUT}s." to player
+        send colored "" to {_to}
+        send colored "&b&l✦ CHEMARE &8— &f%player% &7vrea sa vina la tine" to {_to}
+        send colored "&7  Distanta: &e%{_dist}% blocuri  &8|  &7Lume: &e%name of world of player%" to {_to}
+        send colored "&a  /tpaccept &8— Accepta  &c/tpdeny &8— Refuza" to {_to}
+        send colored "" to {_to}
+
+command /tpahere <player>:
+    trigger:
+        set {_to} to arg-1
+        if {_to} is not set:
+            send "&c/tpahere <jucator>" to player
+            stop
+        if {tpa::cd::%player's uuid%} is set:
+            if difference between {tpa::cd::%player's uuid%} and now < {@TPA_COOLDOWN} minutes:
+                send "&c[Chemare] Asteapta {@TPA_COOLDOWN} minute intre cereri." to player
+                stop
+        set {tpa::req::%{_to}'s uuid%::from} to "%player's uuid%"
+        set {tpa::req::%{_to}'s uuid%::type} to "tpahere"
+        set {tpa::req::%{_to}'s uuid%::time} to now
+        set {tpa::out::%player's uuid%} to "%{_to}'s uuid%"
+        set {tpa::cd::%player's uuid%} to now
+        send colored "&a[Chemare] Cerere /tpahere trimisa catre &b%{_to}%&a." to player
+        send colored "" to {_to}
+        send colored "&b&l✦ CHEMARE &8— &f%player% &7vrea sa te cheme la el" to {_to}
+        send colored "&a  /tpaccept &8— Accepta  &c/tpdeny &8— Refuza" to {_to}
+        send colored "" to {_to}
+
+command /tpaccept:
+    trigger:
+        if {tpa::req::%player's uuid%::from} is not set:
+            send "&c[Chemare] Nicio cerere in asteptare." to player
+            stop
+        if difference between {tpa::req::%player's uuid%::time} and now > {@TPA_TIMEOUT} seconds:
+            delete {tpa::req::%player's uuid%::from}
+            delete {tpa::req::%player's uuid%::type}
+            delete {tpa::req::%player's uuid%::time}
+            send "&c[Chemare] Cererea a expirat (>{@TPA_TIMEOUT}s)." to player
+            stop
+        set {_from_uuid} to {tpa::req::%player's uuid%::from}
+        set {_type} to {tpa::req::%player's uuid%::type}
+        delete {tpa::req::%player's uuid%::from}
+        delete {tpa::req::%player's uuid%::type}
+        delete {tpa::req::%player's uuid%::time}
+        set {_from} to player({_from_uuid})
+        if {_from} is not online:
+            send "&c[Chemare] Jucatorul nu mai este online." to player
+            stop
+        send colored "&a[Chemare] Acceptat! Teleportare in {@TPA_WARMUP}s — &cNU TE MISCA!" to player
+        send colored "&a[Chemare] &b%player% &aa acceptat! Teleportare in {@TPA_WARMUP}s — &cNU TE MISCA!" to {_from}
+        set {tpa::warmup::%{_from_uuid}%::target} to "%player's uuid%"
+        set {tpa::warmup::%{_from_uuid}%::type} to {_type}
+        set {tpa::warmup::%{_from_uuid}%::start} to now
+        set {tpa::warmup::%{_from_uuid}%::loc} to {_from}'s location
+        delete {tpa::out::%{_from_uuid}%}
+
+command /tpdeny:
+    trigger:
+        if {tpa::req::%player's uuid%::from} is not set:
+            send "&c[Chemare] Nicio cerere de refuzat." to player
+            stop
+        set {_from_uuid} to {tpa::req::%player's uuid%::from}
+        delete {tpa::req::%player's uuid%::from}
+        delete {tpa::req::%player's uuid%::type}
+        delete {tpa::req::%player's uuid%::time}
+        set {_from} to player({_from_uuid})
+        send colored "&c[Chemare] Cerere refuzata." to player
+        if {_from} is online:
+            send colored "&c[Chemare] &f%player% &7a refuzat cererea ta." to {_from}
+        delete {tpa::out::%{_from_uuid}%}
+
+command /tpacancel:
+    trigger:
+        if {tpa::out::%player's uuid%} is not set:
+            send "&c[Chemare] Nu ai cereri active de anulat." to player
+            stop
+        set {_to_uuid} to {tpa::out::%player's uuid%}
+        delete {tpa::req::%{_to_uuid}%::from}
+        delete {tpa::req::%{_to_uuid}%::type}
+        delete {tpa::req::%{_to_uuid}%::time}
+        delete {tpa::out::%player's uuid%}
+        set {_to} to player({_to_uuid})
+        if {_to} is online:
+            send colored "&c[Chemare] &f%player% &7si-a anulat cererea." to {_to}
+        send colored "&c[Chemare] Cerere anulata." to player
+
+# ── Warmup ticker — cancels if player moves ────────────────────
+every 1 second:
+    loop all players:
+        set {_wuuid} to "%loop-player's uuid%"
+        if {tpa::warmup::%{_wuuid}%::start} is set:
+            set {_elapsed} to difference between {tpa::warmup::%{_wuuid}%::start} and now
+            set {_secs} to floor({_elapsed} / 1 second)
+            if distance between loop-player's location and {tpa::warmup::%{_wuuid}%::loc} > 1:
+                delete {tpa::warmup::%{_wuuid}%::start}
+                delete {tpa::warmup::%{_wuuid}%::target}
+                delete {tpa::warmup::%{_wuuid}%::type}
+                delete {tpa::warmup::%{_wuuid}%::loc}
+                send colored "&c[Chemare] Teleportarea a fost anulata — te-ai miscat!" to loop-player
+            else if {_secs} >= {@TPA_WARMUP}:
+                set {_target_uuid} to {tpa::warmup::%{_wuuid}%::target}
+                set {_tp_type} to {tpa::warmup::%{_wuuid}%::type}
+                delete {tpa::warmup::%{_wuuid}%::start}
+                delete {tpa::warmup::%{_wuuid}%::target}
+                delete {tpa::warmup::%{_wuuid}%::type}
+                delete {tpa::warmup::%{_wuuid}%::loc}
+                set {_target} to player({_target_uuid})
+                if {_target} is online:
+                    if {_tp_type} is "tpa":
+                        teleport loop-player to {_target}
+                        send colored "&a[Chemare] &b✦ &aTeleportat la &b%{_target}%&a!" to loop-player
+                    else:
+                        teleport {_target} to loop-player
+                        send colored "&a[Chemare] &b✦ &b%{_target}% &aa fost chemat la tine!" to loop-player
+                        send colored "&a[Chemare] &b✦ &aTeleportat la &b%loop-player%&a!" to {_target}
+            else:
+                set {_rem} to {@TPA_WARMUP} - {_secs}
+                send action bar colored "&7Chemare in &e%{_rem}%s &8— &cNu te misca!" to loop-player

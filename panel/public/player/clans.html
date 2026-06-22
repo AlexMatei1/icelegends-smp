@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Clanuri — IceLegends SMP</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    /* ── Clan tag badge ── */
+    .clan-tag {
+      display:inline-block; padding:2px 10px; border-radius:6px;
+      background:rgba(100,223,223,.1); border:1px solid rgba(100,223,223,.25);
+      color:var(--ice); font-family:'Exo 2',sans-serif; font-size:.78rem; font-weight:700;
+      letter-spacing:1px;
+    }
+    .clan-tag.gold { background:rgba(255,213,128,.1); border-color:rgba(255,213,128,.25); color:var(--gold); }
+
+    /* ── My-clan card ── */
+    .my-clan-header {
+      display:flex; align-items:center; gap:16px; margin-bottom:18px; flex-wrap:wrap;
+    }
+    .my-clan-title {
+      font-family:'Exo 2',sans-serif; font-size:1.5rem; font-weight:900; color:#fff;
+    }
+    .my-clan-desc { color:var(--muted); font-size:.88rem; margin-bottom:18px; }
+
+    /* ── Members list ── */
+    .member-list { display:flex; flex-direction:column; gap:6px; }
+    .member-row {
+      display:flex; align-items:center; gap:12px; padding:9px 14px;
+      background:rgba(100,223,223,.035); border:1px solid rgba(100,223,223,.08);
+      border-radius:8px; transition:background .15s;
+    }
+    .member-row:hover { background:rgba(100,223,223,.07); }
+    .member-avatar { width:32px; height:32px; border-radius:6px; background:rgba(100,223,223,.1); }
+    .member-name { flex:1; font-weight:600; font-size:.9rem; }
+    .role-leader { color:var(--gold); font-size:.75rem; font-weight:700; }
+    .role-member { color:var(--muted); font-size:.75rem; }
+
+    /* ── Create form ── */
+    .create-form-grid {
+      display:grid; grid-template-columns:1fr 120px 1fr; gap:14px; align-items:end;
+      margin-bottom:14px;
+    }
+    @media(max-width:640px) { .create-form-grid { grid-template-columns:1fr; } }
+
+    /* ── Clans table actions ── */
+    .join-btn-cell { text-align:right; }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,8,22,.75); backdrop-filter:blur(4px);
+      z-index:200; display:flex; align-items:center; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity .25s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal-box {
+      background:linear-gradient(135deg,rgba(4,15,38,.97),rgba(8,26,54,.95));
+      border:1px solid var(--border); border-radius:var(--r-lg);
+      padding:32px; max-width:520px; width:90%; position:relative;
+      box-shadow:0 24px 80px rgba(0,0,0,.6);
+    }
+    .modal-box::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(100,223,223,.4),transparent);
+    }
+    .modal-close {
+      position:absolute; top:14px; right:16px; background:transparent; border:none;
+      color:var(--muted); font-size:1.2rem; cursor:pointer; line-height:1; transition:color .2s;
+    }
+    .modal-close:hover { color:#fff; }
+    .modal-title { font-family:'Exo 2',sans-serif; font-size:1.2rem; font-weight:800;
+      color:#fff; margin-bottom:4px; }
+    .modal-sub { color:var(--muted); font-size:.83rem; margin-bottom:18px; }
+
+    /* ── Divider ── */
+    .sec-divider {
+      display:flex; align-items:center; gap:12px; margin:24px 0 18px;
+      color:var(--muted); font-size:.78rem; letter-spacing:1.5px; text-transform:uppercase;
+    }
+    .sec-divider::before, .sec-divider::after {
+      content:''; flex:1; height:1px; background:var(--border);
+    }
+
+    /* ── Alert helper ── */
+    .alert { font-size:.84rem; margin-top:10px; min-height:1.2em; }
+    .alert-ok  { color:#64ffda; }
+    .alert-err { color:#ff5252; }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+    <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link active" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+    <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<div class="page"><div class="container">
+
+  <div class="page-hero">
+    <div class="page-hero-title">⚔ <span class="accent">Clanuri IceLegends</span></div>
+    <div class="page-hero-sub">Unește-te cu aliații tăi și cucerește serverul împreună.</div>
+  </div>
+
+  <!-- My clan / create section (filled by JS) -->
+  <div id="clanSection" style="margin-bottom:28px"></div>
+
+  <!-- All clans table -->
+  <div class="sec-label">Toate Clanurile</div>
+  <div class="card" id="allClansWrap">
+    <div class="loading-wrap"><div class="spinner"></div></div>
+  </div>
+
+</div></div>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+let me = null;          // {username, uuid, role}
+let myClan = null;      // clan object or null
+let allClans = [];
+
+async function logout() {
+  await fetch('/api/player/logout', { method:'POST', credentials:'include' });
+  location.href = '/player/login';
+}
+
+/* ── Bootstrap ───────────────────────────────────────────── */
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials:'include' });
+    if (r.ok) {
+      me = await r.json();
+      document.getElementById('navName').textContent = me.username;
+      const cr = await fetch('/api/player/clan', { credentials:'include' });
+      if (cr.ok) myClan = await cr.json();
+    } else {
+      document.getElementById('navName').textContent = 'Neautentificat';
+    }
+  } catch {}
+
+  renderClanSection();
+  loadAllClans();
+}
+
+/* ── My Clan / Create Form ────────────────────────────────── */
+function renderClanSection() {
+  const el = document.getElementById('clanSection');
+  if (!me) {
+    el.innerHTML = `
+      <div class="card" style="text-align:center;padding:28px;color:var(--muted)">
+        <a href="/player/login" style="color:var(--ice)">Autentifică-te</a>
+        pentru a crea sau te alătura unui clan.
+      </div>`;
+    return;
+  }
+  if (myClan) {
+    renderMyClan(el);
+  } else {
+    renderCreateForm(el);
+  }
+}
+
+function renderMyClan(el) {
+  const membersHtml = (myClan.members || []).map(m => `
+    <div class="member-row">
+      <img class="member-avatar" src="https://mc-heads.net/avatar/${m.username}/32" alt="${m.username}">
+      <span class="member-name">${m.username}${m.role === 'leader' ? ' 👑' : ''}</span>
+      <span class="${m.role === 'leader' ? 'role-leader' : 'role-member'}">
+        ${m.role === 'leader' ? 'Lider' : 'Membru'}
+      </span>
+    </div>`).join('');
+
+  el.innerHTML = `
+    <div class="sec-label">Clanul Meu</div>
+    <div class="card" style="margin-bottom:8px">
+      <div class="my-clan-header">
+        <span class="clan-tag gold">${esc(myClan.tag)}</span>
+        <span class="my-clan-title">${esc(myClan.name)}</span>
+        <span style="color:var(--muted);font-size:.82rem">Lider: <strong style="color:#fff">${esc(myClan.owner_name)}</strong></span>
+      </div>
+      ${myClan.description ? `<div class="my-clan-desc">${esc(myClan.description)}</div>` : ''}
+      <div class="sec-label" style="margin:0 0 10px">Membri (${(myClan.members||[]).length})</div>
+      <div class="member-list">${membersHtml}</div>
+      <div style="margin-top:18px">
+        <button class="btn btn-red btn-sm" onclick="leaveClan()">Părăsește Clanul</button>
+        <span id="leaveMsg" class="alert"></span>
+      </div>
+    </div>`;
+}
+
+function renderCreateForm(el) {
+  el.innerHTML = `
+    <div class="sec-label">Creează Clan</div>
+    <div class="card" style="margin-bottom:8px">
+      <div class="create-form-grid">
+        <div>
+          <label class="form-label">Nume Clan</label>
+          <input class="form-input" id="cName" placeholder="ex: IceWarriors" maxlength="32">
+        </div>
+        <div>
+          <label class="form-label">Tag (2-5 litere)</label>
+          <input class="form-input" id="cTag" placeholder="IW" maxlength="5">
+        </div>
+        <div>
+          <label class="form-label">Descriere (opțional)</label>
+          <input class="form-input" id="cDesc" placeholder="Ceva despre clan...">
+        </div>
+      </div>
+      <button class="btn btn-ice" onclick="createClan()">✦ Creează Clan</button>
+      <span id="createMsg" class="alert"></span>
+    </div>
+    <div class="sec-divider">Sau alătură-te unui clan existent</div>`;
+}
+
+/* ── All Clans ───────────────────────────────────────────── */
+async function loadAllClans() {
+  try {
+    const r = await fetch('/api/clans');
+    allClans = await r.json();
+  } catch { allClans = []; }
+  renderAllClans();
+}
+
+function renderAllClans() {
+  const wrap = document.getElementById('allClansWrap');
+  if (!allClans.length) {
+    wrap.innerHTML = '<div class="empty">⚔<br><br>Niciun clan creat încă. Fii primul!</div>';
+    return;
+  }
+  const inClan = !!myClan;
+  const rows = allClans.map((c, i) => `
+    <tr>
+      <td style="color:var(--muted);font-weight:700">${i + 1}</td>
+      <td><span class="clan-tag">${esc(c.tag)}</span></td>
+      <td>
+        <a class="clan-name-link" onclick="openClanModal(${c.id})" href="javascript:void(0)"
+           style="color:#fff;font-weight:600;text-decoration:none;cursor:pointer;transition:color .2s"
+           onmouseover="this.style.color='var(--ice)'" onmouseout="this.style.color='#fff'">
+          ${esc(c.name)}
+        </a>
+      </td>
+      <td>${esc(c.owner_name)}</td>
+      <td style="text-align:center">${c.members || 0}</td>
+      <td style="text-align:center;color:var(--gold)">${c.wins || 0}</td>
+      <td class="join-btn-cell">
+        ${me && !inClan
+          ? `<button class="btn btn-ice btn-sm" onclick="joinClan(${c.id},'${esc(c.name)}')">Alătură-te</button>`
+          : (myClan && myClan.id === c.id ? '<span style="color:var(--ice);font-size:.78rem">✔ Membrul tău</span>' : '')}
+      </td>
+    </tr>`).join('');
+
+  wrap.innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="ice-table">
+        <thead><tr>
+          <th width="40">#</th>
+          <th width="70">Tag</th>
+          <th>Nume</th>
+          <th>Lider</th>
+          <th style="text-align:center">Membri</th>
+          <th style="text-align:center">Victorii</th>
+          <th width="120"></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* ── Actions ─────────────────────────────────────────────── */
+async function createClan() {
+  const name = document.getElementById('cName').value.trim();
+  const tag  = document.getElementById('cTag').value.trim().toUpperCase();
+  const description = document.getElementById('cDesc').value.trim();
+  const msg  = document.getElementById('createMsg');
+  if (!name || !tag) { setMsg(msg, 'Completează numele și tag-ul.', false); return; }
+  if (tag.length < 2 || tag.length > 5) { setMsg(msg, 'Tag-ul trebuie să aibă 2-5 caractere.', false); return; }
+  const r = await fetch('/api/clans', {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name, tag, description })
+  });
+  const d = await r.json();
+  if (d.ok || d.id) {
+    setMsg(msg, 'Clan creat cu succes!', true);
+    setTimeout(() => location.reload(), 900);
+  } else {
+    setMsg(msg, d.error || 'Eroare la creare.', false);
+  }
+}
+
+async function joinClan(id, name) {
+  const r = await fetch(`/api/clans/${id}/join`, { method:'POST', credentials:'include' });
+  const d = await r.json();
+  if (d.ok) { location.reload(); }
+  else { alert(d.error || 'Nu te-ai putut alătura clanului.'); }
+}
+
+async function leaveClan() {
+  if (!myClan) return;
+  if (!confirm('Ești sigur că vrei să părăsești clanul?')) return;
+  const r = await fetch(`/api/clans/${myClan.id}/leave`, { method:'POST', credentials:'include' });
+  const d = await r.json();
+  if (d.ok) { location.reload(); }
+  else {
+    const msg = document.getElementById('leaveMsg');
+    setMsg(msg, d.error || 'Eroare.', false);
+  }
+}
+
+/* ── Modal ───────────────────────────────────────────────── */
+async function openClanModal(id) {
+  const modal = document.getElementById('modal');
+  const content = document.getElementById('modalContent');
+  content.innerHTML = '<div class="loading-wrap" style="height:120px"><div class="spinner"></div></div>';
+  modal.classList.add('open');
+
+  try {
+    const r = await fetch(`/api/clans/${id}`);
+    const c = await r.json();
+    const membersHtml = (c.members || []).map(m => `
+      <div class="member-row">
+        <img class="member-avatar" src="https://mc-heads.net/avatar/${m.username}/32" alt="${m.username}">
+        <span class="member-name">${esc(m.username)}</span>
+        <span class="${m.role === 'leader' ? 'role-leader' : 'role-member'}">
+          ${m.role === 'leader' ? '👑 Lider' : 'Membru'}
+        </span>
+        <span style="color:var(--muted);font-size:.72rem">
+          ${m.joined_at ? new Date(m.joined_at).toLocaleDateString('ro-RO') : ''}
+        </span>
+      </div>`).join('');
+
+    content.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+        <span class="clan-tag gold">${esc(c.tag)}</span>
+        <div class="modal-title">${esc(c.name)}</div>
+      </div>
+      <div class="modal-sub">
+        Lider: <strong style="color:#fff">${esc(c.owner_name)}</strong>
+        &nbsp;·&nbsp; ${c.wins || 0} victorii
+        &nbsp;·&nbsp; Creat: ${c.created_at ? new Date(c.created_at).toLocaleDateString('ro-RO') : '—'}
+      </div>
+      ${c.description ? `<p style="color:var(--muted);font-size:.86rem;margin-bottom:16px">${esc(c.description)}</p>` : ''}
+      <div class="sec-label" style="margin-bottom:10px">Membri (${(c.members||[]).length})</div>
+      <div class="member-list">${membersHtml || '<div class="empty" style="padding:20px">Niciun membru.</div>'}</div>`;
+  } catch {
+    content.innerHTML = '<div class="empty">Eroare la încărcarea detaliilor.</div>';
+  }
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function setMsg(el, text, ok) {
+  el.textContent = (ok ? '✔ ' : '✘ ') + text;
+  el.className = 'alert ' + (ok ? 'alert-ok' : 'alert-err');
+}
+
+init();
+</script>
+</body>
+</html>

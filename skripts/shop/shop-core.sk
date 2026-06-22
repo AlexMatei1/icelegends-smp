@@ -1,0 +1,60 @@
+# ============================================================
+# Shop Core — IceLegends Shop Server (server dedicat)
+# Jucatorii ajung direct in lumea "shop" via Velocity
+# /hub pentru intoarcere in Hub server
+# ============================================================
+
+options:
+    SHOP_WORLD: shop
+    SHOP_PREFIX: &8[&a Shop&8]
+
+# ── Spawn shop ────────────────────────────────────────────────
+command /shopspawn:
+    permission: smp.admin
+    trigger:
+        set {shop::spawn} to player's location
+        send "{@SHOP_PREFIX} &aSpawn shop setat la %player's location%!" to player
+
+command /shoptp:
+    permission: smp.admin
+    trigger:
+        if {shop::spawn} is set:
+            teleport player to {shop::spawn}
+        else:
+            teleport player to spawn of world "{@SHOP_WORLD}"
+        send "{@SHOP_PREFIX} &aTelportat la spawn." to player
+
+# ── La join pe server ─────────────────────────────────────────
+on join:
+    wait 5 ticks
+    if player does not have permission "smp.admin":
+        set player's game mode to adventure
+    if {shop::spawn} is set:
+        teleport player to {shop::spawn}
+    send action bar "{@SHOP_PREFIX} &7Foloseste &b/hub &7pentru a te intoarce" to player
+    send title "&a&l Magazin" with subtitle "&7Alege o categorie de la NPC-uri!" to player for 3 seconds
+
+# ── Protectie shop world ──────────────────────────────────────
+on damage:
+    cancel event
+
+on food level change:
+    cancel event
+    set player's food level to 20
+
+on drop:
+    if player does not have permission "smp.admin":
+        cancel event
+
+# ── Portale blocate → inapoi la Hub via Velocity ─────────────
+on portal:
+    cancel event
+    send "{@SHOP_PREFIX} &7Se intoarce la hub..." to player
+    make player execute command "server hub"
+
+# ── Game mode enforcement ─────────────────────────────────────
+every 10 seconds:
+    loop all players:
+        if loop-player does not have permission "smp.admin":
+            if loop-player's game mode is not adventure:
+                set loop-player's game mode to adventure

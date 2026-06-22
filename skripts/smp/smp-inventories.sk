@@ -1,0 +1,21 @@
+# ============================================================
+# SMP Inventories — IceLegends SMP
+#
+# REDESIGN: Inventar comun pentru toate lumile.
+# Busola Lumilor este gestionata exclusiv de hub-busola.sk:
+#   • La intrare in hub → busola adaugata automat
+#   • La iesire din hub → busola stearsa automat
+# Jucatorul pastreaza acelasi inventar in Hub / SMP / Shop / Parkour.
+# ============================================================
+
+options:
+    SMP_WORLD: world
+    HUB_WORLD: hub
+
+# ── Game mode: survival in SMP, adventure in hub (hub-core.sk) ─
+
+on world change:
+    if name of world of player is "{@SMP_WORLD}":
+        if player does not have permission "smp.admin":
+            wait 5 ticks
+            set player's game mode to survival

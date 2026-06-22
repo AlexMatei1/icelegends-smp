@@ -1,0 +1,83 @@
+# ============================================================
+# IceLegends — Sistem de Raportare
+# /report <jucator> <motiv> — trimite raport la staff online
+# /reports — staff vede rapoartele recente
+# Cooldown: 5 minute intre rapoarte (anti-spam)
+# ============================================================
+
+options:
+    PREFIX: &8[&cRaport&8]
+    COOLDOWN: 300
+
+command /report <player> <text>:
+    description: Raporteaza un jucator.
+    trigger:
+        set {_uuid} to "%player's uuid%"
+        set {_now} to floor(unix timestamp of now)
+        set {_last} to {report::cooldown::%{_uuid}%} ? 0
+        if ({_now} - {_last}) < {@COOLDOWN}:
+            set {_rem} to {@COOLDOWN} - ({_now} - {_last})
+            set {_rem_min} to floor({_rem} / 60)
+            set {_rem_sec} to {_rem} - ({_rem_min} * 60)
+            send colored "{@PREFIX} &cMai asteapta &e%{_rem_min}%m %{_rem_sec}%s &cinainte de alt raport." to player
+            stop
+        if arg-1's uuid is player's uuid:
+            send colored "{@PREFIX} &cNu te poti raporta pe tine insuti." to player
+            stop
+        if length of arg-2 < 5:
+            send colored "{@PREFIX} &cMotivul este prea scurt." to player
+            stop
+        set {report::cooldown::%{_uuid}%} to {_now}
+        # Incrementare counter rapoarte
+        add 1 to {report::count}
+        set {_id} to {report::count}
+        set {report::%{_id}%::reporter} to player's name
+        set {report::%{_id}%::target} to arg-1's name
+        set {report::%{_id}%::reason} to arg-2
+        set {report::%{_id}%::time} to {_now}
+        set {report::%{_id}%::handled} to false
+        # Notifica staff online
+        set {_notified} to 0
+        loop all players:
+            if loop-player has permission "smp.admin":
+                send colored "" to loop-player
+                send colored "{@PREFIX} &c[#%{_id}%] &b%player% &7a raportat &c%arg-1% &8— &7%arg-2%" to loop-player
+                send colored "{@PREFIX} &7/reports &8pentru lista completa." to loop-player
+                send colored "" to loop-player
+                add 1 to {_notified}
+        send colored "{@PREFIX} &aRaportul #%{_id}% a fost trimis." to player
+        if {_notified} is 0:
+            send colored "{@PREFIX} &7Niciun staff online, dar raportul a fost inregistrat." to player
+
+command /reports [<text>]:
+    permission: smp.admin
+    description: Afiseaza rapoartele recente.
+    trigger:
+        set {_count} to {report::count} ? 0
+        if {_count} is 0:
+            send colored "{@PREFIX} &7Niciun raport inregistrat." to player
+            stop
+        send colored "&c&l━━[ Rapoarte Recente ]━━" to player
+        set {_shown} to 0
+        loop {_count} times:
+            set {_i} to {_count} - loop-number + 1
+            if {_i} > 0:
+                if {report::%{_i}%::reporter} is set:
+                    if {_shown} < 10:
+                        set {_status} to "&8[Rezolvat]"
+                        if {report::%{_i}%::handled} is false:
+                            set {_status} to "&c[Nou]"
+                        send colored "  &8#%{_i}% %{_status}% &b%{report::%{_i}%::reporter}% &7→ &c%{report::%{_i}%::target}% &8— &7%{report::%{_i}%::reason}%" to player
+                        add 1 to {_shown}
+        send colored "&8/reports resolve <id> &7— marcheaza ca rezolvat" to player
+
+command /rresolve <number>:
+    permission: smp.admin
+    description: Marcheaza un raport ca rezolvat.
+    trigger:
+        set {_id} to arg-1
+        if {report::%{_id}%::reporter} is not set:
+            send colored "{@PREFIX} &cRaportul #%{_id}% nu exista." to player
+            stop
+        set {report::%{_id}%::handled} to true
+        send colored "{@PREFIX} &aRaportul #%{_id}% marcat ca rezolvat." to player

@@ -1,0 +1,26 @@
+## IceLegends — Chat Format cu Ranguri
+## Formateaza chat-ul cu prefix rang colorat
+## Formatul: [Rang] Jucator: mesaj
+
+# Foloseste set chat format (nu cancel+broadcast) pentru ca DiscordSRV
+# sa poata intercepta evenimentul si relaya mesajele catre Discord.
+
+on chat:
+    set {_rank} to {ranks::rank::%uuid of player%} ? "Ghetar"
+
+    # Prefix colorat pre-calculat (colored aplica & → §)
+    if {_rank} is "Legend":
+        set {_prefix} to colored "&d&l[Legend]&r"
+    else if {_rank} is "Veteran":
+        set {_prefix} to colored "&6&l[Veteran]&r"
+    else if {_rank} is "Explorator":
+        set {_prefix} to colored "&a[Explorator]&r"
+    else:
+        set {_prefix} to colored "&b[Ghetar]&r"
+
+    # AFK marker
+    set {_afk} to ""
+    if {afk::%uuid of player%} is true:
+        set {_afk} to colored " &7[AFK]"
+
+    set the chat format to "%{_prefix}%%{_afk}% §f%player%§7: §f%message%"

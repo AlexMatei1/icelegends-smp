@@ -1,0 +1,70 @@
+# ============================================================
+# IceLegends SMP — .gitignore
+# ============================================================
+
+# ── Secrets ─────────────────────────────────────────────────
+.env
+*.env
+*.env.local
+.env.production
+forwarding.secret
+
+# ── Server runtime data (worlds, player data, logs) ─────────
+# These directories are gigabytes of live server state
+data/
+mysql-data/
+backups/
+/opt/mc-backups/
+
+# ── Server JARs and per-server runtime ──────────────────────
+servers/*/data/
+servers/*/plugins/*.jar
+servers/*/libraries/
+servers/*/logs/
+servers/*/cache/
+servers/*/versions/
+servers/*/*.jar
+mc-complete/
+worlds/
+
+# ── Velocity proxy runtime ──────────────────────────────────
+velocity/*.jar
+velocity/logs/
+velocity/plugins/bStats/
+velocity/plugins/*.jar
+velocity/.results.env
+
+# ── Flutter / Dart ──────────────────────────────────────────
+app/build/
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/flutter_export_environment.sh
+**/.dart_tool/
+.pub-cache/
+
+# ── Node / Panel ────────────────────────────────────────────
+panel/node_modules/
+panel/data/
+
+# ── Logs ────────────────────────────────────────────────────
+*.log
+bootstrap.log
+/var/log/mc-*.log
+
+# ── Archives (too large for git) ────────────────────────────
+*.tar.gz
+*.zip
+
+# ── Claude AI session memory ────────────────────────────────
+.claude/
+
+# ── OS metadata ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ─────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo

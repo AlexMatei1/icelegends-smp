@@ -1,0 +1,54 @@
+## IceLegends — Comenzi Diverse
+## /discord, /website, /ip, /rules, /staff
+
+options:
+    discord-link: https://discord.gg/icelegends
+    website-link: https://mc.ice4legends.com
+    server-ip:    mc.ice4legends.com
+
+command /discord:
+    description: Link-ul serverului de Discord.
+    trigger:
+        send "&b&l[IceLegends] &7Join Discord: &b&n{@discord-link}" to player
+
+command /website:
+    description: Link-ul website-ului IceLegends.
+    trigger:
+        send "&b&l[IceLegends] &7Website: &b&n{@website-link}" to player
+
+command /ip:
+    description: Adresa serverului IceLegends.
+    trigger:
+        send "&b&l[IceLegends] &7IP Server: &b{@server-ip}" to player
+
+command /rules:
+    description: Regulile serverului IceLegends.
+    trigger:
+        send "&b&l━━[ &f&lReguli IceLegends &b&l]━━" to player
+        send " &a✔ &fRespect reciproc fata de toti jucatorii" to player
+        send " &a✔ &fPvP consensual — nu ataca fara acord" to player
+        send " &a✔ &fConstructiile altora sunt protejate" to player
+        send " &c✘ &fZero hack-uri sau clienti modificati = &cban permanent" to player
+        send " &c✘ &fFara toxicitate, spam sau discriminare" to player
+        send " &c✘ &fNu exploata bug-uri — raporteaza-le la admini" to player
+        send " &7Detalii: &b&n{@website-link}#reguli" to player
+        send "&b&l━━━━━━━━━━━━━━━━━━━" to player
+
+command /staff:
+    description: Afiseaza echipa de administrare.
+    trigger:
+        send "&b&l━━[ &f&lEchipa IceLegends &b&l]━━" to player
+        send " &6&l[Owner] &fMatei" to player
+        send " &7Website: &b&n{@website-link}#staff" to player
+        send " &7Discord: &b&n{@discord-link}" to player
+        send "&b&l━━━━━━━━━━━━━━━━━━━" to player
+
+command /vote:
+    description: Link-uri pentru votarea serverului.
+    trigger:
+        send "&b&l━━[ &f&lVotează IceLegends &b&l]━━" to player
+        send " &7Fiecare vot = &6+500 coins &7+ &bCheie Crate&7!" to player
+        send " &b▸ &fhttps://minecraft-list.ro" to player
+        send " &b▸ &fhttps://topg.org" to player
+        send " &b▸ &fhttps://minecraft-server.eu" to player
+        send "&b&l━━━━━━━━━━━━━━━━━━━" to player

@@ -1,0 +1,86 @@
+# ============================================================
+# IceLegends — Kit System
+# /kit — lista kituri disponibile
+# /kit <nume> — revendica un kit
+# Kituri: starter (o singura data), daily (24h cooldown)
+# ============================================================
+
+options:
+    PREFIX: &8[&aKit&8]
+
+command /kit [<text>]:
+    description: Revendica un kit.
+    trigger:
+        if arg-1 is not set:
+            send colored "{@PREFIX} &7Kituri disponibile:" to player
+            send colored "  &a/kit starter &8— &7Echipament de inceput &8(o singura data)" to player
+            send colored "  &a/kit daily &8— &7Provizii zilnice &8(24h cooldown)" to player
+            send colored "  &a/kit miner &8— &7Unelte de minat &8(48h cooldown)" to player
+            stop
+        set {_name} to arg-1 in lower case
+        if {_name} is "starter":
+            giveKitStarter(player)
+        else if {_name} is "daily":
+            giveKitDaily(player)
+        else if {_name} is "miner":
+            giveKitMiner(player)
+        else:
+            send colored "{@PREFIX} &cKit necunoscut. Foloseste &e/kit &cpentru lista." to player
+
+function giveKitStarter(p: player):
+    set {_uuid} to "%{_p}'s uuid%"
+    if {kit::starter::%{_uuid}%} is true:
+        send colored "{@PREFIX} &cAi revendicat deja kit-ul &eStarter&c." to {_p}
+        stop
+    set {kit::starter::%{_uuid}%} to true
+    give {_p} 1 iron sword named "&7Sabia Incepatorului"
+    give {_p} 1 iron pickaxe named "&7Tarnacopul Incepatorului"
+    give {_p} 1 iron axe named "&7Toporul Incepatorului"
+    give {_p} 1 iron shovel named "&7Lopata Incepatorului"
+    give {_p} 1 iron helmet named "&7Casca Incepatorului"
+    give {_p} 1 iron chestplate named "&7Pieptarul Incepatorului"
+    give {_p} 1 iron leggings named "&7Pantalonii Incepatorului"
+    give {_p} 1 iron boots named "&7Cizmele Incepatorului"
+    give {_p} 32 cooked beef
+    give {_p} 32 bread
+    give {_p} 16 torch
+    send colored "{@PREFIX} &aKit &eStarter &areceived! &7Echipament complet de fier." to {_p}
+    send title "" with subtitle colored "&aKit Starter primit!" to {_p} for 3 seconds
+
+function giveKitDaily(p: player):
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_now} to floor(unix timestamp of now)
+    set {_last} to {kit::daily::%{_uuid}%} ? 0
+    set {_diff} to {_now} - {_last}
+    if {_diff} < 86400:
+        set {_rem} to 86400 - {_diff}
+        set {_h} to floor({_rem} / 3600)
+        set {_rem_after_h} to {_rem} - ({_h} * 3600)
+        set {_m} to floor({_rem_after_h} / 60)
+        send colored "{@PREFIX} &cKit disponibil in &e%{_h}%h %{_m}%m&c." to {_p}
+        stop
+    set {kit::daily::%{_uuid}%} to {_now}
+    give {_p} 16 cooked beef
+    give {_p} 16 bread
+    give {_p} 8 golden apple
+    give {_p} 64 torch
+    add 100 to {_p}'s balance
+    send colored "{@PREFIX} &aKit &eZilnic &aprimit! &7+100 coins + mancare." to {_p}
+
+function giveKitMiner(p: player):
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_now} to floor(unix timestamp of now)
+    set {_last} to {kit::miner::%{_uuid}%} ? 0
+    set {_diff} to {_now} - {_last}
+    if {_diff} < 172800:
+        set {_rem} to 172800 - {_diff}
+        set {_h} to floor({_rem} / 3600)
+        send colored "{@PREFIX} &cKit disponibil in &e%{_h}%h&c." to {_p}
+        stop
+    set {kit::miner::%{_uuid}%} to {_now}
+    give {_p} 1 diamond pickaxe of efficiency 3 named "&bTarnacopul Minerului"
+    give {_p} 64 torch
+    give {_p} 32 ladder
+    give {_p} 16 cooked porkchop
+    give {_p} 5 iron ore
+    send colored "{@PREFIX} &aKit &eMiner &aprimit! &7Tarnacopul de diamant te asteapta." to {_p}

@@ -1,0 +1,160 @@
+# ============================================================
+# Busola Lumilor — Navigator GUI
+# Item: Compass named "Busola Lumilor"
+# Right-click → GUI cu SMP / Shop / Parkour
+# Dat automat la join si la schimbare de lume (in hub)
+# ============================================================
+
+options:
+    BUSOLA_NAME: &6&lBusola Lumilor
+    HUB_WORLD: hub
+
+# ── Construieste itemul ───────────────────────────────────────
+
+function busola() :: item:
+    set {_c} to compass named colored "{@BUSOLA_NAME}"
+    set lore of {_c} to colored "&8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" and colored "&b⚔ &fLumea SMP &8— &7Supravietuire" and colored "&a⬛ &fMagazin &8— &7Cumpara si vinde" and colored "&d✦ &fParkour &8— &7Provocari si recorduri" and colored "&8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" and colored "&e» &fClick dreapta pentru a deschide"
+    return {_c}
+
+function areBusola(p: player) :: boolean:
+    loop items in {_p}'s inventory:
+        if name of loop-item is colored "{@BUSOLA_NAME}":
+            return true
+    return false
+
+function giveBusola(p: player):
+    if areBusola({_p}) is false:
+        give busola() to {_p}
+
+# ── Da busola la join si la intoarcere in hub ─────────────────
+
+on join:
+    wait 15 ticks
+    if world of player is world "{@HUB_WORLD}":
+        giveBusola(player)
+
+on world change:
+    if world of player is world "{@HUB_WORLD}":
+        wait 5 ticks
+        giveBusola(player)
+    else:
+        # Small delay so inventory is settled before removing compass
+        wait 3 ticks
+        loop items in player's inventory:
+            if type of loop-item is compass:
+                if name of loop-item is colored "{@BUSOLA_NAME}":
+                    remove loop-item from player's inventory
+
+# ── Verifica periodic ca toti jucatorii din hub au busola ─────
+
+every 8 seconds:
+    loop all players:
+        if world of loop-player is world "{@HUB_WORLD}":
+            giveBusola(loop-player)
+
+# ── Click dreapta cu busola → deschide GUI ────────────────────
+
+on right click:
+    if world of player is not world "{@HUB_WORLD}":
+        stop
+    if player's held item is not set:
+        stop
+    if name of player's held item is colored "{@BUSOLA_NAME}":
+        cancel event
+        deschideBusola(player)
+
+# ── GUI Busola Lumilor ────────────────────────────────────────
+
+function deschideBusola(p: player):
+    set {_inv} to a new chest inventory with 3 rows named "§6§lBusola Lumilor"
+    loop 27 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+
+    # Slot 10 — SMP
+    set {_smp} to grass block named colored "&b&lLumea SMP"
+    set lore of {_smp} to colored "&7Supravietuire · Aventura · PvP" and colored "&8▬▬▬▬▬▬▬▬▬▬▬" and colored "&e» &fClick pentru a calatori"
+    set slot 10 of {_inv} to {_smp}
+
+    # Slot 13 — Shop
+    set {_shop} to emerald named colored "&a&lMagazin"
+    set lore of {_shop} to colored "&7Cumpara · Vinde · Investeste" and colored "&8▬▬▬▬▬▬▬▬▬▬▬" and colored "&e» &fClick pentru a calatori"
+    set slot 13 of {_inv} to {_shop}
+
+    # Slot 16 — Parkour
+    set {_pk} to feather named colored "&d&lParkour"
+    set lore of {_pk} to colored "&7Easy · Medium · Hard" and colored "&7Castiga coins si recorduri!" and colored "&8▬▬▬▬▬▬▬▬▬▬▬" and colored "&e» &fClick pentru a calatori"
+    set slot 16 of {_inv} to {_pk}
+
+    # Slot 22 — Hub (mereu vizibil)
+    set {_hub} to ender pearl named colored "&7&lHub &8— &7Spawn"
+    set lore of {_hub} to colored "&7Intoarce-te la spawn principal" and colored "&8▬▬▬▬▬▬▬▬▬▬▬" and colored "&e» &fClick pentru a reveni"
+    set slot 22 of {_inv} to {_hub}
+
+    open {_inv} to {_p}
+
+# ── Handler click in GUI ──────────────────────────────────────
+
+on inventory click:
+    if name of event-inventory is "§6§lBusola Lumilor":
+        cancel event
+        if event-item is not set:
+            stop
+        if type of event-item is gray stained glass pane:
+            stop
+
+        # SMP — slot 10
+        if event-slot is 10:
+            close player's inventory
+            send title colored "&b&lIceLegends SMP" with subtitle colored "&7Se incarca lumea..." to player for 3 seconds
+            wait 5 ticks
+            if {smp::spawn} is set:
+                teleport player to {smp::spawn}
+            else:
+                teleport player to spawn of world "world"
+            send action bar colored "&a✔ SMP — /hub pentru a reveni" to player
+            stop
+
+        # Shop — slot 13
+        if event-slot is 13:
+            close player's inventory
+            send title colored "&a&lMagazin" with subtitle colored "&7Se incarca magazinul..." to player for 3 seconds
+            wait 5 ticks
+            if {shop::spawn} is set:
+                teleport player to {shop::spawn}
+            else:
+                teleport player to spawn of world "shop"
+            send action bar colored "&a✔ Magazin — /hub pentru a reveni" to player
+            stop
+
+        # Parkour — slot 16
+        if event-slot is 16:
+            close player's inventory
+            if {pk::start::x} is not set:
+                send colored "&c[Busola] Parcursul nu e configurat inca!" to player
+                stop
+            send title colored "&d&lParkour" with subtitle colored "&7/pk start pentru a incepe!" to player for 3 seconds
+            wait 5 ticks
+            teleport player to location({pk::start::x}, {pk::start::y}, {pk::start::z}, world "parkour")
+            send action bar colored "&d✔ Parkour — /hub pentru a reveni" to player
+            stop
+
+        # Hub — slot 22
+        if event-slot is 22:
+            close player's inventory
+            wait 5 ticks
+            teleport player to hubSpawn()
+            send action bar colored "&b✔ Hub — Bun venit inapoi!" to player
+            stop
+
+# ── Previne aruncarea busolei ─────────────────────────────────
+
+on drop:
+    if name of player's held item is colored "{@BUSOLA_NAME}":
+        cancel event
+
+# ── Previne pierderea busolei la moarte (doar in hub) ────────
+
+on death of player:
+    wait 2 ticks
+    if world of victim is world "{@HUB_WORLD}":
+        giveBusola(victim)

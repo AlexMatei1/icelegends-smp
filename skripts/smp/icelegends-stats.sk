@@ -1,0 +1,111 @@
+## IceLegends — Statistici + Rang system
+## Playtime tracked in minute (exclus AFK)
+## Ranguri: Ghetar → Explorator → Veteran → Legend
+
+function rankOf(uuid: text) :: text:
+    set {_min} to {stats::playtime::%{_uuid}%} ? 0
+    if {_min} >= 3000:
+        return "Legend"
+    if {_min} >= 1200:
+        return "Veteran"
+    if {_min} >= 300:
+        return "Explorator"
+    return "Ghetar"
+
+function rankColor(r: text) :: text:
+    if {_r} is "Legend":
+        return "&d"
+    if {_r} is "Veteran":
+        return "&6"
+    if {_r} is "Explorator":
+        return "&a"
+    return "&b"
+
+function rankPrefix(r: text) :: text:
+    set {_c} to rankColor({_r})
+    return "%{_c}%[%{_r}%]&r"
+
+# Milestone-uri playtime (minute): 60=1h, 600=10h, 3000=50h, 6000=100h
+function checkPlaytimeMilestone(p: player, min: number):
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_key} to "pt_milestone_%{_min}%"
+    if {stats::milestone::%{_uuid}%::%{_key}%} is true:
+        stop
+    set {stats::milestone::%{_uuid}%::%{_key}%} to true
+    set {_h} to floor({_min} / 60)
+    add (floor({_h} * 50)) to {_p}'s balance
+    broadcast colored "&b&l[IceLegends] &b%{_p}% &7a jucat &e%{_h}%h &7pe server! &6+%floor({_h} * 50)% coins"
+    send title " " with subtitle colored "&7Milestone: &e%{_h}% ore jucate!" to {_p} for 4 seconds
+
+# Actualizare playtime si rang la fiecare minut
+every 1 minute:
+    loop all players:
+        if {afk::%uuid of loop-player%} is not true:
+            add 1 to {stats::playtime::%uuid of loop-player%}
+            set {_min} to {stats::playtime::%uuid of loop-player%}
+            if {_min} is 60:
+                checkPlaytimeMilestone(loop-player, 60)
+            if {_min} is 600:
+                checkPlaytimeMilestone(loop-player, 600)
+            if {_min} is 3000:
+                checkPlaytimeMilestone(loop-player, 3000)
+            if {_min} is 6000:
+                checkPlaytimeMilestone(loop-player, 6000)
+        # Actualizeaza rangul
+        set {_nou} to rankOf(uuid of loop-player)
+        set {_vechi} to {ranks::rank::%uuid of loop-player%} ? "Ghetar"
+        set {ranks::rank::%uuid of loop-player%} to {_nou}
+        if {_nou} is not {_vechi}:
+            if {_vechi} is not "Ghetar":
+                set {_c} to rankColor({_nou})
+                send "&b&l[IceLegends] &7Felicitari! Ai avansat la rangul %{_c}%&l%{_nou}%&7!" to loop-player
+                send title " " with subtitle "&7Rang nou: %{_c}%&l%{_nou}%" to loop-player
+
+# /stats [jucator]
+command /stats [<offline player>]:
+    description: Afiseaza statisticile unui jucator.
+    trigger:
+        set {_t} to arg-1 ? player
+        set {_uuid} to uuid of {_t}
+        set {_min} to {stats::playtime::%{_uuid}%} ? 0
+        set {_h} to floor({_min} / 60)
+        set {_m} to {_min} - ({_h} * 60)
+        set {_rank} to {ranks::rank::%{_uuid}%} ? "Ghetar"
+        set {_c} to rankColor({_rank})
+        set {_status} to "&aOnline"
+        if {afk::%{_uuid}%} is true:
+            set {_status} to "&7[AFK]"
+        send "&b&l━━[ &fStatistici: &b%{_t}% &b&l]━━" to player
+        send "  &7Rang: %{_c}%&l%{_rank}%&r" to player
+        send "  &7Timp de joc: &b%{_h}%h %{_m}%m" to player
+        send "  &7Status: %{_status}%" to player
+        send "&b&l━━━━━━━━━━━━━━━━━━━" to player
+
+# /playtime (scurtatura)
+command /playtime:
+    description: Afiseaza timpul tau de joc.
+    trigger:
+        execute player command "stats"
+
+# /rankup — arata progresul catre rangul urmator
+command /rankup:
+    description: Afiseaza progresul catre rangul urmator.
+    trigger:
+        set {_min} to {stats::playtime::%uuid of player%} ? 0
+        set {_rank} to {ranks::rank::%uuid of player%} ? "Ghetar"
+        if {_rank} is "Legend":
+            send "&d&l[Legend] &7Ai atins rangul maxim! Felicitari!" to player
+            stop
+        set {_next} to "Explorator"
+        set {_need} to 300
+        if {_rank} is "Explorator":
+            set {_next} to "Veteran"
+            set {_need} to 1200
+        if {_rank} is "Veteran":
+            set {_next} to "Legend"
+            set {_need} to 3000
+        set {_left} to {_need} - {_min}
+        set {_h} to floor({_left} / 60)
+        set {_m} to {_left} - ({_h} * 60)
+        set {_nc} to rankColor({_next})
+        send "&b&l[IceLegends] &7Pana la %{_nc}%&l%{_next}%&7: &b%{_h}%h %{_m}%m" to player

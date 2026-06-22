@@ -1,0 +1,23 @@
+# ClearLag — Curăță entități la fiecare 10 minute
+
+remove-entities:
+  interval: 600
+
+warnings:
+  - time: 30
+    message: "&e[ClearLag] &7Itemele de pe jos dispar în &c30 secunde&7!"
+  - time: 10
+    message: "&e[ClearLag] &7Itemele de pe jos dispar în &c10 secunde&7!"
+  - time: 5
+    message: "&e[ClearLag] &7Itemele de pe jos dispar în &c5 secunde&7!"
+
+clear-message: "&e[ClearLag] &7Eliminate: &c{entities} &7entități și &c{items} &7iteme."
+
+remove-items: true
+remove-entities: true
+
+protected:
+  - ARMOR_STAND
+  - ITEM_FRAME
+  - VILLAGER
+  - named: true

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Stock Market</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    :root { --accent: var(--ice); --surface: var(--glass); }
+
+    /* Holdings / table styles referenced by JS innerHTML */
+    .player-name { font-family:'Exo 2',sans-serif; font-weight:700; }
+    .price-val { color:var(--gold); font-weight:700; font-family:'Exo 2',sans-serif; }
+    .profit-pos { color:var(--green); font-weight:600; }
+    .profit-neg { color:var(--red); font-weight:600; }
+
+    /* Buy/sell buttons used in JS-generated HTML */
+    .btn-buy  { background:linear-gradient(135deg,#004d2a,#00796b,#00bfa5); color:#fff; box-shadow:0 4px 20px rgba(100,255,200,.14); }
+    .btn-sell { background:rgba(255,82,82,.08); border:1px solid rgba(255,82,82,.22); color:rgba(255,140,140,.85); }
+    .btn-cancel { background:rgba(100,223,223,.05); border:1px solid var(--border-soft); color:var(--muted); flex:1; padding:12px; border-radius:var(--r-sm); cursor:pointer; font-family:inherit; font-size:.9rem; }
+    .btn-full { flex:1; }
+    .modal-btns { display:flex; gap:10px; margin-top:14px; }
+
+    /* Holdings box */
+    .holdings-section { background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md); padding:22px; margin-bottom:24px; overflow-x:auto; }
+
+    /* Table wrapper */
+    .table-wrap { background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; }
+    .table-wrap .ice-table th { padding:14px 14px 10px; }
+
+    /* Note box */
+    .note { background:rgba(100,223,223,.03); border:1px solid rgba(100,223,223,.12); border-radius:var(--r-sm); padding:14px 16px; font-size:.84rem; color:var(--muted); margin-bottom:22px; }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+    <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link active" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+    <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="container">
+    <div class="page-hero">
+      <div class="page-hero-title">📈 <span class="accent">Player Stock Market</span></div>
+      <div class="page-hero-sub">Investește coins în performanța altor jucători. Prețul acțiunilor reflectă skills + balanța fiecăruia.</div>
+    </div>
+
+    <div class="note">
+      💡 Prețul unei acțiuni = <strong style="color:var(--ice)">100 + (skill_levels × 4) + (balance × 0.02)</strong>. Cumpără devreme pentru profit maxim!
+    </div>
+
+    <div class="sec-label">Portofoliul meu</div>
+    <div class="holdings-section" id="holdingsSection">
+      <div style="color:var(--muted);font-size:.9rem">Autentifică-te pentru a vedea portofoliul.</div>
+    </div>
+
+    <div class="sec-label">Toate acțiunile</div>
+    <div class="table-wrap">
+      <table class="ice-table">
+        <thead><tr>
+          <th>Jucător</th>
+          <th>Preț / acțiune</th>
+          <th>Disponibile</th>
+          <th>Acțiune</th>
+        </tr></thead>
+        <tbody id="stocksBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Trade Modal -->
+<div class="modal-overlay" id="tradeModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">Cumpără acțiuni</div>
+    <div class="form-group">
+      <label class="form-label">Număr acțiuni</label>
+      <input class="form-input" type="number" id="tradeShares" min="1" placeholder="ex: 10">
+    </div>
+    <div id="tradeCost" style="color:var(--muted);font-size:.85rem;margin-bottom:4px"></div>
+    <div id="tradeMsg" class="alert"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Anulează</button>
+      <button class="btn btn-buy btn-full" id="tradeConfirm" onclick="confirmTrade()">Confirmă</button>
+    </div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+let myUuid = null, tradeMode = null, tradeStock = null, stocks = [];
+
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials: 'include' });
+    if (r.ok) {
+      const d = await r.json();
+      myUuid = d.uuid;
+      document.getElementById('navName').textContent = d.username;
+      loadHoldings();
+    } else {
+      document.getElementById('navName').textContent = 'Neautentificat';
+    }
+  } catch {}
+  loadStocks();
+}
+
+async function loadStocks() {
+  const r = await fetch('/api/stocks');
+  stocks = await r.json();
+  const tbody = document.getElementById('stocksBody');
+  tbody.innerHTML = stocks.map(s => {
+    const avail = s.shares_out - (s.sold || 0);
+    const isMe = s.uuid === myUuid;
+    return `<tr>
+      <td class="player-name">${s.name}${isMe ? ' <span style="color:var(--accent);font-size:.75rem">(tu)</span>' : ''}</td>
+      <td class="price-val">${s.price.toLocaleString('ro-RO')} coins</td>
+      <td style="color:var(--muted)">${s.shares_out}</td>
+      <td>
+        ${!isMe ? `<button class="btn btn-buy btn-sm" onclick="openModal('buy','${s.uuid}','${s.name}',${s.price})">Cumpără</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadHoldings() {
+  const r = await fetch('/api/stocks/holdings', { credentials: 'include' });
+  if (!r.ok) return;
+  const data = await r.json();
+  const el = document.getElementById('holdingsSection');
+  if (!data.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.9rem">Nu ai acțiuni în portofoliu.</div>'; return; }
+  el.innerHTML = `<table class="ice-table"><thead><tr>
+    <th>Jucător</th><th>Acțiuni</th><th>Preț mediu</th><th>Preț curent</th><th>P/L</th><th></th>
+  </tr></thead><tbody>${data.map(h => {
+    const diff = (h.current_price - h.avg_price) * h.shares;
+    const cls = diff >= 0 ? 'profit-pos' : 'profit-neg';
+    return `<tr>
+      <td class="player-name">${h.stock_name}</td>
+      <td>${h.shares}</td>
+      <td style="color:var(--muted)">${Math.round(h.avg_price)}</td>
+      <td class="price-val">${Math.round(h.current_price)}</td>
+      <td class="${cls}">${diff >= 0 ? '+' : ''}${Math.round(diff)} coins</td>
+      <td><button class="btn btn-sell btn-sm" onclick="openModal('sell','${h.stock_uuid}','${h.stock_name}',${h.current_price})">Vinde</button></td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function openModal(mode, uuid, name, price) {
+  tradeMode = mode; tradeStock = { uuid, name, price };
+  document.getElementById('modalTitle').textContent = (mode === 'buy' ? 'Cumpără' : 'Vinde') + ` acțiuni ${name}`;
+  document.getElementById('tradeConfirm').className = mode === 'buy' ? 'btn btn-buy btn-full' : 'btn btn-red btn-full';
+  document.getElementById('tradeConfirm').textContent = mode === 'buy' ? 'Cumpără' : 'Vinde';
+  document.getElementById('tradeShares').value = '';
+  document.getElementById('tradeCost').textContent = '';
+  document.getElementById('tradeMsg').className = 'alert';
+  document.getElementById('tradeModal').classList.add('open');
+}
+document.getElementById('tradeShares').addEventListener('input', e => {
+  const n = parseInt(e.target.value) || 0;
+  if (n > 0 && tradeStock) {
+    const total = Math.round(n * tradeStock.price);
+    document.getElementById('tradeCost').textContent = (tradeMode === 'buy' ? 'Cost total: ' : 'Primești: ') + total.toLocaleString('ro-RO') + ' coins';
+  }
+});
+function closeModal() { document.getElementById('tradeModal').classList.remove('open'); }
+async function confirmTrade() {
+  const shares = parseInt(document.getElementById('tradeShares').value);
+  const msg = document.getElementById('tradeMsg');
+  if (!shares || shares < 1) { msg.className='alert alert-err show'; msg.textContent='Introdu un număr valid.'; return; }
+  const url = tradeMode === 'buy' ? '/api/stocks/buy' : '/api/stocks/sell';
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({stock_uuid:tradeStock.uuid,shares}) });
+  const d = await r.json();
+  if (d.ok) {
+    msg.className = 'alert alert-ok show';
+    msg.textContent = `${tradeMode === 'buy' ? 'Cumpărat' : 'Vândut'} ${shares} acțiuni!`;
+    setTimeout(() => { closeModal(); loadStocks(); loadHoldings(); }, 1200);
+  } else { msg.className='alert alert-err show'; msg.textContent=d.error; }
+}
+init();
+</script>
+</body>
+</html>

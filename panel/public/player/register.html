@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Înregistrare</title>
+  <link rel="stylesheet" href="/player/ice.css">
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-icon" style="font-size:2.6rem">🌐</span>
+      <div class="auth-title">ÎNREGISTRARE</div>
+      <div class="auth-subtitle">Conectează contul Minecraft</div>
+    </div>
+
+    <div class="steps">
+      <div class="step active" id="s1">1 · Cod în joc</div>
+      <div class="step" id="s2">2 · Parolă</div>
+      <div class="step" id="s3">3 · Gata!</div>
+    </div>
+
+    <div class="info-box">
+      Intră pe server și rulează comanda <code>/registerweb</code> pentru a primi codul tău de 6 cifre.
+      Codul expiră în <strong>5 minute</strong>.
+    </div>
+
+    <form id="claimForm">
+      <div class="form-group">
+        <label class="form-label">Username Minecraft</label>
+        <input class="form-input" type="text" id="username" placeholder="Exact ca în joc" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cod din joc (6 cifre)</label>
+        <input class="form-input" type="text" id="token" placeholder="ex: 482951" maxlength="6" inputmode="numeric" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parolă nouă</label>
+        <input class="form-input" type="password" id="password" placeholder="Minim 6 caractere" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmă parola</label>
+        <input class="form-input" type="password" id="password2" placeholder="Repetă parola" required>
+      </div>
+      <button type="submit" class="btn btn-ice btn-full">CREEAZĂ CONTUL</button>
+      <div id="msg" class="alert"></div>
+    </form>
+
+    <div class="crystal-line">sau</div>
+    <div class="auth-footer">
+      Ai deja cont? <a class="ice-link" href="/player/login">Autentifică-te</a>
+    </div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+  document.getElementById('claimForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = document.getElementById('msg');
+    msg.className = 'alert';
+    const username = document.getElementById('username').value.trim();
+    const token    = document.getElementById('token').value.trim();
+    const password = document.getElementById('password').value;
+    const pass2    = document.getElementById('password2').value;
+    if (password !== pass2) {
+      msg.className = 'alert alert-err show';
+      msg.textContent = 'Parolele nu coincid.';
+      return;
+    }
+    document.getElementById('s1').className = 'step done';
+    document.getElementById('s2').className = 'step active';
+    try {
+      const r = await fetch('/api/player/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, token, password }),
+        credentials: 'include'
+      });
+      const d = await r.json();
+      if (d.ok) {
+        document.getElementById('s2').className = 'step done';
+        document.getElementById('s3').className = 'step done';
+        msg.className = 'alert alert-ok show';
+        msg.textContent = 'Cont creat cu succes! Te redirectăm...';
+        setTimeout(() => window.location.href = '/player/dashboard', 1500);
+      } else {
+        document.getElementById('s2').className = 'step';
+        document.getElementById('s1').className = 'step active';
+        msg.className = 'alert alert-err show';
+        msg.textContent = d.error || 'Eroare necunoscută.';
+      }
+    } catch {
+      msg.className = 'alert alert-err show';
+      msg.textContent = 'Eroare de rețea.';
+    }
+  });
+</script>
+</body>
+</html>

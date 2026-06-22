@@ -1,0 +1,351 @@
+# ============================================================
+# IceLegends — Contracte (Daily Quests System)
+# Unic: 3 contracte zilnice alese de server din pool de 13
+#        Jucatorul alege 1 contract si il completeaza
+#        Reset la fiecare 20+ ore, ID de sesiune unic
+# Inlocuieste Quests plugin
+# ============================================================
+
+options:
+    QUEST_PREFIX: &8[&6Contracte&8]
+
+# ── Initializare pool de contracte ────────────────────────────
+
+on script load:
+    initQuestPool()
+    checkDailyReset()
+
+function initQuestPool():
+    # Tip, Descriere, Cantitate, Recompensa, Dificultate
+    setContract(1,  "kill_zombie",   "zombies ucisi",          50,  150, "Comun")
+    setContract(2,  "kill_skeleton", "schelete ucise",         40,  160, "Comun")
+    setContract(3,  "kill_creeper",  "creeperi ucisi",         20,  220, "Comun")
+    setContract(4,  "kill_enderman", "endermeni ucisi",        15,  350, "Rar")
+    setContract(5,  "kill_spider",   "paianjeni ucisi",        60,  140, "Comun")
+    setContract(6,  "mine_iron",     "minereuri de fier",      64,  130, "Comun")
+    setContract(7,  "mine_gold",     "minereuri de aur",       32,  200, "Comun")
+    setContract(8,  "mine_diamond",  "diamante minate",        16,  450, "Rar")
+    setContract(9,  "mine_ancient",  "ancient debris",         3,   700, "Epic")
+    setContract(10, "harvest_crop",  "recolte recoltate",      100, 130, "Comun")
+    setContract(11, "chop_log",      "busteni taiati",         100, 110, "Comun")
+    setContract(12, "travel",        "blocuri parcurse in SMP",5000,160, "Comun")
+    setContract(13, "kill_wither",   "Wither invins",          1,   1200,"Epic")
+
+function setContract(n: number, type: text, desc: text, amount: number, reward: number, diff: text):
+    set {cpool::%{_n}%::type}   to {_type}
+    set {cpool::%{_n}%::desc}   to {_desc}
+    set {cpool::%{_n}%::amount} to {_amount}
+    set {cpool::%{_n}%::reward} to {_reward}
+    set {cpool::%{_n}%::diff}   to {_diff}
+
+# ── Reset zilnic (la 20+ ore) ─────────────────────────────────
+
+function checkDailyReset():
+    if {contract::reset_time} is set:
+        if difference between {contract::reset_time} and now < 20 hours:
+            stop
+    set {contract::reset_time} to now
+    set {contract::session} to random integer between 100000 and 999999
+    # Selectie 3 contracte distincte aleatorii
+    set {contract::slot::1} to random integer between 1 and 13
+    set {contract::slot::2} to random integer between 1 and 13
+    loop 30 times:
+        if {contract::slot::2} is {contract::slot::1}:
+            set {contract::slot::2} to random integer between 1 and 13
+    set {contract::slot::3} to random integer between 1 and 13
+    loop 30 times:
+        if {contract::slot::3} is {contract::slot::1}:
+            set {contract::slot::3} to random integer between 1 and 13
+        if {contract::slot::3} is {contract::slot::2}:
+            set {contract::slot::3} to random integer between 1 and 13
+    broadcast colored "{@QUEST_PREFIX} &7Contractele zilei s-au schimbat! &e/contracte &7pentru a vedea."
+
+every 1 hour:
+    checkDailyReset()
+
+# ── Functie afisare contracte (refolosita de /contracte si /missions) ─────
+
+function showDailyContracts(p: player):
+    checkDailyReset()
+    set {_uuid} to "%{_p}'s uuid%"
+    # Guard: {contract::session} must be set (not null) to avoid null==null false-positive
+    if {contract::session} is not set:
+        send colored "{@QUEST_PREFIX} &cContractele zilei nu sunt inca incarcate. Incearca in cateva secunde." to {_p}
+        stop
+    if {contract::player::%{_uuid}%::session} is set:
+        if {contract::player::%{_uuid}%::session} is {contract::session}:
+            send colored "{@QUEST_PREFIX} &7Ai ales deja un contract. &e/contract &7pentru progres." to {_p}
+            stop
+    send colored "" to {_p}
+    send colored "&6&l★ CONTRACTE ZILNICE" to {_p}
+    send colored "&8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to {_p}
+    loop 3 times:
+        set {_s} to loop-number
+        set {_idx} to {contract::slot::%{_s}%}
+        set {_desc} to {cpool::%{_idx}%::desc}
+        set {_amount} to {cpool::%{_idx}%::amount}
+        set {_reward} to {cpool::%{_idx}%::reward}
+        set {_diff} to {cpool::%{_idx}%::diff}
+        set {_col} to "&7"
+        if {_diff} is "Rar":
+            set {_col} to "&b"
+        if {_diff} is "Epic":
+            set {_col} to "&5"
+        send colored "  &e[%{_s}%] %{_col}%&l%{_diff}% &8— &f%{_amount}% %{_desc}%" to {_p}
+        send colored "      &7Recompensa: &6%{_reward}% coins &8| &7/accept %{_s}%" to {_p}
+    send colored "&8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to {_p}
+    send colored "" to {_p}
+
+function acceptContract(p: player, s: number):
+    checkDailyReset()
+    set {_uuid} to "%{_p}'s uuid%"
+    if {contract::session} is not set:
+        send colored "{@QUEST_PREFIX} &cContractele nu sunt inca disponibile." to {_p}
+        stop
+    if {contract::player::%{_uuid}%::session} is set:
+        if {contract::player::%{_uuid}%::session} is {contract::session}:
+            send colored "{@QUEST_PREFIX} &cAi ales deja un contract. &e/contract &7pentru progres." to {_p}
+            stop
+    if {_s} is not 1:
+        if {_s} is not 2:
+            if {_s} is not 3:
+                send colored "{@QUEST_PREFIX} &cAlege 1, 2 sau 3." to {_p}
+                stop
+    set {_idx} to {contract::slot::%{_s}%}
+    set {contract::player::%{_uuid}%::session}  to {contract::session}
+    set {contract::player::%{_uuid}%::pool_idx} to {_idx}
+    set {contract::player::%{_uuid}%::progress} to 0
+    set {contract::player::%{_uuid}%::done}     to false
+    send colored "" to {_p}
+    send colored "{@QUEST_PREFIX} &aContract acceptat!" to {_p}
+    send colored "&7  Obiectiv: &f%{cpool::%{_idx}%::amount}% %{cpool::%{_idx}%::desc}%" to {_p}
+    send colored "&7  Recompensa: &6%{cpool::%{_idx}%::reward}% coins" to {_p}
+    send colored "&7  Progres: &e/contract" to {_p}
+    send colored "" to {_p}
+
+# ── /contracte si /missions — Tabla de contracte zilnica ──────
+
+command /contracte:
+    trigger:
+        showDailyContracts(player)
+
+command /missions:
+    trigger:
+        showDailyContracts(player)
+
+command /misiuni:
+    trigger:
+        showDailyContracts(player)
+
+# ── /ia-contract si /accept — Accepta un contract ─────────────
+
+command /ia-contract <number>:
+    trigger:
+        acceptContract(player, arg-1)
+
+command /accept <number>:
+    trigger:
+        acceptContract(player, arg-1)
+
+# ── /contract — Progresul curent ─────────────────────────────
+
+command /contract:
+    trigger:
+        checkDailyReset()
+        set {_uuid} to "%player's uuid%"
+        if {contract::player::%{_uuid}%::session} is not {contract::session}:
+            send colored "{@QUEST_PREFIX} &7Nu ai un contract activ. &e/contracte &7pentru a alege." to player
+            stop
+        set {_idx} to {contract::player::%{_uuid}%::pool_idx}
+        set {_prog} to {contract::player::%{_uuid}%::progress}
+        set {_amount} to {cpool::%{_idx}%::amount}
+        set {_reward} to {cpool::%{_idx}%::reward}
+        set {_diff} to {cpool::%{_idx}%::diff}
+        if {_prog} is not set:
+            set {_prog} to 0
+        send colored "" to player
+        if {contract::player::%{_uuid}%::done} is true:
+            send colored "&6★ Contract completat! Recompensa primita: &a+%{_reward}% coins" to player
+        else:
+            send colored "&6★ Contractul tau activ:" to player
+            send colored "&7  Obiectiv: &f%{_amount}% %{cpool::%{_idx}%::desc}%" to player
+            send colored "&7  Progres: &e%{_prog}%&8/&e%{_amount}%" to player
+            send colored "&7  Recompensa: &6%{_reward}% coins  &7Dificultate: &f%{_diff}%" to player
+        send colored "" to player
+
+# ── Functie progres ───────────────────────────────────────────
+
+function addContractProgress(p: player, qtype: text, amount: number):
+    set {_uuid} to "%{_p}'s uuid%"
+    if {contract::player::%{_uuid}%::session} is not {contract::session}:
+        stop
+    if {contract::player::%{_uuid}%::done} is true:
+        stop
+    set {_idx} to {contract::player::%{_uuid}%::pool_idx}
+    if {cpool::%{_idx}%::type} is not {_qtype}:
+        stop
+    add {_amount} to {contract::player::%{_uuid}%::progress}
+    set {_prog} to {contract::player::%{_uuid}%::progress}
+    set {_needed} to {cpool::%{_idx}%::amount}
+    if {_prog} >= {_needed}:
+        set {contract::player::%{_uuid}%::done} to true
+        set {_reward} to {cpool::%{_idx}%::reward}
+        add {_reward} to balance of {_p}
+        send colored "" to {_p}
+        send colored "{@QUEST_PREFIX} &6&l✦ CONTRACT COMPLETAT!" to {_p}
+        send colored "&7  Recompensa primita: &6+%{_reward}% coins" to {_p}
+        send colored "" to {_p}
+        send title colored "&6&l★ Contract completat!" with subtitle colored "&a+%{_reward}% coins" to {_p} for 4 seconds
+        broadcast colored "{@QUEST_PREFIX} &b%{_p}% &7a completat: &e%{cpool::%{_idx}%::desc}% &8(&6+%{_reward}% coins&8)"
+
+# ── Tracking kill events ───────────────────────────────────────
+
+on death:
+    if attacker is a player:
+        if world of attacker is not world "world":
+            stop
+        if victim is a zombie:
+            addContractProgress(attacker, "kill_zombie", 1)
+        if victim is a husk:
+            addContractProgress(attacker, "kill_zombie", 1)
+        if victim is a drowned:
+            addContractProgress(attacker, "kill_zombie", 1)
+        if victim is a skeleton:
+            addContractProgress(attacker, "kill_skeleton", 1)
+        if victim is a stray:
+            addContractProgress(attacker, "kill_skeleton", 1)
+        if victim is a bogged:
+            addContractProgress(attacker, "kill_skeleton", 1)
+        if victim is a creeper:
+            addContractProgress(attacker, "kill_creeper", 1)
+        if victim is an enderman:
+            addContractProgress(attacker, "kill_enderman", 1)
+        if victim is a spider:
+            addContractProgress(attacker, "kill_spider", 1)
+        if victim is a cave spider:
+            addContractProgress(attacker, "kill_spider", 1)
+        if victim is a wither:
+            addContractProgress(attacker, "kill_wither", 1)
+
+# ── Tracking mine events ────────────────────────────────────────
+
+on mine:
+    if world of player is not world "world":
+        stop
+    set {_t} to type of event-block
+    if {_t} is iron ore:
+        addContractProgress(player, "mine_iron", 1)
+    if {_t} is deepslate iron ore:
+        addContractProgress(player, "mine_iron", 1)
+    if {_t} is gold ore:
+        addContractProgress(player, "mine_gold", 1)
+    if {_t} is deepslate gold ore:
+        addContractProgress(player, "mine_gold", 1)
+    if {_t} is diamond ore:
+        addContractProgress(player, "mine_diamond", 1)
+    if {_t} is deepslate diamond ore:
+        addContractProgress(player, "mine_diamond", 1)
+    if {_t} is ancient debris:
+        addContractProgress(player, "mine_ancient", 1)
+    if {_t} is oak log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is spruce log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is birch log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is jungle log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is acacia log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is dark oak log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is mangrove log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is cherry log:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is crimson stem:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is warped stem:
+        addContractProgress(player, "chop_log", 1)
+    if {_t} is wheat:
+        addContractProgress(player, "harvest_crop", 1)
+    if {_t} is carrots:
+        addContractProgress(player, "harvest_crop", 1)
+    if {_t} is potatoes:
+        addContractProgress(player, "harvest_crop", 1)
+    if {_t} is beetroots:
+        addContractProgress(player, "harvest_crop", 1)
+    if {_t} is melon:
+        addContractProgress(player, "harvest_crop", 1)
+    if {_t} is pumpkin:
+        addContractProgress(player, "harvest_crop", 1)
+    if {_t} is sugar cane:
+        addContractProgress(player, "harvest_crop", 1)
+    if {_t} is nether wart:
+        addContractProgress(player, "harvest_crop", 1)
+
+# ── Tracking travel ────────────────────────────────────────────
+
+every 30 seconds:
+    loop all players:
+        if world of loop-player is world "world":
+            set {_uuid} to "%loop-player's uuid%"
+            if {contract::travel_loc::%{_uuid}%} is set:
+                set {_dist} to floor(distance between loop-player's location and {contract::travel_loc::%{_uuid}%})
+                if {_dist} > 10:
+                    addContractProgress(loop-player, "travel", {_dist})
+            set {contract::travel_loc::%{_uuid}%} to loop-player's location
+
+# ── RCON commands pentru panel (date live) ────────────────────
+
+command /icl_missions_today:
+    trigger:
+        if sender is a player:
+            send "&cComanda rezervata consolei." to sender
+            stop
+        send "SESSION:%{contract::session}%"
+        loop 3 times:
+            set {_s} to loop-number
+            set {_idx} to {contract::slot::%{_s}%}
+            send "SLOT:%{_s}%:%{_idx}%:%{cpool::%{_idx}%::type}%:%{cpool::%{_idx}%::desc}%:%{cpool::%{_idx}%::amount}%:%{cpool::%{_idx}%::reward}%:%{cpool::%{_idx}%::diff}%"
+
+command /icl_mission_me <text>:
+    trigger:
+        if sender is a player:
+            send "&cComanda rezervata consolei." to sender
+            stop
+        set {_uuid} to arg-1
+        if {contract::player::%{_uuid}%::session} is not {contract::session}:
+            send "MISSION_ME:none"
+            stop
+        set {_idx} to {contract::player::%{_uuid}%::pool_idx}
+        set {_prog} to {contract::player::%{_uuid}%::progress}
+        set {_done} to "%{contract::player::%{_uuid}%::done}%"
+        send "MISSION_ME:%{_idx}%:%{_prog}%:%{_done}%"
+
+# Panel: accepta un contract pentru un jucator offline/online via UUID
+command /icl_accept_contract <text> <number>:
+    trigger:
+        if sender is a player:
+            send "&cComanda rezervata consolei." to sender
+            stop
+        set {_uuid} to arg-1
+        set {_s} to arg-2
+        if {contract::session} is not set:
+            send "ACCEPT_ERR:no_session"
+            stop
+        if {contract::player::%{_uuid}%::session} is set:
+            if {contract::player::%{_uuid}%::session} is {contract::session}:
+                send "ACCEPT_ERR:already_accepted"
+                stop
+        if {_s} is not 1:
+            if {_s} is not 2:
+                if {_s} is not 3:
+                    send "ACCEPT_ERR:invalid_slot"
+                    stop
+        set {_idx} to {contract::slot::%{_s}%}
+        set {contract::player::%{_uuid}%::session}  to {contract::session}
+        set {contract::player::%{_uuid}%::pool_idx} to {_idx}
+        set {contract::player::%{_uuid}%::progress} to 0
+        set {contract::player::%{_uuid}%::done}     to false
+        send "ACCEPT_OK:%{_idx}%:%{cpool::%{_idx}%::desc}%:%{cpool::%{_idx}%::reward}%"

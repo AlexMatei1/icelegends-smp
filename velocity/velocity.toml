@@ -1,0 +1,47 @@
+config-version = "2.8"
+forwarding-secret-file = "forwarding.secret"
+
+bind = "0.0.0.0:25577"
+motd = "<gradient:aqua:white><bold>IceLegends SMP</bold></gradient> <gray>| SMP Românesc</gray>"
+show-max-players = 15
+online-mode = false
+force-key-authentication = false
+player-info-forwarding-mode = "none"
+announce-forge = false
+kick-existing-players = false
+
+[servers]
+hub = "hub:25565"
+smp = "smp:25565"
+shop = "shop:25565"
+
+try = ["hub"]
+
+[forced-hosts]
+"play.icelegends.cloud" = ["hub"]
+
+[advanced]
+compression-threshold = 256
+compression-level = -1
+login-ratelimit = 3000
+connection-timeout = 5000
+read-timeout = 30000
+haproxy-protocol = false
+tcp-fast-open = false
+bungee-plugin-message-channel = true
+show-ping-requests = false
+failover-on-unexpected-server-disconnect = true
+announce-proxy-commands = true
+log-command-executions = false
+log-player-connections = true
+accepts-transfers = false
+
+[packet-limiter]
+interval = 7
+packets-per-second = -1
+bytes-per-second = -1
+decompressed-bytes-per-second = 5242880
+
+[query]
+enabled = false
+port = 25577

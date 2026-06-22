@@ -1,0 +1,120 @@
+# ============================================================
+# Hub NPCs — IceLegends SMP
+# NPC "Paznicul" → /reguli (reguli server)
+# NPC "Meseriasul" → /profesii (cum castigi coins)
+# ============================================================
+
+# ─────────────────────────────────────────────────────────────
+#  REGULI
+# ─────────────────────────────────────────────────────────────
+
+command /reguli:
+    trigger:
+        deschideReguli(player)
+
+function deschideReguli(p: player):
+    set {_inv} to a new chest inventory with 5 rows named "§e§lReguli IceLegends"
+    loop 45 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+
+    # Regula 1 — Fair Play
+    set {_r1} to written book named colored "&b&l1. Fair Play"
+    set lore of {_r1} to colored "&7Nu folosi cheat-uri sau" and colored "&7programe externe de orice fel." and colored "" and colored "&cIncalcarea = ban permanent"
+    set slot 10 of {_inv} to {_r1}
+
+    # Regula 2 — Respect
+    set {_r2} to golden apple named colored "&a&l2. Respect"
+    set lore of {_r2} to colored "&7Respecta toti jucatorii." and colored "&7Hartuirea, rasismul si spam-ul" and colored "&7sunt interzise." and colored "" and colored "&cIncalcarea = mute / ban"
+    set slot 12 of {_inv} to {_r2}
+
+    # Regula 3 — Griefing
+    set {_r3} to tnt named colored "&c&l3. Griefing"
+    set lore of {_r3} to colored "&7Claim-uieste-ti terenul!" and colored "&7Griefing in afara claim-ului" and colored "&7poate fi sanctionat contextual." and colored "" and colored "&e/claim &7pentru a-ti proteja terenul"
+    set slot 14 of {_inv} to {_r3}
+
+    # Regula 4 — Comert
+    set {_r4} to gold ingot named colored "&e&l4. Comert"
+    set lore of {_r4} to colored "&7Respecta tranzactiile promise." and colored "&7Scam-ul pe sume mari" and colored "&7poate fi raportat la admin." and colored "" and colored "&7Dovezile (screenshot) conteaza!"
+    set slot 16 of {_inv} to {_r4}
+
+    # Regula 5 — PvP
+    set {_r5} to diamond sword named colored "&c&l5. PvP"
+    set lore of {_r5} to colored "&7PvP activ in afara claim-urilor." and colored "&7In interiorul claim-ului," and colored "&7proprietarul poate activa/dezactiva PvP." and colored "" and colored "&e/claim → &7Harta teritorii"
+    set slot 28 of {_inv} to {_r5}
+
+    # Regula 6 — Admin Final
+    set {_r6} to nether star named colored "&d&l6. Admin"
+    set lore of {_r6} to colored "&7Decizia adminului este finala." and colored "&7Raportati abuzuri in Discord." and colored "" and colored "&bDiscord: IceLegends SMP"
+    set slot 30 of {_inv} to {_r6}
+
+    # Reward pentru citit
+    set {_bonus} to emerald named colored "&a&lBonus Cititor"
+    set lore of {_bonus} to colored "&7Ai citit regulile!" and colored "&7Succes pe server!" and colored "" and colored "&8(decorativ)"
+    set slot 40 of {_inv} to {_bonus}
+
+    # Inchide
+    set {_close} to barrier named colored "&c&lInchide"
+    set slot 44 of {_inv} to {_close}
+
+    open {_inv} to {_p}
+
+on inventory click:
+    if name of event-inventory is "§e§lReguli IceLegends":
+        cancel event
+        if event-slot is 44:
+            close player's inventory
+
+# ─────────────────────────────────────────────────────────────
+#  PROFESII / CUM CASTIGI COINS
+# ─────────────────────────────────────────────────────────────
+
+command /profesii:
+    trigger:
+        deschideProfesii(player)
+
+function deschideProfesii(p: player):
+    set {_inv} to a new chest inventory with 5 rows named "§a§lCum castigi coins?"
+    loop 45 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+
+    # Quest-uri
+    set {_q} to book named colored "&6&lQuest-uri"
+    set lore of {_q} to colored "&7Completeaza misiuni zilnice" and colored "&7si saptamanale pentru coins." and colored "" and colored "&e» /quests &7— lista quest-uri"
+    set slot 10 of {_inv} to {_q}
+
+    # Parkour
+    set {_pk} to feather named colored "&d&lParkour"
+    set lore of {_pk} to colored "&7Termina parcursul si castiga:" and colored "" and colored "&a Easy: &f150 coins" and colored "&e Medium: &f350 coins" and colored "&c Hard: &f750 coins" and colored "" and colored "&e» &7Busola → Parkour → /pk start"
+    set slot 12 of {_inv} to {_pk}
+
+    # Vanzari shop
+    set {_sh} to gold ingot named colored "&a&lVanzari la Shop"
+    set lore of {_sh} to colored "&7Vinde resurse in magazin:" and colored "&7• Resurse naturale (lemn, piatra)" and colored "&7• Produse alimentare" and colored "&7• Drop-uri de mob" and colored "&7• Recolte agricole" and colored "" and colored "&e» &7Busola → Magazin"
+    set slot 14 of {_inv} to {_sh}
+
+    # Claim-uri si rankuri
+    set {_rk} to nether star named colored "&b&lRankuri"
+    set lore of {_rk} to colored "&7Fiecare rank iti da:" and colored "&7• Mai multe claim-uri disponibile" and colored "&7• Acces la zone speciale" and colored "" and colored "&8▸ Ghetar (start)" and colored "&8▸ Explorator → Veteran → Legend" and colored "" and colored "&e» &7Contacteaza adminul"
+    set slot 16 of {_inv} to {_rk}
+
+    # AuraSkills
+    set {_as} to experience bottle named colored "&2&lSkills"
+    set lore of {_as} to colored "&7Imbunatateste-ti skill-urile" and colored "&7pentru bonusuri de productie," and colored "&7combate si supravietuire." and colored "" and colored "&e» /skills &7— meniu skills"
+    set slot 28 of {_inv} to {_as}
+
+    # Events
+    set {_ev} to firework star named colored "&c&lEvenimente"
+    set lore of {_ev} to colored "&7Participa la evenimente:" and colored "&7• Turnee PvP" and colored "&7• Concursuri de constructii" and colored "&7• Provocari speciale" and colored "" and colored "&7Anunturi in Discord / chat"
+    set slot 30 of {_inv} to {_ev}
+
+    # Inchide
+    set {_close} to barrier named colored "&c&lInchide"
+    set slot 44 of {_inv} to {_close}
+
+    open {_inv} to {_p}
+
+on inventory click:
+    if name of event-inventory is "§a§lCum castigi coins?":
+        cancel event
+        if event-slot is 44:
+            close player's inventory

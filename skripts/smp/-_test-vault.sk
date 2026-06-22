@@ -1,0 +1,3 @@
+command /testbal:
+    trigger:
+        send "Balanta: %player's balance%" to player

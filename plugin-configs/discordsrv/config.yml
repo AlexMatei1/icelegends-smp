@@ -1,0 +1,79 @@
+# ============================================================
+# DiscordSRV — Configurație SMP Românesc
+# Versiune: DiscordSRV 1.x pentru PaperMC 1.21.x
+# Rol: bridge chat bidirecțional + events + moarte + connect
+# CRITIC: Console channel gol — NICIODATĂ expune consola în Discord
+# ============================================================
+
+# Token bot Discord — obținut din discord.com/developers/applications
+# Completat din .env: DISCORD_BOT_TOKEN
+BotToken: "PLACEHOLDER_DISCORD_BOT_TOKEN"
+
+# ── Canale Discord ───────────────────────────────────────────
+# ID-uri canale — completate din .env sau direct în config
+
+# Canal principal de chat (bidirecțional — Minecraft ↔ Discord)
+Channels:
+  global: "PLACEHOLDER_CHANNEL_ID_CHAT"
+
+# CRITIC: Gol — NICIODATĂ nu expune consola serverului în Discord
+# Compromiterea botului = acces la comenzi console
+DiscordConsoleChannelId: ""
+
+# Canal pentru mesajele de moarte
+DiscordGameDeathMessageChannelId: "PLACEHOLDER_CHANNEL_ID_DECESE"
+
+# ── Join/Leave în același canal ca chat-ul ──────────────────
+# Join și leave în #chat-minecraft (nu canal separat)
+DiscordJoinLeaveInSameChannel: true
+
+# ── Mesaje Române ────────────────────────────────────────────
+# Format mesaj la conectarea unui jucător
+MinecraftPlayerJoinMessage: "**{USERNAME}** s-a conectat la server! 👋"
+# Format mesaj la deconectarea unui jucător
+MinecraftPlayerLeaveMessage: "**{USERNAME}** a ieșit de pe server."
+# Format mesaj de moarte — include cauza morții
+MinecraftPlayerDeathMessage: ":skull: **{USERNAME}** {DEATHMESSAGE}"
+
+# ── Lifecycle Server ─────────────────────────────────────────
+# Mesaj la pornirea serverului (în canalul global)
+DiscordChatChannelServerStartupMessage: "✅ **Serverul a pornit!** Vă așteptăm."
+# Mesaj la oprirea serverului
+DiscordChatChannelServerShutdownMessage: "🔴 **Serverul s-a oprit.** Ne vedem curând!"
+
+# ── Format Chat Minecraft → Discord ─────────────────────────
+# Format mesaj trimis din Minecraft în Discord
+MinecraftChatToDiscordMessageFormat: "**{USERNAME}** » {MESSAGE}"
+
+# Format mesaj trimis din Discord în Minecraft
+DiscordToMinecraftChatMessageFormat: "&9[Discord] &f{USERNAME}: &7{MESSAGE}"
+
+# ── Filtre ───────────────────────────────────────────────────
+# Nu trimite mesaje de la console în Discord
+DiscordChatChannelConsoleCommandEnabled: false
+
+# Blochează comenzile executate din Discord (securitate)
+DiscordChatChannelCommandsEnabled: false
+
+# ── Avatar ────────────────────────────────────────────────────
+# Avatarul Minecraft afișat în mesajele Discord
+DiscordChatChannelEmbedMode: true
+
+# ── Webhook ───────────────────────────────────────────────────
+# Folosește webhook-uri pentru mesaje mai curate în Discord
+Experiment_WebhookChatMessageDelivery: false
+
+# ── Integrare Towny ───────────────────────────────────────────
+# War declarations apar automat în #chat-minecraft via chat bridge
+# (dacă Towny trimite anunțuri în chat global)
+
+# ── Canale Adiționale ────────────────────────────────────────
+# Configurează în channels.yml pentru canal de wars separat:
+# wars:
+#   discord: "PLACEHOLDER_CHANNEL_ID_WARS"
+#   minecraft: ""
+
+# ── Debug ────────────────────────────────────────────────────
+# Dezactivat în producție — activează doar pentru troubleshooting
+DebugJDA: false
+Debug: []

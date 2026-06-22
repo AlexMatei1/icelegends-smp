@@ -1,0 +1,64 @@
+# ============================================================
+# Hub Schematic — IceLegends SMP
+# Salveaza si restaureaza hub-ul via FastAsyncWorldEdit
+#
+# SETUP (o singura data dupa ce hub-ul arata perfect):
+#   1. Intra in hub ca admin
+#   2. Selecteaza hub-ul cu //wand (click stanga = colt 1, click dreapta = colt 2)
+#   3. Ruleaza /hubsave
+#
+# RESTAURARE COMPLETA (cand hub-ul e distrus masiv):
+#   1. Intra in hub ca admin
+#   2. Ruleaza /hubrestore
+# ============================================================
+
+options:
+    HUB_WORLD: hub
+    SCHEM_NAME: hub-backup
+    ADMIN_PERM: smp.admin
+
+# ── Salveaza schematic-ul hub-ului ───────────────────────────
+command /hubsave:
+    permission: {@ADMIN_PERM}
+    trigger:
+        if world of player is not world "{@HUB_WORLD}":
+            send "&c[Hub] Trebuie sa fii in hub! Foloseste /hub intai." to player
+            stop
+        set {hub::schematic::origin} to player's location
+        make player execute command "schem save {@SCHEM_NAME}"
+        wait 5 ticks
+        send "&a[Hub] Schematic salvat ca '{@SCHEM_NAME}'!" to player
+        send "&7Pozitia ta (%location of player%) retinuta ca origin de restaurare." to player
+
+# ── Restaureaza hub-ul din schematic ─────────────────────────
+command /hubrestore:
+    permission: {@ADMIN_PERM}
+    trigger:
+        if {hub::schematic::origin} is not set:
+            send "&c[Hub] Niciun schematic salvat! Ruleaza /hub saveschematic intai." to player
+            stop
+        send "&e[Hub] Incepe restaurarea hub-ului..." to player
+
+        # Anunta toti jucatorii din hub
+        loop all players:
+            if world of loop-player is world "{@HUB_WORLD}":
+                send title "&c&lHUB" with subtitle "&7Se restaureaza — 5 secunde..." to loop-player for 5 seconds
+
+        wait 3 seconds
+
+        # Teleporteaza admin la origin si executa paste
+        teleport player to {hub::schematic::origin}
+        wait 5 ticks
+        make player execute command "schem load {@SCHEM_NAME}"
+        wait 15 ticks
+        make player execute command "paste -a"
+        wait 10 ticks
+
+        send "&a[Hub] Hub restaurat complet din schematic!" to player
+        loop all players:
+            if world of loop-player is world "{@HUB_WORLD}":
+                send title "&a&lHUB Restaurat" with subtitle "&7Hub-ul a fost refacut!" to loop-player for 3 seconds
+
+# ── Restaurare automata dupa detectare distrugere masiva ──────
+# Blocheaza exploziile inainte sa distruga — hub-restore.sk le oprestе
+# Schematic-ul este backup nuclear in caz de griefing masiv

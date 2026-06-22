@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IceLegends — Clasament</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    .lb-hero { text-align:center; padding:40px 0 32px; }
+    .lb-hero h1 { font-family:'Exo 2',sans-serif; font-size:2.2rem; font-weight:900;
+      background:linear-gradient(135deg,#7fffd4,#4dd9ff,#a78bfa); -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent; background-clip:text; margin:0 0 8px; }
+    .lb-hero p { color:var(--muted); font-size:.88rem; }
+
+    .tab-bar { display:flex; gap:6px; margin-bottom:20px; }
+    .tab { padding:8px 18px; border-radius:10px; border:1px solid var(--border); background:transparent;
+      color:var(--muted); font-family:'Exo 2',sans-serif; font-size:.76rem; font-weight:700;
+      letter-spacing:1px; cursor:pointer; transition:all .2s; }
+    .tab.active { background:rgba(100,223,223,.12); border-color:rgba(100,223,223,.35); color:var(--ice); }
+
+    .lb-card { background:var(--glass); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; }
+    .lb-row { display:grid; grid-template-columns:42px 1fr auto; align-items:center; gap:14px;
+      padding:14px 20px; border-bottom:1px solid rgba(255,255,255,.04); transition:background .2s; }
+    .lb-row:last-child { border-bottom:none; }
+    .lb-row:hover { background:rgba(100,223,223,.04); }
+    .lb-rank { font-family:'Exo 2',sans-serif; font-size:1.1rem; font-weight:900; text-align:center;
+      width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+    .rank-1 { background:rgba(255,213,0,.15); color:#ffd700; box-shadow:0 0 12px rgba(255,213,0,.2); }
+    .rank-2 { background:rgba(192,192,192,.12); color:#c0c0c0; }
+    .rank-3 { background:rgba(205,127,50,.12); color:#cd7f32; }
+    .rank-n { background:rgba(255,255,255,.05); color:var(--muted); font-size:.85rem; }
+    .lb-name { font-weight:600; color:var(--text); }
+    .lb-name small { display:block; color:var(--muted); font-size:.72rem; margin-top:2px; }
+    .lb-val { font-family:'Exo 2',sans-serif; font-weight:800; color:var(--gold); text-align:right; }
+    .lb-val small { display:block; color:var(--muted); font-size:.68rem; font-weight:400; }
+
+    .empty { color:var(--muted); text-align:center; padding:40px; font-size:.88rem; }
+  </style>
+</head>
+<body>
+<nav class="nav-bar">
+  <a href="/player/dashboard" class="nav-brand">❄ IceLegends</a>
+  <div class="nav-links" id="nav-links"></div>
+</nav>
+
+<main class="container" style="max-width:700px">
+  <div class="lb-hero">
+    <h1>Clasament</h1>
+    <p>Top jucatori ai serverului IceLegends SMP</p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="show('balance',this)">Coins</button>
+    <button class="tab" onclick="show('playtime',this)">Timp jucat</button>
+  </div>
+
+  <div class="lb-card" id="lb-list">
+    <div class="empty">Se incarca...</div>
+  </div>
+</main>
+
+<script src="/player/ice.js"></script>
+<script>
+let data = {};
+
+async function load() {
+  const r = await fetch('/api/leaderboard');
+  data = await r.json();
+  show('balance', document.querySelector('.tab.active'));
+}
+
+function show(type, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const list = type === 'balance' ? data.balances : data.playtime;
+  const el = document.getElementById('lb-list');
+  if (!list || !list.length) { el.innerHTML = '<div class="empty">Nu exista date.</div>'; return; }
+  el.innerHTML = list.map((p, i) => {
+    const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const rankLabel = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i+1}`;
+    let val, sub;
+    if (type === 'balance') {
+      val = Math.floor(p.balance).toLocaleString('ro-RO');
+      sub = 'coins';
+    } else {
+      const h = Math.floor(p.minutes / 60), m = p.minutes % 60;
+      val = `${h}h ${m}m`;
+      sub = 'timp jucat';
+    }
+    return `<div class="lb-row">
+      <div class="lb-rank ${rankCls}">${rankLabel}</div>
+      <div class="lb-name">${escHtml(p.name)}</div>
+      <div class="lb-val">${val}<small>${sub}</small></div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+# ============================================================
+# IceLegends — Bounty System (Skript side)
+# Panel stores bounties in SQLite.
+# Panel syncs to Skript via RCON: icl_bounty_set / icl_bounty_clear
+# Skript handles instant coin payout on kill.
+# Skript logs [ICELEGENDS_BOUNTY_CLAIMED] so panel can update DB.
+# ============================================================
+
+# ── Console commands called by the panel via RCON ─────────────
+
+command /icl_bounty_set <text> <integer>:
+    description: Internal — panel sets a bounty via RCON
+    trigger:
+        if sender is a player:
+            send "&cComanda rezervata consolei." to sender
+            stop
+        set {bounty::%arg-1%} to arg-2
+        log "[ICELEGENDS_BOUNTY_SET] %arg-1% %arg-2%"
+        set {_target} to arg-1 parsed as an offline player
+        if {_target} is online:
+            send colored "&c&l[☠ BOUNTY] &7Cineva a pus o recompensa de &6%arg-2% coins &7pe capul tau! Fii precaut!" to {_target}
+            send title colored "&c☠ Bounty pe capul tau!" with subtitle colored "&7Recompensa: &6%arg-2% coins" to {_target} for 4 seconds
+
+command /icl_bounty_clear <text>:
+    description: Internal — panel clears a bounty via RCON
+    trigger:
+        if sender is a player:
+            send "&cComanda rezervata consolei." to sender
+            stop
+        delete {bounty::%arg-1%}
+        log "[ICELEGENDS_BOUNTY_CLEARED] %arg-1%"
+
+# ── Kill handler ──────────────────────────────────────────────
+
+on death:
+    if attacker is a player:
+        if victim is a player:
+            if world of victim is world "world":
+                set {_victim} to victim's name
+                set {_killer} to attacker's name
+                if {bounty::%{_victim}%} is set:
+                    set {_amt} to {bounty::%{_victim}%}
+                    delete {bounty::%{_victim}%}
+                    set {_killer_p} to {_killer} parsed as offline player
+                    add {_amt} to balance of {_killer_p}
+                    send colored "&a[&6☠&a] &7Ai incasat recompensa de &6%{_amt}% coins &7pentru uciderea lui &c%{_victim}%&7!" to {_killer_p}
+                    if victim is online:
+                        send colored "&c[&6☠&c] &7%{_killer}% &7te-a ucis si a incasat recompensa de &6%{_amt}% coins &7pusa pe capul tau!" to victim
+                    broadcast colored "&8[&6☠ Bounty&8] &6%{_killer}% &7a ucis pe &c%{_victim}% &7si a incasat recompensa de &a%{_amt}% coins&7!"
+                    log "[ICELEGENDS_BOUNTY_CLAIMED] %{_victim}% %{_killer}% %{_amt}%"

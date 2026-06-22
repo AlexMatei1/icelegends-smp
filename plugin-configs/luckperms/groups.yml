@@ -1,0 +1,125 @@
+# ============================================================
+# LuckPerms — Definiția Grupurilor
+# Aplică cu: bash scripts/setup-luckperms.sh
+# Sau manual prin comenzi /lp în joc
+# ============================================================
+# Ierarhie grupuri (greutate mai mare = prioritate mai mare):
+#   Admin (100) → Moderator (30) → Helper (20) → Jucator (10)
+# ============================================================
+
+groups:
+
+  # ── Jucator — Grup implicit pentru toți jucătorii ────────────
+  jucator:
+    # Greutate afișare în TAB și chat
+    weight: 10
+    # Prefix afișat înaintea numelui în chat
+    prefix: "&7Jucător &8| "
+    # Grup implicit — toți jucătorii noi primesc automat acest grup
+    is-default: true
+    permissions:
+      # Comenzi EssentialsX permise jucătorilor
+      - essentials.home
+      - essentials.sethome
+      - essentials.sethome.multiple
+      - essentials.sethome.multiple.jucator
+      - essentials.tpa
+      - essentials.tpaccept
+      - essentials.tpdeny
+      - essentials.spawn
+      - essentials.warp
+      - essentials.warps
+      - essentials.msg
+      - essentials.reply
+      # Towny — land claim și management town
+      - towny.command.town
+      - towny.command.nation
+      - towny.command.plot
+      # AureliumSkills — vizualizare skills
+      - auraskills.skills
+      - auraskills.stats
+      # Prism — inspecție proprie (înlocuiește CoreProtect)
+      - prism.inspect
+      # Quests — participare la quest-uri
+      - quests.quests
+      - quests.quest
+      - quests.stats
+      # Citizens — interacțiune NPC-uri
+      - citizens.npc.basic
+
+  # ── Helper — Moderator junior, primă linie de suport ─────────
+  helper:
+    weight: 20
+    prefix: "&aHelper &8| "
+    # Moștenește toate permisiunile de la Jucator
+    parents:
+      - jucator
+    permissions:
+      # EssentialsX — moderare ușoară
+      - essentials.mute
+      - essentials.unmute
+      - essentials.kick
+      - essentials.invsee
+      - essentials.seen
+      - essentials.whois
+      - essentials.sethome.multiple.helper
+      # Prism — inspecție și lookup (înlocuiește CoreProtect)
+      - prism.inspect
+      - prism.lookup
+      # Towny — vizualizare informații
+      - towny.command.townyworld
+      - towny.command.town.here
+      - towny.command.nation.here
+
+  # ── Moderator — Moderare completă, rollback grief ─────────────
+  moderator:
+    weight: 30
+    prefix: "&bModerator &8| "
+    # Moștenește toate permisiunile de la Helper
+    parents:
+      - helper
+    permissions:
+      # EssentialsX — moderare completă
+      - essentials.ban
+      - essentials.unban
+      - essentials.tempban
+      - essentials.banlist
+      - essentials.ban.exempt.override
+      - essentials.fly
+      - essentials.gamemode
+      - essentials.tp
+      - essentials.tpto
+      - essentials.teleport
+      - essentials.sethome.multiple.moderator
+      # Prism — rollback și restore (înlocuiește CoreProtect)
+      - prism.rollback
+      - prism.restore
+      - prism.teleport
+      # Multiverse — acces la toate lumile
+      - multiverse.access.*
+      - multiverse.teleport.self.*
+      # Towny — management towns (cleanup grief)
+      - towny.admin.town.delete
+      - towny.admin.town.bankhistory
+
+  # ── Admin — Control complet al serverului ────────────────────
+  admin:
+    weight: 100
+    prefix: "&cAdmin &8| "
+    # Moștenește toate permisiunile de la Moderator
+    parents:
+      - moderator
+    permissions:
+      # Toate permisiunile — wildcard
+      - "*"
+
+# ============================================================
+# NOTE: Aplică configurația cu:
+#   bash /opt/minecraft/scripts/setup-luckperms.sh
+#
+# Atribuie un jucător la un grup:
+#   /lp user <username> group add <grup>
+#
+# Verifică permisiunile unui jucător:
+#   /lp user <username> info
+# ============================================================

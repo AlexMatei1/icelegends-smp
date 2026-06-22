@@ -1,0 +1,699 @@
+# ============================================================
+# SMP Shop — Înlocuire custom pentru ShopGUI+
+# Comenzi: /shop
+# Economie: Vault (EssentialsX)
+# ============================================================
+
+options:
+    CURRENCY: coins
+
+# ── Inițializare prețuri la încărcare script ──────────────────
+
+on load:
+    set {shop::buy::OAK_LOG} to 3
+    set {shop::buy::BIRCH_LOG} to 3
+    set {shop::buy::SPRUCE_LOG} to 3
+    set {shop::buy::STONE} to 2
+    set {shop::buy::COBBLESTONE} to 1
+    set {shop::buy::IRON_INGOT} to 20
+    set {shop::buy::GOLD_INGOT} to 35
+    set {shop::buy::DIAMOND} to 200
+    set {shop::buy::COAL} to 3
+    set {shop::buy::BREAD} to 5
+    set {shop::buy::CARROT} to 3
+    set {shop::buy::COOKED_BEEF} to 12
+    set {shop::buy::COOKED_CHICKEN} to 8
+    set {shop::buy::APPLE} to 4
+    set {shop::buy::LEATHER} to 8
+    set {shop::buy::BONE} to 5
+    set {shop::buy::STRING} to 6
+    set {shop::buy::BLAZE_ROD} to 40
+    set {shop::buy::SLIME_BALL} to 15
+    set {shop::buy::ENDER_PEARL} to 30
+    set {shop::buy::WHEAT_SEEDS} to 2
+    set {shop::buy::BONE_MEAL} to 4
+    set {shop::buy::SUGAR_CANE} to 3
+    set {shop::buy::CACTUS} to 3
+    set {shop::buy::ELYTRA} to 5000
+    set {shop::buy::TOTEM_OF_UNDYING} to 3000
+    set {shop::buy::SHULKER_SHELL} to 1000
+    set {shop::buy::NAME_TAG} to 200
+    set {shop::sell::OAK_LOG} to 1
+    set {shop::sell::BIRCH_LOG} to 1
+    set {shop::sell::SPRUCE_LOG} to 1
+    set {shop::sell::IRON_INGOT} to 7
+    set {shop::sell::GOLD_INGOT} to 12
+    set {shop::sell::DIAMOND} to 70
+    set {shop::sell::COAL} to 1
+    set {shop::sell::BREAD} to 2
+    set {shop::sell::CARROT} to 1
+    set {shop::sell::COOKED_BEEF} to 4
+    set {shop::sell::COOKED_CHICKEN} to 3
+    set {shop::sell::APPLE} to 1
+    set {shop::sell::LEATHER} to 3
+    set {shop::sell::BONE} to 2
+    set {shop::sell::STRING} to 2
+    set {shop::sell::BLAZE_ROD} to 14
+    set {shop::sell::SLIME_BALL} to 5
+    set {shop::sell::ENDER_PEARL} to 10
+    set {shop::sell::BONE_MEAL} to 1
+    set {shop::sell::SUGAR_CANE} to 1
+    set {shop::sell::CACTUS} to 1
+    set {shop::qty::OAK_LOG} to 64
+    set {shop::qty::BIRCH_LOG} to 64
+    set {shop::qty::SPRUCE_LOG} to 64
+    set {shop::qty::STONE} to 64
+    set {shop::qty::COBBLESTONE} to 64
+    set {shop::qty::IRON_INGOT} to 16
+    set {shop::qty::GOLD_INGOT} to 16
+    set {shop::qty::DIAMOND} to 1
+    set {shop::qty::COAL} to 32
+    set {shop::qty::BREAD} to 32
+    set {shop::qty::CARROT} to 32
+    set {shop::qty::COOKED_BEEF} to 16
+    set {shop::qty::COOKED_CHICKEN} to 16
+    set {shop::qty::APPLE} to 16
+    set {shop::qty::LEATHER} to 16
+    set {shop::qty::BONE} to 16
+    set {shop::qty::STRING} to 16
+    set {shop::qty::BLAZE_ROD} to 8
+    set {shop::qty::SLIME_BALL} to 8
+    set {shop::qty::ENDER_PEARL} to 4
+    set {shop::qty::WHEAT_SEEDS} to 32
+    set {shop::qty::BONE_MEAL} to 32
+    set {shop::qty::SUGAR_CANE} to 32
+    set {shop::qty::CACTUS} to 32
+    set {shop::qty::ELYTRA} to 1
+    set {shop::qty::TOTEM_OF_UNDYING} to 1
+    set {shop::qty::SHULKER_SHELL} to 1
+    set {shop::qty::NAME_TAG} to 1
+
+# ── Funcție: generează lore pentru un item ────────────────────
+
+function buildLore(mat: text) :: texts:
+    set {_buy} to {shop::buy::%{_mat}%}
+    if {_buy} is not set:
+        set {_buy} to 0
+    set {_sell} to {shop::sell::%{_mat}%}
+    if {_sell} is not set:
+        set {_sell} to 0
+    set {_qty} to {shop::qty::%{_mat}%}
+    if {_qty} is not set:
+        set {_qty} to 64
+    set {_tb} to {_buy} * {_qty}
+    set {_ts} to {_sell} * {_qty}
+    set {_l1} to "&7━━━━━━━━━━━━━━━━━━"
+    if {_buy} > 0:
+        set {_l2} to "&aCumpără &7x%{_qty}%: &e%{_tb}% {@CURRENCY}"
+    else:
+        set {_l2} to "&7Nu se poate cumpara"
+    if {_sell} > 0:
+        set {_l3} to "&6Vinde &7x%{_qty}%: &e%{_ts}% {@CURRENCY}"
+    else:
+        set {_l3} to "&7Nu se poate vinde"
+    set {_l4} to "&7━━━━━━━━━━━━━━━━━━"
+    set {_l5} to "&bClic stanga &7-> cumpara"
+    if {_sell} > 0:
+        set {_l6} to "&bClic dreapta &7-> vinde"
+        return {_l1}, {_l2}, {_l3}, {_l4}, {_l5}, {_l6}
+    return {_l1}, {_l2}, {_l3}, {_l4}, {_l5}
+
+# ── Funcție: detectează material key din item ─────────────────
+
+function getMatKey(t: item) :: text:
+    if type of {_t} is oak log:
+        return "OAK_LOG"
+    else if type of {_t} is birch log:
+        return "BIRCH_LOG"
+    else if type of {_t} is spruce log:
+        return "SPRUCE_LOG"
+    else if type of {_t} is stone:
+        return "STONE"
+    else if type of {_t} is cobblestone:
+        return "COBBLESTONE"
+    else if type of {_t} is iron ingot:
+        return "IRON_INGOT"
+    else if type of {_t} is gold ingot:
+        return "GOLD_INGOT"
+    else if type of {_t} is diamond:
+        return "DIAMOND"
+    else if type of {_t} is coal:
+        return "COAL"
+    else if type of {_t} is bread:
+        return "BREAD"
+    else if type of {_t} is carrot:
+        return "CARROT"
+    else if type of {_t} is cooked beef:
+        return "COOKED_BEEF"
+    else if type of {_t} is cooked chicken:
+        return "COOKED_CHICKEN"
+    else if type of {_t} is apple:
+        return "APPLE"
+    else if type of {_t} is leather:
+        return "LEATHER"
+    else if type of {_t} is bone:
+        return "BONE"
+    else if type of {_t} is string:
+        return "STRING"
+    else if type of {_t} is blaze rod:
+        return "BLAZE_ROD"
+    else if type of {_t} is slime ball:
+        return "SLIME_BALL"
+    else if type of {_t} is ender pearl:
+        return "ENDER_PEARL"
+    else if type of {_t} is wheat seeds:
+        return "WHEAT_SEEDS"
+    else if type of {_t} is bone meal:
+        return "BONE_MEAL"
+    else if type of {_t} is sugar cane:
+        return "SUGAR_CANE"
+    else if type of {_t} is cactus:
+        return "CACTUS"
+    else if type of {_t} is elytra:
+        return "ELYTRA"
+    else if type of {_t} is totem of undying:
+        return "TOTEM_OF_UNDYING"
+    else if type of {_t} is shulker shell:
+        return "SHULKER_SHELL"
+    else if type of {_t} is name tag:
+        return "NAME_TAG"
+    return ""
+
+# ── Funcție: construiește item de shop ────────────────────────
+
+function makeShopItem(mat: text, label: text) :: item:
+    if {_mat} is "OAK_LOG":
+        set {_item} to oak log named {_label}
+    else if {_mat} is "BIRCH_LOG":
+        set {_item} to birch log named {_label}
+    else if {_mat} is "SPRUCE_LOG":
+        set {_item} to spruce log named {_label}
+    else if {_mat} is "STONE":
+        set {_item} to stone named {_label}
+    else if {_mat} is "COBBLESTONE":
+        set {_item} to cobblestone named {_label}
+    else if {_mat} is "IRON_INGOT":
+        set {_item} to iron ingot named {_label}
+    else if {_mat} is "GOLD_INGOT":
+        set {_item} to gold ingot named {_label}
+    else if {_mat} is "DIAMOND":
+        set {_item} to diamond named {_label}
+    else if {_mat} is "COAL":
+        set {_item} to coal named {_label}
+    else if {_mat} is "BREAD":
+        set {_item} to bread named {_label}
+    else if {_mat} is "CARROT":
+        set {_item} to carrot named {_label}
+    else if {_mat} is "COOKED_BEEF":
+        set {_item} to cooked beef named {_label}
+    else if {_mat} is "COOKED_CHICKEN":
+        set {_item} to cooked chicken named {_label}
+    else if {_mat} is "APPLE":
+        set {_item} to apple named {_label}
+    else if {_mat} is "LEATHER":
+        set {_item} to leather named {_label}
+    else if {_mat} is "BONE":
+        set {_item} to bone named {_label}
+    else if {_mat} is "STRING":
+        set {_item} to string named {_label}
+    else if {_mat} is "BLAZE_ROD":
+        set {_item} to blaze rod named {_label}
+    else if {_mat} is "SLIME_BALL":
+        set {_item} to slime ball named {_label}
+    else if {_mat} is "ENDER_PEARL":
+        set {_item} to ender pearl named {_label}
+    else if {_mat} is "WHEAT_SEEDS":
+        set {_item} to wheat seeds named {_label}
+    else if {_mat} is "BONE_MEAL":
+        set {_item} to bone meal named {_label}
+    else if {_mat} is "SUGAR_CANE":
+        set {_item} to sugar cane named {_label}
+    else if {_mat} is "CACTUS":
+        set {_item} to cactus named {_label}
+    else if {_mat} is "ELYTRA":
+        set {_item} to elytra named {_label}
+    else if {_mat} is "TOTEM_OF_UNDYING":
+        set {_item} to totem of undying named {_label}
+    else if {_mat} is "SHULKER_SHELL":
+        set {_item} to shulker shell named {_label}
+    else if {_mat} is "NAME_TAG":
+        set {_item} to name tag named {_label}
+    else:
+        return air
+    set {_lore::*} to buildLore({_mat})
+    set lore of {_item} to {_lore::*}
+    return {_item}
+
+# ── Funcție: dă item jucătorului din material key ─────────────
+
+function giveByMat(p: player, mat: text, qty: number):
+    if {_mat} is "OAK_LOG":
+        give {_qty} of oak log to {_p}
+    else if {_mat} is "BIRCH_LOG":
+        give {_qty} of birch log to {_p}
+    else if {_mat} is "SPRUCE_LOG":
+        give {_qty} of spruce log to {_p}
+    else if {_mat} is "STONE":
+        give {_qty} of stone to {_p}
+    else if {_mat} is "COBBLESTONE":
+        give {_qty} of cobblestone to {_p}
+    else if {_mat} is "IRON_INGOT":
+        give {_qty} of iron ingot to {_p}
+    else if {_mat} is "GOLD_INGOT":
+        give {_qty} of gold ingot to {_p}
+    else if {_mat} is "DIAMOND":
+        give {_qty} of diamond to {_p}
+    else if {_mat} is "COAL":
+        give {_qty} of coal to {_p}
+    else if {_mat} is "BREAD":
+        give {_qty} of bread to {_p}
+    else if {_mat} is "CARROT":
+        give {_qty} of carrot to {_p}
+    else if {_mat} is "COOKED_BEEF":
+        give {_qty} of cooked beef to {_p}
+    else if {_mat} is "COOKED_CHICKEN":
+        give {_qty} of cooked chicken to {_p}
+    else if {_mat} is "APPLE":
+        give {_qty} of apple to {_p}
+    else if {_mat} is "LEATHER":
+        give {_qty} of leather to {_p}
+    else if {_mat} is "BONE":
+        give {_qty} of bone to {_p}
+    else if {_mat} is "STRING":
+        give {_qty} of string to {_p}
+    else if {_mat} is "BLAZE_ROD":
+        give {_qty} of blaze rod to {_p}
+    else if {_mat} is "SLIME_BALL":
+        give {_qty} of slime ball to {_p}
+    else if {_mat} is "ENDER_PEARL":
+        give {_qty} of ender pearl to {_p}
+    else if {_mat} is "WHEAT_SEEDS":
+        give {_qty} of wheat seeds to {_p}
+    else if {_mat} is "BONE_MEAL":
+        give {_qty} of bone meal to {_p}
+    else if {_mat} is "SUGAR_CANE":
+        give {_qty} of sugar cane to {_p}
+    else if {_mat} is "CACTUS":
+        give {_qty} of cactus to {_p}
+    else if {_mat} is "ELYTRA":
+        give {_qty} of elytra to {_p}
+    else if {_mat} is "TOTEM_OF_UNDYING":
+        give {_qty} of totem of undying to {_p}
+    else if {_mat} is "SHULKER_SHELL":
+        give {_qty} of shulker shell to {_p}
+    else if {_mat} is "NAME_TAG":
+        give {_qty} of name tag to {_p}
+
+# ── Funcție: ia item din inventarul jucătorului ───────────────
+
+function takeByMat(p: player, mat: text, qty: number) :: number:
+    if {_mat} is "OAK_LOG":
+        set {_have} to amount of oak log in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of oak log from {_p}'s inventory
+        return -1
+    else if {_mat} is "BIRCH_LOG":
+        set {_have} to amount of birch log in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of birch log from {_p}'s inventory
+        return -1
+    else if {_mat} is "SPRUCE_LOG":
+        set {_have} to amount of spruce log in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of spruce log from {_p}'s inventory
+        return -1
+    else if {_mat} is "IRON_INGOT":
+        set {_have} to amount of iron ingot in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of iron ingot from {_p}'s inventory
+        return -1
+    else if {_mat} is "GOLD_INGOT":
+        set {_have} to amount of gold ingot in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of gold ingot from {_p}'s inventory
+        return -1
+    else if {_mat} is "DIAMOND":
+        set {_have} to amount of diamond in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of diamond from {_p}'s inventory
+        return -1
+    else if {_mat} is "COAL":
+        set {_have} to amount of coal in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of coal from {_p}'s inventory
+        return -1
+    else if {_mat} is "BREAD":
+        set {_have} to amount of bread in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of bread from {_p}'s inventory
+        return -1
+    else if {_mat} is "CARROT":
+        set {_have} to amount of carrot in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of carrot from {_p}'s inventory
+        return -1
+    else if {_mat} is "COOKED_BEEF":
+        set {_have} to amount of cooked beef in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of cooked beef from {_p}'s inventory
+        return -1
+    else if {_mat} is "COOKED_CHICKEN":
+        set {_have} to amount of cooked chicken in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of cooked chicken from {_p}'s inventory
+        return -1
+    else if {_mat} is "APPLE":
+        set {_have} to amount of apple in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of apple from {_p}'s inventory
+        return -1
+    else if {_mat} is "LEATHER":
+        set {_have} to amount of leather in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of leather from {_p}'s inventory
+        return -1
+    else if {_mat} is "BONE":
+        set {_have} to amount of bone in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of bone from {_p}'s inventory
+        return -1
+    else if {_mat} is "STRING":
+        set {_have} to amount of string in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of string from {_p}'s inventory
+        return -1
+    else if {_mat} is "BLAZE_ROD":
+        set {_have} to amount of blaze rod in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of blaze rod from {_p}'s inventory
+        return -1
+    else if {_mat} is "SLIME_BALL":
+        set {_have} to amount of slime ball in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of slime ball from {_p}'s inventory
+        return -1
+    else if {_mat} is "ENDER_PEARL":
+        set {_have} to amount of ender pearl in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of ender pearl from {_p}'s inventory
+        return -1
+    else if {_mat} is "BONE_MEAL":
+        set {_have} to amount of bone meal in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of bone meal from {_p}'s inventory
+        return -1
+    else if {_mat} is "SUGAR_CANE":
+        set {_have} to amount of sugar cane in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of sugar cane from {_p}'s inventory
+        return -1
+    else if {_mat} is "CACTUS":
+        set {_have} to amount of cactus in {_p}'s inventory
+        if {_have} < {_qty}:
+            return {_have}
+        remove {_qty} of cactus from {_p}'s inventory
+        return -1
+    return 0
+
+# ── Meniu principal ───────────────────────────────────────────
+
+function deschideMain(p: player):
+    set {_inv} to a new chest inventory with 3 rows named "§6§lSMP Shop [SMP]"
+    loop 27 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+    set {_r} to iron pickaxe named "&6Resurse"
+    set lore of {_r} to "&7Lemn, Piatra, Metale", "&8-> Click pentru a deschide"
+    set slot 10 of {_inv} to {_r}
+    set {_h} to bread named "&aHrana"
+    set lore of {_h} to "&7Paine, Carne, Fructe", "&8-> Click pentru a deschide"
+    set slot 12 of {_inv} to {_h}
+    set {_m} to bone named "&cDrops Mob-uri"
+    set lore of {_m} to "&7Piele, Blaze Rod, Perle", "&8-> Click pentru a deschide"
+    set slot 14 of {_inv} to {_m}
+    set {_a} to wheat seeds named "&2Agricultura"
+    set lore of {_a} to "&7Seminte, Trestie, Cactus", "&8-> Click pentru a deschide"
+    set slot 16 of {_inv} to {_a}
+    set {_s} to elytra named "&5Special"
+    set lore of {_s} to "&7Elitre, Totem, Shulker Shell", "&8-> Click pentru a deschide", "&4Preturi ridicate - end-game"
+    set slot 22 of {_inv} to {_s}
+    set {shop::%{_p}'s uuid%::page} to "main"
+    open {_inv} to {_p}
+
+# ── Meniu Resurse ─────────────────────────────────────────────
+
+function deschideResurse(p: player):
+    set {_inv} to a new chest inventory with 6 rows named "§6Resurse [SMP]"
+    loop 54 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+    set {shop::%{_p}'s uuid%::slot::10} to "OAK_LOG"
+    set {shop::%{_p}'s uuid%::slot::11} to "BIRCH_LOG"
+    set {shop::%{_p}'s uuid%::slot::12} to "SPRUCE_LOG"
+    set {shop::%{_p}'s uuid%::slot::13} to "STONE"
+    set {shop::%{_p}'s uuid%::slot::14} to "COBBLESTONE"
+    set {shop::%{_p}'s uuid%::slot::19} to "IRON_INGOT"
+    set {shop::%{_p}'s uuid%::slot::20} to "GOLD_INGOT"
+    set {shop::%{_p}'s uuid%::slot::21} to "DIAMOND"
+    set {shop::%{_p}'s uuid%::slot::22} to "COAL"
+    set slot 10 of {_inv} to makeShopItem("OAK_LOG", "&fButean de Stejar")
+    set slot 11 of {_inv} to makeShopItem("BIRCH_LOG", "&fButean de Mesteacan")
+    set slot 12 of {_inv} to makeShopItem("SPRUCE_LOG", "&fButean de Molid")
+    set slot 13 of {_inv} to makeShopItem("STONE", "&7Piatra")
+    set slot 14 of {_inv} to makeShopItem("COBBLESTONE", "&7Piatra Bruta")
+    set slot 19 of {_inv} to makeShopItem("IRON_INGOT", "&fLingou de Fier")
+    set slot 20 of {_inv} to makeShopItem("GOLD_INGOT", "&6Lingou de Aur")
+    set slot 21 of {_inv} to makeShopItem("DIAMOND", "&bDiamant")
+    set slot 22 of {_inv} to makeShopItem("COAL", "&8Carbune")
+    set slot 49 of {_inv} to red stained glass pane named "&cInapoi"
+    set {shop::%{_p}'s uuid%::page} to "cat"
+    open {_inv} to {_p}
+
+# ── Meniu Hrană ───────────────────────────────────────────────
+
+function deschideHrana(p: player):
+    set {_inv} to a new chest inventory with 6 rows named "§aHrana [SMP]"
+    loop 54 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+    set {shop::%{_p}'s uuid%::slot::10} to "BREAD"
+    set {shop::%{_p}'s uuid%::slot::11} to "CARROT"
+    set {shop::%{_p}'s uuid%::slot::12} to "COOKED_BEEF"
+    set {shop::%{_p}'s uuid%::slot::13} to "COOKED_CHICKEN"
+    set {shop::%{_p}'s uuid%::slot::14} to "APPLE"
+    set slot 10 of {_inv} to makeShopItem("BREAD", "&fPaine")
+    set slot 11 of {_inv} to makeShopItem("CARROT", "&6Morcov")
+    set slot 12 of {_inv} to makeShopItem("COOKED_BEEF", "&cBiftek Fiert")
+    set slot 13 of {_inv} to makeShopItem("COOKED_CHICKEN", "&fPui Fiert")
+    set slot 14 of {_inv} to makeShopItem("APPLE", "&cMar")
+    set slot 49 of {_inv} to red stained glass pane named "&cInapoi"
+    set {shop::%{_p}'s uuid%::page} to "cat"
+    open {_inv} to {_p}
+
+# ── Meniu Mob Drops ───────────────────────────────────────────
+
+function deschideMobDrops(p: player):
+    set {_inv} to a new chest inventory with 6 rows named "§cDrops Mob [SMP]"
+    loop 54 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+    set {shop::%{_p}'s uuid%::slot::10} to "LEATHER"
+    set {shop::%{_p}'s uuid%::slot::11} to "BONE"
+    set {shop::%{_p}'s uuid%::slot::12} to "STRING"
+    set {shop::%{_p}'s uuid%::slot::13} to "BLAZE_ROD"
+    set {shop::%{_p}'s uuid%::slot::14} to "SLIME_BALL"
+    set {shop::%{_p}'s uuid%::slot::19} to "ENDER_PEARL"
+    set slot 10 of {_inv} to makeShopItem("LEATHER", "&6Piele")
+    set slot 11 of {_inv} to makeShopItem("BONE", "&fOs")
+    set slot 12 of {_inv} to makeShopItem("STRING", "&fFir")
+    set slot 13 of {_inv} to makeShopItem("BLAZE_ROD", "&eBat de Blaze")
+    set slot 14 of {_inv} to makeShopItem("SLIME_BALL", "&aBila de Slime")
+    set slot 19 of {_inv} to makeShopItem("ENDER_PEARL", "&5Perla de Ender")
+    set slot 49 of {_inv} to red stained glass pane named "&cInapoi"
+    set {shop::%{_p}'s uuid%::page} to "cat"
+    open {_inv} to {_p}
+
+# ── Meniu Agricultură ─────────────────────────────────────────
+
+function deschideAgricultura(p: player):
+    set {_inv} to a new chest inventory with 6 rows named "§2Agricultura [SMP]"
+    loop 54 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+    set {shop::%{_p}'s uuid%::slot::10} to "WHEAT_SEEDS"
+    set {shop::%{_p}'s uuid%::slot::11} to "BONE_MEAL"
+    set {shop::%{_p}'s uuid%::slot::12} to "SUGAR_CANE"
+    set {shop::%{_p}'s uuid%::slot::13} to "CACTUS"
+    set slot 10 of {_inv} to makeShopItem("WHEAT_SEEDS", "&fSeminte de Grau")
+    set slot 11 of {_inv} to makeShopItem("BONE_MEAL", "&fFaina de Os")
+    set slot 12 of {_inv} to makeShopItem("SUGAR_CANE", "&aTrestie de Zahar")
+    set slot 13 of {_inv} to makeShopItem("CACTUS", "&2Cactus")
+    set slot 49 of {_inv} to red stained glass pane named "&cInapoi"
+    set {shop::%{_p}'s uuid%::page} to "cat"
+    open {_inv} to {_p}
+
+# ── Meniu Special ─────────────────────────────────────────────
+
+function deschideSpecial(p: player):
+    set {_inv} to a new chest inventory with 6 rows named "§5Special [SMP]"
+    loop 54 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+    set {shop::%{_p}'s uuid%::slot::10} to "ELYTRA"
+    set {shop::%{_p}'s uuid%::slot::11} to "TOTEM_OF_UNDYING"
+    set {shop::%{_p}'s uuid%::slot::12} to "SHULKER_SHELL"
+    set {shop::%{_p}'s uuid%::slot::13} to "NAME_TAG"
+    set slot 10 of {_inv} to makeShopItem("ELYTRA", "&dElitre")
+    set slot 11 of {_inv} to makeShopItem("TOTEM_OF_UNDYING", "&6Totem al Nemuririi")
+    set slot 12 of {_inv} to makeShopItem("SHULKER_SHELL", "&5Cochilie Shulker")
+    set slot 13 of {_inv} to makeShopItem("NAME_TAG", "&fEticheta Nume")
+    set slot 49 of {_inv} to red stained glass pane named "&cInapoi"
+    set {shop::%{_p}'s uuid%::page} to "cat"
+    open {_inv} to {_p}
+
+# ── Comanda /shop ─────────────────────────────────────────────
+
+command /shop [<text>]:
+    permission: smp.shop
+    permission message: "&cNu ai permisiunea de a folosi shop-ul."
+    trigger:
+        if arg-1 is "resurse":
+            deschideResurse(player)
+        else if arg-1 is "hrana":
+            deschideHrana(player)
+        else if arg-1 is "mobdrops":
+            deschideMobDrops(player)
+        else if arg-1 is "agricultura":
+            deschideAgricultura(player)
+        else if arg-1 is "special":
+            deschideSpecial(player)
+        else:
+            deschideMain(player)
+
+# ── Handler click inventar ────────────────────────────────────
+
+on inventory click:
+    if name of event-inventory contains "[SMP]":
+        cancel event
+        if name of event-inventory is "§6§lSMP Shop [SMP]":
+            if event-slot is 10:
+                deschideResurse(player)
+            else if event-slot is 12:
+                deschideHrana(player)
+            else if event-slot is 14:
+                deschideMobDrops(player)
+            else if event-slot is 16:
+                deschideAgricultura(player)
+            else if event-slot is 22:
+                deschideSpecial(player)
+            stop
+        if event-slot is 49:
+            deschideMain(player)
+            stop
+        if event-item is not set:
+            stop
+        if event-item is air:
+            stop
+        if type of event-item is gray stained glass pane:
+            stop
+        if type of event-item is red stained glass pane:
+            stop
+        set {_mat} to getMatKey(event-item)
+        if {_mat} is "":
+            stop
+        set {_buy} to {shop::buy::%{_mat}%}
+        if {_buy} is not set:
+            set {_buy} to 0
+        set {_sell} to {shop::sell::%{_mat}%}
+        if {_sell} is not set:
+            set {_sell} to 0
+        set {_qty} to {shop::qty::%{_mat}%}
+        if {_qty} is not set:
+            set {_qty} to 64
+        set {_ct} to "%event-clicktype%"
+        set {_buying} to false
+        set {_selling} to false
+        if {_ct} is "left":
+            set {_buying} to true
+        if {_ct} is "shift left":
+            set {_buying} to true
+        if {_ct} is "right":
+            set {_selling} to true
+        if {_ct} is "shift right":
+            set {_selling} to true
+        if {_buying} is true:
+            if {_buy} is 0:
+                send "&cAcest item nu se poate cumpara." to player
+                stop
+            set {_cost} to {_buy} * {_qty}
+            if player's balance < {_cost}:
+                send "&cNu ai destui bani! Cost: &e%{_cost}% coins&c, sold: &e%player's balance% coins&c." to player
+                stop
+            remove {_cost} from player's balance
+            giveByMat(player, {_mat}, {_qty})
+            send "&a+ Cumparat &f%{_qty}%x %{_mat}% &apentru &e%{_cost}% coins&a." to player
+        if {_selling} is true:
+            if {_sell} is 0:
+                send "&cAcest item nu se poate vinde." to player
+                stop
+            set {_have} to takeByMat(player, {_mat}, {_qty})
+            if {_have} is not -1:
+                send "&cNu ai destule! Ai &e%{_have}%x&c, nevoie de &e%{_qty}%x&c." to player
+                stop
+            set {_earn} to {_sell} * {_qty}
+            add {_earn} to player's balance
+            send "&a+ Vandut &f%{_qty}%x %{_mat}% &apentru &e%{_earn}% coins&a." to player
+
+# ── Curata starea la inchidere inventar ───────────────────────
+
+on inventory close:
+    if name of event-inventory contains "[SMP]":
+        delete {shop::%player's uuid%::page}
+
+# ── Comanda /sell — vinde item din mana ──────────────────────
+
+command /sell [<number>]:
+    permission: smp.shop
+    permission message: "&cNu ai permisiunea."
+    trigger:
+        set {_item} to player's held item
+        if {_item} is air:
+            send "&cTine un item in mana pentru a-l vinde." to player
+            stop
+        set {_mat} to getMatKey({_item})
+        if {_mat} is "":
+            send "&cAcest item nu se poate vinde in shop. Verifica &e/shop&c." to player
+            stop
+        set {_sell} to {shop::sell::%{_mat}%}
+        if {_sell} is not set:
+            send "&cAcest item nu se poate vinde." to player
+            stop
+        set {_maxQty} to {shop::qty::%{_mat}%}
+        if {_maxQty} is not set:
+            set {_maxQty} to 64
+        set {_qty} to arg-1
+        if arg-1 is not set:
+            set {_qty} to {_maxQty}
+        if {_qty} > {_maxQty}:
+            set {_qty} to {_maxQty}
+        set {_have} to takeByMat(player, {_mat}, {_qty})
+        if {_have} is not -1:
+            send "&cNu ai destule! Ai &e%{_have}%x&c, vrei sa vinzi &e%{_qty}%x&c." to player
+            stop
+        set {_earn} to {_sell} * {_qty}
+        add {_earn} to player's balance
+        send "&a+ Vandut &f%{_qty}%x %{_mat}% &apentru &e%{_earn}% coins&a. Sold: &e%player's balance% coins&a." to player

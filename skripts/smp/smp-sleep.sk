@@ -1,0 +1,123 @@
+# ============================================================
+# SMP Sleep — IceLegends SMP
+# Ziua se face cand SLEEP_PERCENT% din jucatorii activi dorm.
+# Jucatorii AFK (icelegends-afk.sk) nu sunt numarati.
+# ============================================================
+
+options:
+    SMP_WORLD: world
+    SLEEP_PERCENT: 30
+
+# Skript gestioneaza pragul de 30% — vanilla necesita 100% implicit
+# deci nu interfereaza (Skript sare la zi inainte ca vanilla sa contorizeze)
+on script load:
+    wait 5 ticks
+    delete {sleep::in_bed::*}
+
+on quit:
+    delete {sleep::in_bed::%uuid of player%}
+
+# ── Polling la fiecare 5 ticks (0.25s) ──────────────────────
+# Detecteaza intrarea/iesirea din pat fara event dedicat
+
+every 5 ticks:
+    loop all players:
+        if world of loop-player is world "{@SMP_WORLD}":
+            set {_uuid} to "%uuid of loop-player%"
+            if loop-player is sleeping:
+                if {sleep::in_bed::%{_uuid}%} is not true:
+                    set {sleep::in_bed::%{_uuid}%} to true
+                    showSleepBar()
+                    checkAndSkip()
+            else:
+                if {sleep::in_bed::%{_uuid}%} is true:
+                    delete {sleep::in_bed::%{_uuid}%}
+                    showSleepBar()
+
+# ── Numara jucatorii eligibili (non-AFK, in SMP) ─────────────
+
+function eligibleCount() :: number:
+    set {_n} to 0
+    loop all players:
+        if world of loop-player is world "world":
+            if {afk::%uuid of loop-player%} is not true:
+                add 1 to {_n}
+    return {_n}
+
+# ── Numara cei care dorm ──────────────────────────────────────
+
+function sleepingCount() :: number:
+    set {_n} to 0
+    loop all players:
+        if world of loop-player is world "world":
+            if {afk::%uuid of loop-player%} is not true:
+                if loop-player is sleeping:
+                    add 1 to {_n}
+    return {_n}
+
+# ── Cati jucatori trebuie sa doarma ──────────────────────────
+
+function neededCount() :: number:
+    set {_e} to eligibleCount()
+    if {_e} <= 0:
+        return 1
+    set {_n} to ceiling({_e} * {@SLEEP_PERCENT} / 100)
+    if {_n} < 1:
+        return 1
+    return {_n}
+
+# ── Afiseaza progress in action bar la toti jucatorii SMP ────
+
+function showSleepBar():
+    set {_s} to sleepingCount()
+    set {_n} to neededCount()
+    if {_s} <= 0:
+        stop
+    loop all players:
+        if world of loop-player is world "world":
+            send action bar colored "&7🌙 Dorm: &e%{_s}%&7/&e%{_n}% &7— inca &e%({_n} - {_s})% &7jucatori pana la zi" to loop-player
+
+# ── Sare la zi cand pragul e atins ───────────────────────────
+
+function checkAndSkip():
+    set {_s} to sleepingCount()
+    set {_n} to neededCount()
+    if {_s} < {_n}:
+        stop
+    set {_e} to eligibleCount()
+    execute console command "time set 1000 world"
+    execute console command "weather world sun"
+    set {sleep::last_skip} to now
+    loop all players:
+        if world of loop-player is world "world":
+            send title colored "&e&l☀  Buna Dimineata!" with subtitle colored "&7%{_s}%/%{_e}% jucatori au dormit" to loop-player for 4 seconds
+            send action bar "" to loop-player
+    broadcast colored "&8[&6IceLegends&8] &e☀ &f%{_s}%&7/&f%{_e}% &7jucatori au dormit &8— &e&lBuna dimineata!"
+
+# ── Blocheaza phantom spawn 5 minute dupa ce s-a dormit ──────
+# (inlocuieste reset timeSinceRest care nu e accesibil direct din Skript)
+
+on spawn of a phantom:
+    if world of event-entity is world "world":
+        if {sleep::last_skip} is set:
+            if difference between {sleep::last_skip} and now < 5 minutes:
+                cancel event
+
+# ── /sleepstatus (admin) ──────────────────────────────────────
+
+command /sleepstatus:
+    permission: smp.admin
+    trigger:
+        set {_s} to sleepingCount()
+        set {_e} to eligibleCount()
+        set {_n} to neededCount()
+        set {_pct} to {@SLEEP_PERCENT}
+        send colored "&7=== Sleep Status SMP ===" to player
+        send colored "  &7Jucatori eligibili (non-AFK in SMP): &e%{_e}%" to player
+        send colored "  &7Dorm acum: &e%{_s}%" to player
+        send colored "  &7Prag de %{_pct}% la suta — necesari: &e%{_n}%" to player
+        if {_s} >= {_n}:
+            send colored "  &a✔ Conditie indeplinita!" to player
+        else:
+            set {_left} to {_n} - {_s}
+            send colored "  &c✘ Mai trebuie &e%{_left}% &cjucatori." to player

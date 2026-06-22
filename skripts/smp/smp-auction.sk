@@ -1,0 +1,223 @@
+# ============================================================
+# IceLegends — Auction House
+# /ah — deschide lista anunturi active
+# /ah sell <pret> — listeaza itemul in mana
+# /ah cancel — anuleaza anuntul tau
+# Expirata dupa 48h. Taxe: 5% la listare.
+# ============================================================
+
+options:
+    PREFIX: &8[&6AH&8]
+    TAX: 5
+    DURATION: 172800
+    MAX_PER_PLAYER: 5
+
+variables:
+    {ah::next_id} = 1
+
+# ── Comenzi principale ────────────────────────────────────────
+
+command /ah [<text>] [<number>]:
+    aliases: /auction
+    permission: smp.shop
+    description: Casa de licitatii.
+    trigger:
+        if arg-1 is not set:
+            openAH(player, 1)
+            stop
+        set {_sub} to arg-1 in lower case
+        if {_sub} is "sell":
+            if arg-2 is not set:
+                send colored "{@PREFIX} &cFoloseste: &e/ah sell <pret>" to player
+                stop
+            ahSell(player, arg-2)
+        else if {_sub} is "cancel":
+            openAHCancel(player)
+        else if {_sub} is "search":
+            openAH(player, 1)
+        else:
+            send colored "{@PREFIX} &c/ah &8| &c/ah sell <pret> &8| &c/ah cancel" to player
+
+# ── Functii ───────────────────────────────────────────────────
+
+function ahSell(p: player, price: number):
+    set {_uuid} to "%{_p}'s uuid%"
+    if {_price} < 1:
+        send colored "{@PREFIX} &cPretul minim este &e1 coin&c." to {_p}
+        stop
+    if {_price} > 1000000:
+        send colored "{@PREFIX} &cPretul maxim este &e1.000.000 coins&c." to {_p}
+        stop
+    set {_item} to {_p}'s tool
+    if {_item} is air:
+        send colored "{@PREFIX} &cTine un item in mana pentru a-l lista." to {_p}
+        stop
+    # Verifica limita per jucator
+    set {_count} to 0
+    loop {ah::next_id} times:
+        set {_i} to loop-number
+        if {ah::listing::%{_i}%::active} is true:
+            if {ah::listing::%{_i}%::seller_uuid} is {_uuid}:
+                add 1 to {_count}
+    if {_count} >= {@MAX_PER_PLAYER}:
+        send colored "{@PREFIX} &cAi deja %{_count}% anunturi active (max {@MAX_PER_PLAYER})." to {_p}
+        stop
+    # Taxa listare
+    set {_tax} to ceil({_price} * {@TAX} / 100)
+    if {_p}'s balance < {_tax}:
+        send colored "{@PREFIX} &cNu ai destui coins pentru taxa de listare (&e%{_tax}% coins&c)." to {_p}
+        stop
+    remove {_tax} from {_p}'s balance
+    remove 1 of {_item} from {_p}
+    # Creeaza listing
+    set {_id} to {ah::next_id}
+    add 1 to {ah::next_id}
+    set {ah::listing::%{_id}%::active} to true
+    set {ah::listing::%{_id}%::seller_uuid} to {_uuid}
+    set {ah::listing::%{_id}%::seller_name} to {_p}'s name
+    set {ah::listing::%{_id}%::item} to {_item}
+    set {ah::listing::%{_id}%::price} to {_price}
+    set {ah::listing::%{_id}%::time} to floor(unix timestamp of now)
+    send colored "{@PREFIX} &aItem listat pentru &6%{_price}% coins&a. &7Taxa: &e%{_tax}% coins&7." to {_p}
+
+function openAH(p: player, page: number):
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_inv} to a new chest inventory with 6 rows named "&6&lAuction House &8— &7Pagina %{_page}%"
+    set {_slot} to 0
+    set {_total} to {ah::next_id} - 1
+    set {_now} to floor(unix timestamp of now)
+    set {_start} to ({_page} - 1) * 45 + 1
+    set {_end} to {_page} * 45
+    set {_filled} to 0
+    set {_active_count} to 0
+    loop {_total} times:
+        set {_i} to loop-number
+        if {ah::listing::%{_i}%::active} is true:
+            if ({_now} - {ah::listing::%{_i}%::time}) > {@DURATION}:
+                # Expirat — returneaza item vanzatorului
+                expireAHListing({_i})
+            else:
+                add 1 to {_active_count}
+                if {_active_count} >= {_start}:
+                    if {_active_count} <= {_end}:
+                        set {_disp} to {ah::listing::%{_i}%::item}
+                        set lore of {_disp} to "&7Vanzator: &b%{ah::listing::%{_i}%::seller_name}%" and "&6Pret: %{ah::listing::%{_i}%::price}% coins" and "&7ID: #%{_i}%" and "&eClick stanga pentru a cumpara"
+                        set slot {_slot} of {_inv} to {_disp}
+                        add 1 to {_slot}
+    # Butoane navigatie in randul de jos
+    if {_page} > 1:
+        set {_prev} to {_page} - 1
+        set slot 45 of {_inv} to arrow named "&7Pagina %{_prev}%"
+    set slot 49 of {_inv} to book named "&6&lAH &8— &7%{_active_count}% anunturi"
+    if {_active_count} > {_end}:
+        set {_next} to {_page} + 1
+        set slot 53 of {_inv} to arrow named "&7Pagina %{_next}%"
+    set {ah::browsing::%{_uuid}%::page} to {_page}
+    open {_inv} to {_p}
+
+function openAHCancel(p: player):
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_inv} to a new chest inventory with 6 rows named "&6&lAnunturile Mele"
+    set {_slot} to 0
+    set {_total} to {ah::next_id} - 1
+    delete {ah::cancel_slots::%{_uuid}%::*}
+    loop {_total} times:
+        set {_i} to loop-number
+        if {ah::listing::%{_i}%::active} is true:
+            if {ah::listing::%{_i}%::seller_uuid} is {_uuid}:
+                set {_disp} to {ah::listing::%{_i}%::item}
+                set lore of {_disp} to "&6Pret: %{ah::listing::%{_i}%::price}% coins" and "&7ID: #%{_i}%" and "&cClick drept pentru a anula"
+                set slot {_slot} of {_inv} to {_disp}
+                set {ah::cancel_slots::%{_uuid}%::%{_slot}%} to {_i}
+                add 1 to {_slot}
+    if {_slot} is 0:
+        send colored "{@PREFIX} &7Nu ai anunturi active." to {_p}
+        stop
+    open {_inv} to {_p}
+
+function expireAHListing(id: number):
+    if {ah::listing::%{_id}%::active} is not true:
+        stop
+    set {ah::listing::%{_id}%::active} to false
+    set {_seller_name} to {ah::listing::%{_id}%::seller_name}
+    set {_item} to {ah::listing::%{_id}%::item}
+    set {_target} to {_seller_name} parsed as an offline player
+    if {_target} is set:
+        give {_target} {_item}
+        if {_target} is online:
+            send colored "{@PREFIX} &7Anuntul tau #%{_id}% a expirat. Itemul a fost returnat." to {_target}
+
+# ── Click handler ─────────────────────────────────────────────
+
+on inventory click:
+    if name of player's current inventory starts with "&6&lAuction House":
+        cancel event
+        set {_uuid} to "%player's uuid%"
+        set {_slot} to event-slot
+        if {_slot} is 45:
+            set {_page} to {ah::browsing::%{_uuid}%::page} ? 1
+            if {_page} > 1:
+                openAH(player, {_page} - 1)
+            stop
+        if {_slot} is 53:
+            set {_page} to {ah::browsing::%{_uuid}%::page} ? 1
+            openAH(player, {_page} + 1)
+            stop
+        if {_slot} >= 45:
+            stop
+        set {_clicked} to event-item
+        if {_clicked} is air:
+            stop
+        # Gaseste listing-ul dupa slot si pagina
+        set {_page} to {ah::browsing::%{_uuid}%::page} ? 1
+        set {_target_slot} to ({_page} - 1) * 45 + {_slot}
+        set {_total} to {ah::next_id} - 1
+        set {_now} to floor(unix timestamp of now)
+        set {_active_count} to 0
+        loop {_total} times:
+            set {_i} to loop-number
+            if {ah::listing::%{_i}%::active} is true:
+                if ({_now} - {ah::listing::%{_i}%::time}) <= {@DURATION}:
+                    add 1 to {_active_count}
+                    set {_expected} to {_target_slot} + 1
+                    if {_active_count} is {_expected}:
+                        # Cumparare
+                        if {ah::listing::%{_i}%::seller_uuid} is {_uuid}:
+                            send colored "{@PREFIX} &cNu poti cumpara propriul tau anunt." to player
+                            stop
+                        set {_price} to {ah::listing::%{_i}%::price}
+                        if player's balance < {_price}:
+                            send colored "{@PREFIX} &cFondsuri insuficiente! &7Pret: &e%{_price}% coins&7, &7balanta ta: &e%floor(player's balance)% coins&7." to player
+                            stop
+                        # Proceseaza tranzactia
+                        set {ah::listing::%{_i}%::active} to false
+                        remove {_price} from player's balance
+                        set {_seller_name} to {ah::listing::%{_i}%::seller_name}
+                        set {_item} to {ah::listing::%{_i}%::item}
+                        give player {_item}
+                        add {_price} to balance of ({_seller_name} parsed as offline player)
+                        send colored "{@PREFIX} &aCumparat cu succes! &6-%{_price}% coins&a." to player
+                        if {_seller_name} parsed as offline player is online:
+                            send colored "{@PREFIX} &b%player% &7ti-a cumparat anuntul #%{_i}% pentru &6%{_price}% coins&7." to ({_seller_name} parsed as offline player)
+                        # Refresh
+                        close player's inventory
+                        wait 1 tick
+                        openAH(player, {_page})
+                        stop
+
+    if name of player's current inventory is "&6&lAnunturile Mele":
+        cancel event
+        set {_uuid} to "%player's uuid%"
+        if "%event-clicktype%" contains "right":
+            set {_slot} to event-slot
+            set {_i} to {ah::cancel_slots::%{_uuid}%::%{_slot}%}
+            if {_i} is not set:
+                stop
+            if {ah::listing::%{_i}%::active} is not true:
+                stop
+            if {ah::listing::%{_i}%::seller_uuid} is not {_uuid}:
+                stop
+            set {ah::listing::%{_i}%::active} to false
+            give player {ah::listing::%{_i}%::item}
+            send colored "{@PREFIX} &aAnuntul #%{_i}% anulat. Itemul a fost returnat." to player
+            close player's inventory

@@ -1,0 +1,104 @@
+# ============================================================
+# IceLegends — Paza (Anti-Cheat Light)
+# Unic: Flag-uri progresive — 3 flags = notificare staff
+#        Speed / Reach / Fly detection de baza
+# ============================================================
+
+options:
+    MAX_SPEED: 16
+    MAX_REACH: 5
+    FLAG_COOLDOWN: 10
+    NOTIFY_EVERY: 3
+    PREFIX_AC: &8[&cPaza&8]
+
+# ── Speed check (1 vez pe secunda) ───────────────────────────
+
+every 1 second:
+    loop all players:
+        if world of loop-player is world "world":
+            set {_uuid} to "%loop-player's uuid%"
+            if {ac::lastpos::%{_uuid}%} is set:
+                set {_dist} to distance between loop-player's location and {ac::lastpos::%{_uuid}%}
+                if {_dist} > {@MAX_SPEED}:
+                    if loop-player's game mode is not creative:
+                        if loop-player is not flying:
+                            set {_detail} to "%floor({_dist})% bps"
+                            acFlag(loop-player, "Speed", {_detail})
+            set {ac::lastpos::%{_uuid}%} to loop-player's location
+
+# ── Reach check ────────────────────────────────────────────────
+
+on damage of entity:
+    if attacker is a player:
+        if world of attacker is world "world":
+            set {_dist} to distance between attacker's location and victim's location
+            if {_dist} > {@MAX_REACH}:
+                if attacker's game mode is not creative:
+                    cancel event
+                    set {_detail} to "Reach %floor({_dist})% bl"
+                    acFlag(attacker, "Reach", {_detail})
+
+# ── Fly check (la 1 sec) ──────────────────────────────────────
+
+every 1 second:
+    loop all players:
+        if world of loop-player is world "world":
+            if loop-player's game mode is survival:
+                if loop-player is not flying:
+                    if loop-player is not on ground:
+                        set {_uuid} to "%loop-player's uuid%"
+                        if {ac::air::%{_uuid}%} is not set:
+                            set {ac::air::%{_uuid}%} to 0
+                        add 1 to {ac::air::%{_uuid}%}
+                        if {ac::air::%{_uuid}%} > 12:
+                            set {_detail} to "Aer %{ac::air::%{_uuid}%}%s"
+                            acFlag(loop-player, "Fly", {_detail})
+                    else:
+                        delete {ac::air::%loop-player's uuid%}
+
+# ── Flag system ────────────────────────────────────────────────
+
+function acFlag(p: player, type: text, detail: text):
+    set {_uuid} to "%{_p}'s uuid%"
+    if {ac::lastflag::%{_uuid}%} is set:
+        if difference between {ac::lastflag::%{_uuid}%} and now < {@FLAG_COOLDOWN} seconds:
+            stop
+    set {ac::lastflag::%{_uuid}%} to now
+    if {ac::flags::%{_uuid}%} is not set:
+        set {ac::flags::%{_uuid}%} to 0
+    add 1 to {ac::flags::%{_uuid}%}
+    set {_flags} to {ac::flags::%{_uuid}%}
+    # Notifica staff la NOTIFY_EVERY flag-uri
+    set {_rem} to {_flags} - (floor({_flags} / {@NOTIFY_EVERY}) * {@NOTIFY_EVERY})
+    if {_rem} is 0:
+        loop all players:
+            if loop-player has permission "smp.staff":
+                send colored "{@PREFIX_AC} &b%{_p}% &8[&c%{_type}%&8] &7%{_detail}% &8— &cFlags: %{_flags}%" to loop-player
+
+command /acflags [<player>]:
+    permission: smp.mod
+    trigger:
+        if arg-1 is set:
+            set {_t} to arg-1
+            set {_uuid} to "%{_t}'s uuid%"
+            set {_flags} to {ac::flags::%{_uuid}%}
+            if {_flags} is not set:
+                set {_flags} to 0
+            send colored "{@PREFIX_AC} &b%{_t}% &8— &e%{_flags}% &7flag-uri totale." to player
+        else:
+            send colored "{@PREFIX_AC} &7Flags active:" to player
+            loop all players:
+                set {_uuid} to "%loop-player's uuid%"
+                if {ac::flags::%{_uuid}%} is set:
+                    send colored "  &b%loop-player%&8: &e%{ac::flags::%{_uuid}%}% flags" to player
+
+command /acclean <player>:
+    permission: smp.admin
+    trigger:
+        set {_uuid} to "%arg-1's uuid%"
+        delete {ac::flags::%{_uuid}%}
+        send colored "{@PREFIX_AC} &aFlag-urile lui &b%arg-1% &asterse." to player
+
+on quit:
+    delete {ac::air::%player's uuid%}
+    delete {ac::lastpos::%player's uuid%}

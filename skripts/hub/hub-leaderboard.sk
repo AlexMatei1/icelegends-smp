@@ -1,0 +1,123 @@
+# ============================================================
+# Hub Leaderboard — IceLegends SMP
+# Actualizeaza hologramul "hub-leaderboard" la fiecare 2 min
+# cu top 5 jucatori dupa sold (coins).
+# ============================================================
+
+options:
+    LB_HOLOGRAM: hub-leaderboard
+    LB_PAGE: 1
+
+# ─────────────────────────────────────────────────────────────
+#  TRACKING — inregistreaza jucatorul la join / quit
+# ─────────────────────────────────────────────────────────────
+
+on join:
+    set {_pn} to "%player%"
+    if {hub::lb_tracked::%{_pn}%} is not set:
+        set {hub::lb_tracked::%{_pn}%} to true
+        add {_pn} to {hub::lb_names::*}
+    set {hub::lb_bal::%{_pn}%} to player's balance + 0
+
+on quit:
+    set {_pn} to "%player%"
+    set {hub::lb_bal::%{_pn}%} to player's balance + 0
+
+# ─────────────────────────────────────────────────────────────
+#  FUNCTIE: actualizeaza balantele jucatorilor online
+# ─────────────────────────────────────────────────────────────
+
+function lbRefreshOnline():
+    loop all players:
+        set {_pn} to "%loop-player%"
+        if {hub::lb_tracked::%{_pn}%} is not set:
+            set {hub::lb_tracked::%{_pn}%} to true
+            add {_pn} to {hub::lb_names::*}
+        set {hub::lb_bal::%{_pn}%} to loop-player's balance + 0
+
+# ─────────────────────────────────────────────────────────────
+#  FUNCTIE: gaseste cel mai bun jucator, excluzand cei 4 dati
+# ─────────────────────────────────────────────────────────────
+
+function lbFindBest(ex1: text, ex2: text, ex3: text, ex4: text) :: text:
+    set {_best} to -1.0
+    set {_bestN} to ""
+    loop {hub::lb_names::*}:
+        if loop-value is {_ex1}:
+            continue
+        if loop-value is {_ex2}:
+            continue
+        if loop-value is {_ex3}:
+            continue
+        if loop-value is {_ex4}:
+            continue
+        set {_b} to {hub::lb_bal::%loop-value%}
+        if {_b} is set:
+            if {_b} > {_best}:
+                set {_best} to {_b}
+                set {_bestN} to loop-value
+    return {_bestN}
+
+# ─────────────────────────────────────────────────────────────
+#  FUNCTIE: linia hologramei pentru un rank
+# ─────────────────────────────────────────────────────────────
+
+function lbLine(rank: number, name: text, bal: number) :: text:
+    if {_name} is "":
+        return "&8%{_rank}%. &7---"
+    if {_rank} is 1:
+        return "&6&l#1 &f%{_name}% &8| &e%floor({_bal})% &7coins"
+    if {_rank} is 2:
+        return "&e#2 &f%{_name}% &8| &e%floor({_bal})% &7coins"
+    if {_rank} is 3:
+        return "&7#3 &f%{_name}% &8| &7%floor({_bal})% &7coins"
+    return "&8#%{_rank}% &f%{_name}% &8| &7%floor({_bal})% &7coins"
+
+# ─────────────────────────────────────────────────────────────
+#  FUNCTIE PRINCIPALA: actualizeaza hologramul leaderboard
+# ─────────────────────────────────────────────────────────────
+
+function updateLeaderboard():
+    lbRefreshOnline()
+
+    set {_n1} to lbFindBest("", "", "", "")
+    set {_n2} to lbFindBest({_n1}, "", "", "")
+    set {_n3} to lbFindBest({_n1}, {_n2}, "", "")
+    set {_n4} to lbFindBest({_n1}, {_n2}, {_n3}, "")
+    set {_n5} to lbFindBest({_n1}, {_n2}, {_n3}, {_n4})
+
+    set {_b1} to {hub::lb_bal::%{_n1}%}
+    if {_b1} is not set:
+        set {_b1} to 0
+    set {_b2} to {hub::lb_bal::%{_n2}%}
+    if {_b2} is not set:
+        set {_b2} to 0
+    set {_b3} to {hub::lb_bal::%{_n3}%}
+    if {_b3} is not set:
+        set {_b3} to 0
+    set {_b4} to {hub::lb_bal::%{_n4}%}
+    if {_b4} is not set:
+        set {_b4} to 0
+    set {_b5} to {hub::lb_bal::%{_n5}%}
+    if {_b5} is not set:
+        set {_b5} to 0
+
+    if all players is empty:
+        stop
+    set {_exec} to a random player out of all players
+    make {_exec} execute command "dh line edit {@LB_HOLOGRAM} {@LB_PAGE} 3 %lbLine(1, {_n1}, {_b1})%"
+    make {_exec} execute command "dh line edit {@LB_HOLOGRAM} {@LB_PAGE} 4 %lbLine(2, {_n2}, {_b2})%"
+    make {_exec} execute command "dh line edit {@LB_HOLOGRAM} {@LB_PAGE} 5 %lbLine(3, {_n3}, {_b3})%"
+    make {_exec} execute command "dh line edit {@LB_HOLOGRAM} {@LB_PAGE} 6 %lbLine(4, {_n4}, {_b4})%"
+    make {_exec} execute command "dh line edit {@LB_HOLOGRAM} {@LB_PAGE} 7 %lbLine(5, {_n5}, {_b5})%"
+
+# ─────────────────────────────────────────────────────────────
+#  SCHEDULARE
+# ─────────────────────────────────────────────────────────────
+
+on script load:
+    wait 20 seconds
+    updateLeaderboard()
+
+every 2 minutes:
+    updateLeaderboard()

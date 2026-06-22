@@ -1,0 +1,32 @@
+# ============================================================
+# Hub Tablist — IceLegends SMP
+# Header/Footer personalizat in lista de jucatori (TAB)
+# Se actualizeaza la fiecare 3 secunde
+# ============================================================
+
+options:
+    SERVER_IP: play.icelegends.cloud
+
+on join:
+    wait 10 ticks
+    updateTablist(player)
+
+every 3 seconds:
+    loop all players:
+        updateTablist(loop-player)
+
+function updateTablist(p: player):
+    set {_online} to size of all players
+    set {_max} to 15
+    set {_world} to name of world of {_p}
+
+    # Determina lumea curenta pentru footer
+    if {_world} is "hub":
+        set {_loc_str} to "&bHub"
+    else if {_world} is "world":
+        set {_loc_str} to "&aSMP"
+    else:
+        set {_loc_str} to "&7%{_world}%"
+
+    set tab list header of {_p} to "&b&l    ✦ IceLegends SMP ✦    &r%nl%&7Sezonul 1 &8| &bplay.icelegends.cloud    "
+    set tab list footer of {_p} to "    &7Jucatori: &b%{_online}%&7/%{_max}% &8| &7Lume: %{_loc_str}%%nl%    &7Discord: &b/discord &8| &7Website: &bminecraft.icelegends.cloud    "

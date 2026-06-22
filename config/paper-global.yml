@@ -1,0 +1,80 @@
+# ============================================================
+# Paper Global Config — Configurație globală PaperMC
+# Referință: https://docs.papermc.io/paper/reference/global-configuration
+# ============================================================
+
+# Versiunea config — nu modifica manual
+_version: 28
+
+# ── Chunk Loading ──────────────────────────────────────────────
+chunk-loading:
+  # Configurare automată distanță trimitere chunk-uri per jucător
+  autoconfig-send-distance: true
+  # Rata maximă de trimitere chunk-uri per jucător (chunk/s)
+  target-player-chunk-send-rate: 100.0
+
+# ── Anti-Xray ─────────────────────────────────────────────────
+# Previne utilizarea texturilor X-Ray de către jucători
+anti-xray:
+  # Activat — esențial pentru integritatea economiei (minereuri rare)
+  enabled: true
+  # Engine mode 2 = trimite minereuri false clientului (cea mai bună protecție)
+  # Mode 1 = ascunde minereuri, Mode 2 = minereuri false (anti-bypass)
+  engine-mode: 2
+  # Până la ce index de secțiune chunk se aplică anti-xray (3 = sub Y=48)
+  max-chunk-section-index: 3
+  # Raza de update când jucătorul sapă (blocuri)
+  update-radius: 2
+  # Minereuri afișate în mode 2 — incluse toate valoroasele
+  hidden-blocks:
+    - copper_ore
+    - deepslate_copper_ore
+    - gold_ore
+    - deepslate_gold_ore
+    - iron_ore
+    - deepslate_iron_ore
+    - coal_ore
+    - deepslate_coal_ore
+    - lapis_ore
+    - deepslate_lapis_ore
+    - redstone_ore
+    - deepslate_redstone_ore
+    - emerald_ore
+    - deepslate_emerald_ore
+    - diamond_ore
+    - deepslate_diamond_ore
+  # Minereuri false trimise clientului în mode 2
+  replacement-blocks:
+    - stone
+    - oak_planks
+    - deepslate
+
+# ── Coliziuni ─────────────────────────────────────────────────
+collisions:
+  # Jucătorii se pot împinge reciproc — comportament vanilla
+  enable-player-collisions: true
+
+# ── Timings ───────────────────────────────────────────────────
+timings:
+  # Activat pentru diagnosticare TPS (folosit de Spark profiler)
+  enabled: true
+
+# ── Async Chunks ──────────────────────────────────────────────
+async-chunks:
+  # Generare asincronă chunk-uri — reduce lag-ul la explorare
+  generation: true
+
+# ── Item despawn ──────────────────────────────────────────────
+# 6000 ticks = 5 minute — comportament vanilla implicit
+item-despawn-rate: 6000
+
+# ── Velocity ──────────────────────────────────────────────────
+velocity:
+  # Dezactivat — nu folosim Velocity proxy
+  enabled: false
+
+# ── Watchdog ──────────────────────────────────────────────────
+watchdog:
+  # Timp de așteptare înainte de dump thread (ms) — 60s
+  early-warning-every: 5000
+  early-warning-delay: 10000

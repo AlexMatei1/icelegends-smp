@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Contestație Ban — IceLegends SMP</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    .appeal-form { max-width: 640px; margin: 0 auto; }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; margin-bottom: .4rem; font-size: .88rem; color: var(--muted); }
+    .form-group input, .form-group textarea {
+      width: 100%; box-sizing: border-box;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(100,210,255,.15);
+      border-radius: 8px; color: var(--text); font-size: .95rem; padding: .7rem 1rem;
+      font-family: inherit; transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--ice); }
+    .form-group textarea { min-height: 130px; resize: vertical; }
+    .char-count { font-size: .75rem; color: var(--muted); text-align: right; margin-top: .2rem; }
+    .btn-submit { width: 100%; padding: .8rem; background: var(--ice); color: #000; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+    .btn-submit:hover:not(:disabled) { opacity: .85; }
+    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .info-box { background: rgba(100,210,255,.07); border: 1px solid rgba(100,210,255,.2); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: .85rem; color: var(--muted); }
+    .info-box strong { color: var(--ice); }
+    .status-badge { display: inline-block; padding: .25rem .7rem; border-radius: 20px; font-size: .78rem; font-weight: 700; }
+    .status-pending  { background: rgba(255,200,50,.15); color: #ffc832; }
+    .status-accepted { background: rgba(50,255,100,.12); color: #32ff64; }
+    .status-rejected { background: rgba(255,80,80,.12); color: #ff5050; }
+    .my-appeals { margin-top: 2rem; }
+    .appeal-item { background: rgba(255,255,255,.04); border: 1px solid rgba(100,210,255,.1); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: .8rem; }
+    .appeal-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; }
+    .appeal-reason { font-size: .88rem; color: var(--muted); }
+    .appeal-note { margin-top: .6rem; padding: .5rem .8rem; background: rgba(255,255,255,.04); border-radius: 6px; font-size: .82rem; color: var(--text); }
+    .success-msg { text-align: center; padding: 2rem; }
+    .success-msg .big-icon { font-size: 3rem; margin-bottom: .5rem; }
+    .success-msg h3 { margin: 0 0 .5rem; color: var(--ice); }
+    .success-msg p { color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+    <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link active" href="/player/appeal">Contestație</a>
+    <a class="nav-link" href="/player/leaderboard">Clasament</a>
+  </div>
+    <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+<div class="page"><div class="container">
+  <div class="page-header">
+    <h1>📩 Contestație Ban</h1>
+    <p>Crezi că ban-ul tău a fost nedrept? Trimite o contestație și staff-ul va analiza cazul.</p>
+  </div>
+
+  <div id="mainContent">
+    <div class="info-box">
+      <strong>⚠ Înainte de a trimite:</strong><br>
+      Contestațiile false sau care conțin insulte vor fi respinse automat și pot duce la ban permanent.
+      Fii sincer/ă și explică clar situația. Răspunsul vine în 24–48 ore.
+    </div>
+
+    <div class="appeal-form">
+      <div id="formSection">
+        <div class="form-group">
+          <label>Username Minecraft *</label>
+          <input type="text" id="appUsername" placeholder="ExactUsernameMinecraft" maxlength="16">
+        </div>
+        <div class="form-group">
+          <label>Motivul contestației *</label>
+          <textarea id="appReason" maxlength="1000" placeholder="Explică de ce crezi că ban-ul a fost nedrept, ce s-a întâmplat, orice context relevant..."></textarea>
+          <div class="char-count"><span id="charCount">0</span>/1000</div>
+        </div>
+        <button class="btn-submit" onclick="submitAppeal()">📩 Trimite Contestație</button>
+      </div>
+      <div id="successSection" style="display:none" class="success-msg">
+        <div class="big-icon">✅</div>
+        <h3>Contestație trimisă!</h3>
+        <p>Staff-ul va analiza cazul tău în 24–48 ore.<br>Verifică statusul mai jos.</p>
+      </div>
+    </div>
+
+    <div class="my-appeals" id="myAppeals" style="display:none">
+      <h3 style="margin-bottom:1rem;">Contestațiile mele anterioare</h3>
+      <div id="appealsList"></div>
+    </div>
+
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid rgba(100,210,255,.1)">
+      <h3 style="margin-bottom:.5rem;font-size:1rem">🔍 Verifică statusul contestației</h3>
+      <p style="color:var(--muted);font-size:.84rem;margin-bottom:1rem">Introdu username-ul tău Minecraft pentru a vedea statusul fără cont.</p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
+        <input class="form-group input" type="text" id="statusUsername" placeholder="UsernameMinecraft"
+          maxlength="16" style="flex:1;min-width:160px;background:rgba(255,255,255,.06);border:1px solid rgba(100,210,255,.15);border-radius:8px;color:var(--text);font-size:.95rem;padding:.65rem 1rem;font-family:inherit"
+          onkeydown="if(event.key==='Enter')checkStatus()">
+        <button class="btn-submit" onclick="checkStatus()" style="width:auto;padding:.65rem 1.4rem;font-size:.9rem">Verifică</button>
+      </div>
+      <div id="statusResult"></div>
+    </div>
+  </div>
+</div></div>
+
+<script src="/player/ice.js"></script>
+<script>
+async function logout() { await fetch('/api/player/logout',{method:'POST',credentials:'include'}); location.href='/player/login'; }
+
+const textarea = document.getElementById('appReason');
+textarea.addEventListener('input', () => {
+  document.getElementById('charCount').textContent = textarea.value.length;
+});
+
+async function submitAppeal() {
+  const username = document.getElementById('appUsername').value.trim();
+  const reason = document.getElementById('appReason').value.trim();
+  if (!username) { alert('Introduceți username-ul Minecraft.'); return; }
+  if (reason.length < 20) { alert('Motivul trebuie să aibă cel puțin 20 de caractere.'); return; }
+
+  const btn = document.querySelector('.btn-submit');
+  btn.disabled = true; btn.textContent = 'Se trimite...';
+
+  try {
+    const r = await fetch('/api/appeals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, reason })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Eroare server');
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('successSection').style.display = 'block';
+  } catch (e) {
+    alert('Eroare: ' + e.message);
+    btn.disabled = false; btn.textContent = '📩 Trimite Contestație';
+  }
+}
+
+function statusBadge(s) {
+  const map = { pending: 'În așteptare', accepted: 'Acceptat', rejected: 'Respins' };
+  return `<span class="status-badge status-${s}">${map[s] || s}</span>`;
+}
+
+async function init() {
+  // Try to get logged-in user to pre-fill username
+  try {
+    const r = await fetch('/api/player/me', { credentials: 'include' });
+    if (r.ok) {
+      const me = await r.json();
+      document.getElementById('navName').textContent = me.username || me.name || '?';
+      document.getElementById('appUsername').value = me.username || me.name || '';
+    }
+  } catch {}
+}
+
+init();
+
+async function checkStatus() {
+  const name = document.getElementById('statusUsername').value.trim();
+  const el = document.getElementById('statusResult');
+  if (!name) { el.innerHTML = '<p style="color:#ff5050;font-size:.85rem">Introdu un username.</p>'; return; }
+  el.innerHTML = '<p style="color:var(--muted);font-size:.85rem">Se caută...</p>';
+  try {
+    const r = await fetch(`/api/appeals/status/${encodeURIComponent(name)}`);
+    const d = await r.json();
+    if (!d.found) { el.innerHTML = '<p style="color:var(--muted);font-size:.85rem">Nicio contestație găsită pentru acest username.</p>'; return; }
+    const statusLabel = { pending: 'În așteptare', approved: 'Acceptat', rejected: 'Respins' };
+    const statusCls   = { pending: 'status-pending', approved: 'status-accepted', rejected: 'status-rejected' };
+    el.innerHTML = `
+      <div class="appeal-item">
+        <div class="appeal-item-header">
+          <strong>${name}</strong>
+          <span class="status-badge ${statusCls[d.status]||'status-pending'}">${statusLabel[d.status]||d.status}</span>
+        </div>
+        ${d.staff_note ? `<div class="appeal-note">💬 Staff: ${d.staff_note}</div>` : ''}
+        <div style="font-size:.74rem;color:var(--muted);margin-top:.5rem">${new Date(d.submitted_at*1000).toLocaleDateString('ro-RO')}</div>
+      </div>`;
+  } catch { el.innerHTML = '<p style="color:#ff5050;font-size:.85rem">Eroare la verificare.</p>'; }
+}
+</script>
+</body>
+</html>

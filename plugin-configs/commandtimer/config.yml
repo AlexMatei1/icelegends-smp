@@ -1,0 +1,14 @@
+# CommandTimer — Broadcast-uri automate
+
+commands:
+  - command: "broadcast &8[&aServer&8] &7Citește regulamentul la &f/warp spawn &7sau pe Discord!"
+    interval: 7200
+
+  - command: "broadcast &8[&bDiscord&8] &7Alătură-te: &fdiscord.gg/serverultau"
+    interval: 10800
+
+  - command: "broadcast &8[&dHartă&8] &7Harta live: &fmap.serverultau.ro"
+    interval: 14400
+
+  - command: "broadcast &8[&eResurse&8] &7Minează în lumea de resurse: &f/warp resurse"
+    interval: 21600

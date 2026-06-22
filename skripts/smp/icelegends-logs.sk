@@ -1,0 +1,101 @@
+# ============================================================
+# IceLegends — Cronica (Block Logging)
+# Unic: Buffer circular 500 evenimente cu fields separate
+#        Query pe raza XZ sau pe jucator
+# Inlocuieste Prism
+# ============================================================
+
+options:
+    MAX_LOGS: 500
+
+function logBlock(action: text, pname: text, puuid: text, block: text, bx: number, by: number, bz: number):
+    if {logs::count} is not set:
+        set {logs::count} to 0
+    add 1 to {logs::count}
+    set {_cnt} to {logs::count}
+    set {_idx} to {_cnt} - (floor({_cnt} / {@MAX_LOGS}) * {@MAX_LOGS})
+    if {_idx} is 0:
+        set {_idx} to {@MAX_LOGS}
+    set {logs::ev::%{_idx}%::action} to {_action}
+    set {logs::ev::%{_idx}%::pname}  to {_pname}
+    set {logs::ev::%{_idx}%::puuid}  to {_puuid}
+    set {logs::ev::%{_idx}%::block}  to {_block}
+    set {logs::ev::%{_idx}%::bx}     to {_bx}
+    set {logs::ev::%{_idx}%::by}     to {_by}
+    set {logs::ev::%{_idx}%::bz}     to {_bz}
+
+on break:
+    if player is set:
+        if world of player is world "world":
+            logBlock("BREAK", player's name, "%player's uuid%", "%type of event-block%", floor(x-coordinate of event-block), floor(y-coordinate of event-block), floor(z-coordinate of event-block))
+
+on place:
+    if player is set:
+        if world of player is world "world":
+            logBlock("PLACE", player's name, "%player's uuid%", "%type of event-block%", floor(x-coordinate of event-block), floor(y-coordinate of event-block), floor(z-coordinate of event-block))
+
+command /logcheck <integer> <integer> [<integer>]:
+    permission: smp.mod
+    trigger:
+        set {_cx} to arg-1
+        set {_cz} to arg-2
+        set {_r} to 5
+        if arg-3 is set:
+            set {_r} to arg-3
+        send colored "&3[Cronica] &7Modificari in raza &e%{_r}% &7de (%{_cx}%,%{_cz}%):" to player
+        set {_found} to 0
+        set {_max} to {@MAX_LOGS}
+        loop {_max} times:
+            if {logs::ev::%loop-number%::action} is set:
+                set {_bx} to {logs::ev::%loop-number%::bx}
+                set {_bz} to {logs::ev::%loop-number%::bz}
+                if {_bx} is set:
+                    if {_bz} is set:
+                        set {_dx} to abs({_bx} - {_cx})
+                        set {_dz} to abs({_bz} - {_cz})
+                        if {_dx} <= {_r}:
+                            if {_dz} <= {_r}:
+                                add 1 to {_found}
+                                if {_found} <= 20:
+                                    set {_act} to {logs::ev::%loop-number%::action}
+                                    set {_pn} to {logs::ev::%loop-number%::pname}
+                                    set {_bl} to {logs::ev::%loop-number%::block}
+                                    set {_by} to {logs::ev::%loop-number%::by}
+                                    if {_act} is "BREAK":
+                                        send colored "  &c✘ &7%{_pn}% &8— &f%{_bl}% &8@ %{_bx}%,%{_by}%,%{_bz}%" to player
+                                    else:
+                                        send colored "  &a✔ &7%{_pn}% &8— &f%{_bl}% &8@ %{_bx}%,%{_by}%,%{_bz}%" to player
+        if {_found} is 0:
+            send colored "  &7Nicio modificare in aceasta zona." to player
+        else if {_found} > 20:
+            send colored "  &8... si %{_found} - 20% mai multe" to player
+
+command /logplayer <player>:
+    permission: smp.mod
+    trigger:
+        set {_tuuid} to "%arg-1's uuid%"
+        send colored "&3[Cronica] &7Modificari de &b%arg-1%&8:" to player
+        set {_found} to 0
+        set {_max} to {@MAX_LOGS}
+        loop {_max} times:
+            if {logs::ev::%loop-number%::puuid} is {_tuuid}:
+                add 1 to {_found}
+                if {_found} <= 15:
+                    set {_act} to {logs::ev::%loop-number%::action}
+                    set {_bl} to {logs::ev::%loop-number%::block}
+                    set {_bx} to {logs::ev::%loop-number%::bx}
+                    set {_by} to {logs::ev::%loop-number%::by}
+                    set {_bz} to {logs::ev::%loop-number%::bz}
+                    if {_act} is "BREAK":
+                        send colored "  &c✘ &f%{_bl}% &8@ %{_bx}%,%{_by}%,%{_bz}%" to player
+                    else:
+                        send colored "  &a✔ &f%{_bl}% &8@ %{_bx}%,%{_by}%,%{_bz}%" to player
+        if {_found} is 0:
+            send colored "  &7Nicio modificare gasita." to player
+
+command /clearlogsadmin:
+    permission: smp.admin
+    trigger:
+        delete {logs::ev::*}
+        set {logs::count} to 0
+        send colored "&3[Cronica] &aLog-urile au fost curatate." to player

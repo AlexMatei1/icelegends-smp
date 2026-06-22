@@ -1,0 +1,91 @@
+# ============================================================
+# Dynmap — Hartă Web Live
+# SECURITATE: Port 8123 NICIODATĂ deschis în UFW
+# Acces public: exclusiv via Cloudflare Tunnel
+#   map.serverultau.ro → http://mc:8123 (internal Docker)
+# ============================================================
+
+# Port intern Docker — nu este expus în docker-compose.yml ports
+webserver-port: 8123
+
+# Bind pe toate interfețele interne Docker (nu expune la host)
+# 0.0.0.0 în context Docker = intern la rețeaua mc-internal
+webserver-bindaddress: 0.0.0.0
+
+# Disable webserver dacă folosești reverse proxy extern
+# disable-webserver: false
+
+# ── Zoom ──────────────────────────────────────────────────────
+# Zoom implicit la încărcarea hărții
+defaultzoom: 2
+# Zoom maxim permis utilizatorilor
+maximumzoom: 6
+
+# ── Privacitate ───────────────────────────────────────────────
+# Nu afișa pozițiile jucătorilor offline
+hideifshadowlost: true
+
+# Nu afișa chat-ul în hartă (evită spam public)
+hidePlayerChat: false
+
+# Protecție coordonate — ascunde coordonatele exacte ale jucătorilor
+showCoordinates: false
+
+# ── Lumi Randate ──────────────────────────────────────────────
+# Lumea principală — randată complet, vizibilă publicului
+worlds:
+  - name: world
+    title: "Lumea Principală"
+    enabled: true
+    maps:
+      - class: org.dynmap.hdmap.HDMap
+        name: flat
+        title: "Vedere de sus"
+        prefix: flat
+        perspective: iso_S_90_lowres
+      - class: org.dynmap.hdmap.HDMap
+        name: surface
+        title: "Vedere izometrică"
+        prefix: t
+        perspective: iso_SE_30_hires
+
+  # Lumea de resurse — randată și etichetată corect
+  - name: resurse
+    title: "Lume Resurse (resetare săptămânală)"
+    enabled: true
+    maps:
+      - class: org.dynmap.hdmap.HDMap
+        name: flat
+        title: "Vedere de sus"
+        prefix: flat
+        perspective: iso_S_90_lowres
+
+# ── Update Rate ───────────────────────────────────────────────
+# Interval update jucători pe hartă (secunde) — 1s = aproape real-time
+player-render-rate: 1
+
+# Interval update tiles modificate (secunde)
+update-rate: 1
+
+# Număr de threads pentru randare — 2 pentru VPS 4 vCPU
+threads: 2
+
+# ── Storage ───────────────────────────────────────────────────
+# Tile storage — implicit filesystem
+storage:
+  type: filetree
+  tilespath: web/tiles
+
+# ── Integrare Towny ───────────────────────────────────────────
+# Towny Dynmap afișează granițele town-urilor și națiunilor
+# Configurat automat de plugin-ul Towny-Dynmap-Integration
+# Granițe town: linie solidă
+# Granițe națiune: linie punctată
+
+# ── Autentificare ─────────────────────────────────────────────
+# Dezactivat — harta este publică (fără login)
+login-enabled: false
+
+# ── Altele ───────────────────────────────────────────────────
+# Afișare tip server
+configuration-file-version: 2

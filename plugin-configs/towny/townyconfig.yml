@@ -1,0 +1,134 @@
+# ============================================================
+# Towny Advanced — Configurație SMP Românesc
+# Versiune: Towny 0.100.x pentru PaperMC 1.21.x
+# Filozofie: protecție land, towns, națiuni — fără wars la launch
+# ============================================================
+
+# ── Setări Generale Towny ─────────────────────────────────────
+towny:
+
+  settings:
+    # Distanța minimă în chunks între centre de town-uri
+    # 0 = poate clama lângă alt town
+    min_distance_from_town_home_block: 0
+    # Distanța minimă în chunks față de granița altui town
+    min_distance_between_homeblocks: 5
+    # Distanța maximă de clamuit față de homeblock (0 = nelimitat)
+    max_distance_for_town_plots: 0
+
+  # ── Plots ────────────────────────────────────────────────────
+  plots:
+    # Un jucător poate clama singur (fără alt rezident în town)
+    min_residents_to_claim_plot: 1
+    # Maximum 8 plot-uri per rezident — evită claim spam
+    max_plots_per_resident: 8
+    # Tip plot implicit la claimare
+    default_town_plot_type: default
+
+  # ── Towns ────────────────────────────────────────────────────
+  towns:
+    # Un singur jucător poate fonda un town
+    min_residents_for_town: 1
+    # Taxa zilnică a townului — 0 pentru primele 2 săptămâni
+    # Admin activează manual la Week 3: /ta toggle war
+    default_town_tax: 0.0
+    # Upkeep zilnic plătit de town (din banca town-ului)
+    default_upkeep: 0.0
+    # Town poate exista fără fonduri (nu se ștege automat)
+    delete_town_with_no_funds: false
+    # Zile până la ștergerea unui town inactiv (0 = dezactivat)
+    town_deletion_for_inactivity: 0
+    # Permite townuri cu un singur resident
+    allow_single_resident_towns: true
+    # Limita de plots pe nivel town (rezidenti * multiplier)
+    plots_per_level: 8
+    # Fondator town primește titlul de Mayor
+    mayor_can_expand_to_nations: true
+
+  # ── Națiuni ───────────────────────────────────────────────────
+  nations:
+    # Minimum 2 towns pentru a forma o națiune
+    min_towns_for_nation: 2
+    # Taxa zilnică a națiunii (din banca fiecărui town-member)
+    default_nation_tax: 0.0
+    # Upkeep zilnic plătit de națiune
+    default_upkeep: 0.0
+    # Permite națiuni cu un singur town (override min_towns)
+    allow_single_town_nations: false
+
+  # ── Wars ─────────────────────────────────────────────────────
+  # DEZACTIVAT la launch — Admin activează la săptămâna 3
+  # Comandă activare: /ta toggle war
+  war:
+    # Wars globale dezactivate — jucătorii se pot stabili în pace
+    war_enabled: false
+    # Cooldown între wars per town (ore)
+    war_time_between_wars: 48
+    # War Event — dezactivat separat
+    event:
+      war_event_allowed_in_nation: true
+      war_event_allowed_in_town: true
+
+  # ── Taxe și Economie ─────────────────────────────────────────
+  # Toate taxele la 0 la launch, Admin le ajustează la Week 3
+  economy:
+    # Costul clamarii unui plot (0 = gratuit)
+    claim_price: 0.0
+    # Costul abandonării unui plot (0 = gratuit)
+    unclaim_price: 0.0
+    # Costul fondării unui town (în coins)
+    new_town_price: 0.0
+    # Costul fondării unei națiuni (în coins)
+    new_nation_price: 0.0
+    # Moneda folosită — integrare cu Vault
+    # currency: default_currency
+
+  # ── Titluri Române ───────────────────────────────────────────
+  # Titluri afișate în chat și TAB pentru rolurile Towny
+  titles:
+    # Resident — locuitor simplu al unui town
+    resident_title: "&7Locuitor"
+    # Mayor — fondatorul / administratorul unui town
+    mayor_title: "&ePrimar"
+    # King — liderul unei națiuni
+    king_title: "&6Rege"
+    # Împărat — titlu alternativ pentru liderul de națiune
+    emperor_title: "&cÎmpărat"
+    # Cetățean — membru al unui town afiliat la națiune
+    citizen_title: "&fCetățean"
+
+  # ── Protecție și Permisiuni ───────────────────────────────────
+  # Permisiuni implicite pentru plot-uri de town
+  # perm_line: format "build=rroo, destroy=rroo, switch=rroo, itemuse=rroo"
+  # r=resident, o=outsider (a=ally, n=nation)
+  # Prima literă = resident, a doua = nation, a treia = ally, a patra = outsider
+  default_town_perm_line: "build=rroo destroy=rroo switch=rroo itemuse=rroo"
+
+  # PvP în afara town-urilor — activat (wilderness PvP)
+  # PvP în interiorul town-urilor — dezactivat implicit
+  default_town_pvp: false
+  default_town_public: false
+
+  # ── Dynmap Integration ────────────────────────────────────────
+  # Towny Dynmap afișează granițele town-urilor pe hartă
+  dynmap:
+    enabled: true
+    # Culori pentru granițe
+    town_fill_opacity: 0.25
+    nation_fill_opacity: 0.1
+
+  # ── Notificări ────────────────────────────────────────────────
+  notifications:
+    # Mesaj la intrarea în teritoriul unui town
+    town_enter_message: "&7Ai intrat în &e{town}&7 ({nation})"
+    # Mesaj la ieșirea din teritoriul unui town
+    town_leave_message: "&7Ai ieșit din &e{town}"
+
+# ============================================================
+# Configurare Tax Activare (Săptămâna 3):
+#   /towny prices     — verifică prețurile curente
+#   Editează townyconfig.yml:
+#     default_town_tax: 10.0     → 10 coins/zi per rezident
+#   /ta reload         — reload configurație
+#   /ta toggle war     — activează wars globale
+# ============================================================

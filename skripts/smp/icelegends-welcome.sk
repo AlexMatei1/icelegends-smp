@@ -1,0 +1,37 @@
+## IceLegends — Welcome, Join/Quit Messages
+
+on join:
+    # Suprima mesajul implicit de conectare
+    set join message to ""
+
+    # Initializare date la prima conectare
+    if {stats::playtime::%uuid of player%} is not set:
+        set {stats::playtime::%uuid of player%} to 0
+    if {ranks::rank::%uuid of player%} is not set:
+        set {ranks::rank::%uuid of player%} to "Ghetar"
+
+    # Auto-asignare grup jucator + kit starter la prima conectare
+    if player has not played before:
+        wait 5 ticks
+        make console execute command "lp user %player% group set jucator"
+        wait 40 ticks
+        giveKitStarter(player)
+
+    # UI title pentru toti jucatorii
+    wait 10 ticks
+    if player has played before:
+        send title "&b&lIceLegends SMP" with subtitle "&7Bun venit inapoi, &6%player%&7!" to player for 4 seconds
+    else:
+        send title "&a&lBun Venit!" with subtitle "&7Prima ta aventura pe &b&lIceLegends SMP" to player for 5 seconds
+        wait 60 ticks
+        send "&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+        send "&b/smp &7— intri in lumea de supravietuire" to player
+        send "&b/hub &7— te intorci in hub" to player
+        send "&b/rules &7— regulile serverului" to player
+        send "&b/shop &7— magazinul serverului" to player
+        send "&b/kit &7— vezi kiturile disponibile" to player
+        send "&b/ah &7— auction house" to player
+        send "&7━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" to player
+
+on quit:
+    set quit message to ""

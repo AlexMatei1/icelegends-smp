@@ -1,0 +1,300 @@
+# ============================================================
+# Primarul (Mayor) NPC — IceLegends SMP
+# Accesat in lumea shop/bazaar de catre Primarul NPC
+#
+# Functii disponibile:
+#   - Cumpara chunk-uri extra (50 coins/buc)
+#   - Plateste impozit pe proprietate
+#   - Cumpara permis de resedinta
+#   - Anunturi orasenesti
+#   - Status proprietate
+# ============================================================
+
+options:
+    COST_EXTRA_CHUNK: 50
+    COST_RESIDENCE: 200
+    TAX_PER_CHUNK: 5
+    SHOP_WORLD: shop
+    PRIMAR_GUI: §6§l✦ Primaria Mittelalter ✦
+
+# ─────────────────────────────────────────────────────────────
+#  COMANDA PRINCIPALA — /primar
+# ─────────────────────────────────────────────────────────────
+
+command /primar:
+    trigger:
+        deschidePrimar(player)
+
+# ─────────────────────────────────────────────────────────────
+#  GUI PRIMAR — meniu principal
+# ─────────────────────────────────────────────────────────────
+
+function deschidePrimar(p: player):
+    set {_inv} to a new chest inventory with 5 rows named "{@PRIMAR_GUI}"
+    loop 45 times:
+        set slot loop-number - 1 of {_inv} to gray stained glass pane named " "
+
+    # Slot 10 — Cumpara 1 chunk extra
+    set {_extra} to {claim::extra::%{_p}'s uuid%} ? 0
+    set {_item1} to 1 of emerald named "§a§l+1 Chunk Extra"
+    set line 1 of lore of {_item1} to "§7Creste limita de claim cu 1 chunk"
+    set line 2 of lore of {_item1} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 3 of lore of {_item1} to "§ePret: §f{@COST_EXTRA_CHUNK} coins"
+    set line 4 of lore of {_item1} to "§7Ai cumparat: §a%{_extra}% chunk-uri"
+    set line 5 of lore of {_item1} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 6 of lore of {_item1} to "§e» §fClick §7pentru a cumpara"
+    set slot 10 of {_inv} to {_item1}
+
+    # Slot 19 — Cumpara 5 chunk-uri extra
+    set {_item1b} to 5 of emerald named "§a§l+5 Chunk-uri Extra"
+    set line 1 of lore of {_item1b} to "§7Creste limita de claim cu 5 chunk-uri"
+    set line 2 of lore of {_item1b} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 3 of lore of {_item1b} to "§ePret: §f%5 * {@COST_EXTRA_CHUNK}% coins"
+    set line 4 of lore of {_item1b} to "§7Economisesti §a0 coins §7(same price)"
+    set line 5 of lore of {_item1b} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 6 of lore of {_item1b} to "§e» §fClick §7pentru a cumpara 5"
+    set slot 19 of {_inv} to {_item1b}
+
+    # Slot 12 — Plateste impozit
+    set {_tax} to calcTax({_p})
+    set {_item2} to 1 of gold_ingot named "§e§lImpozit Proprietate"
+    set line 1 of lore of {_item2} to "§7Plateste impozitul lunar"
+    set line 2 of lore of {_item2} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 3 of lore of {_item2} to "§eDe platit: §f%{_tax}% coins"
+    set {_taxPaid} to {primar::tax::paid::%{_p}'s uuid%} ? false
+    if {_taxPaid} is true:
+        set line 4 of lore of {_item2} to "§aStatus: §fPlatit ✔"
+    else:
+        set line 4 of lore of {_item2} to "§cStatus: §fNePlatit ✗"
+    set line 5 of lore of {_item2} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 6 of lore of {_item2} to "§e» §fClick §7pentru a plati"
+    set slot 12 of {_inv} to {_item2}
+
+    # Slot 14 — Permis de resedinta
+    set {_item3} to 1 of paper named "§b§lPermis Resedinta"
+    set line 1 of lore of {_item3} to "§7Dreptul de a construi in orasul"
+    set line 2 of lore of {_item3} to "§7medieval Mittelalter 1400"
+    set line 3 of lore of {_item3} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 4 of lore of {_item3} to "§ePret: §f{@COST_RESIDENCE} coins"
+    set {_hasRes} to {primar::residence::%{_p}'s uuid%} ? false
+    if {_hasRes} is true:
+        set line 5 of lore of {_item3} to "§aDetii permis ✔"
+    else:
+        set line 5 of lore of {_item3} to "§cNu detii permis ✗"
+    set line 6 of lore of {_item3} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 7 of lore of {_item3} to "§e» §fClick §7pentru a cumpara"
+    set slot 14 of {_inv} to {_item3}
+
+    # Slot 16 — Anunturi orasenesti
+    set {_item4} to 1 of book named "§d§lAnunturi Orasenesti"
+    set line 1 of lore of {_item4} to "§7Ultimele vesti din Mittelalter"
+    set line 2 of lore of {_item4} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    if {primar::news::1} is set:
+        set line 3 of lore of {_item4} to "§f%{primar::news::1}%"
+    else:
+        set line 3 of lore of {_item4} to "§7Niciun anunt momentan."
+    if {primar::news::2} is set:
+        set line 4 of lore of {_item4} to "§f%{primar::news::2}%"
+    set line 5 of lore of {_item4} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set line 6 of lore of {_item4} to "§e» §fClick §7pentru a citi"
+    set slot 16 of {_inv} to {_item4}
+
+    # Slot 28 — Status proprietate
+    set {_item5} to 1 of filled_map named "§c§lStatus Proprietate"
+    set line 1 of lore of {_item5} to "§7Informatii despre claim-urile tale"
+    set line 2 of lore of {_item5} to "§8▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+    set {_claimCount} to {claim::player::%{_p}'s uuid%::count} ? 0
+    set {_extraC} to {claim::extra::%{_p}'s uuid%} ? 0
+    set line 3 of lore of {_item5} to "§7Chunk-uri ocupate: §e%{_claimCount}%"
+    set line 4 of lore of {_item5} to "§7Chunk-uri extra: §a%{_extraC}%"
+    set {_haRes2} to {primar::residence::%{_p}'s uuid%} ? false
+    if {_haRes2} is true:
+        set line 5 of lore of {_item5} to "§7Permis: §aActiv ✔"
+    else:
+        set line 5 of lore of {_item5} to "§7Permis: §cInactiv ✗"
+    set slot 28 of {_inv} to {_item5}
+
+    # Slot 30 — Administrare anunturi (doar admin)
+    if {_p} has permission "smp.admin":
+        set {_item6} to 1 of command_block named "§4§lAdmin: Anunt Nou"
+        set line 1 of lore of {_item6} to "§7Seteaza un anunt orasenesc"
+        set line 2 of lore of {_item6} to "§e» /primaranunt <mesaj>"
+        set slot 30 of {_inv} to {_item6}
+    else:
+        set {_item6} to 1 of nether_star named "§6§lMittelalter 1400"
+        set line 1 of lore of {_item6} to "§7Orasul medieval IceLegends"
+        set line 2 of lore of {_item6} to "§7Construieste · Comercializeaza"
+        set line 3 of lore of {_item6} to "§7Prospereaza · Conduce"
+        set slot 30 of {_inv} to {_item6}
+
+    # Buton inchidere
+    set slot 44 of {_inv} to barrier named "§cInchide"
+
+    open {_inv} to {_p}
+
+# ─────────────────────────────────────────────────────────────
+#  CALCUL IMPOZIT
+# ─────────────────────────────────────────────────────────────
+
+function calcTax(p: player) :: number:
+    set {_count} to {claim::player::%{_p}'s uuid%::count} ? 0
+    set {_tax} to {_count} * {@TAX_PER_CHUNK}
+    if {_tax} < 10:
+        set {_tax} to 10
+    return {_tax}
+
+# ─────────────────────────────────────────────────────────────
+#  CLICK HANDLER GUI PRIMAR
+# ─────────────────────────────────────────────────────────────
+
+on inventory click:
+    if name of event-inventory is "{@PRIMAR_GUI}":
+        cancel event
+        if event-slot is 44:
+            close player's inventory
+            stop
+        # Cumpara 1 chunk extra (slot 10)
+        if event-slot is 10:
+            cumpChunk(player, 1)
+            stop
+        # Cumpara 5 chunk-uri extra (slot 19)
+        if event-slot is 19:
+            cumpChunk(player, 5)
+            stop
+        # Plateste impozit (slot 12)
+        if event-slot is 12:
+            platImpozit(player)
+            stop
+        # Permis resedinta (slot 14)
+        if event-slot is 14:
+            cumpPermis(player)
+            stop
+        # Anunturi (slot 16)
+        if event-slot is 16:
+            close player's inventory
+            send "" to player
+            send "  §d§l✦ Anunturi Mittelalter ✦" to player
+            send "  §8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to player
+            if {primar::news::1} is set:
+                send "  §f%{primar::news::1}%" to player
+            else:
+                send "  §7Niciun anunt momentan." to player
+            if {primar::news::2} is set:
+                send "  §f%{primar::news::2}%" to player
+            if {primar::news::3} is set:
+                send "  §f%{primar::news::3}%" to player
+            send "  §8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to player
+            send "" to player
+            stop
+        # Status proprietate (slot 28)
+        if event-slot is 28:
+            close player's inventory
+            set {_pn} to "%player%"
+            set {_claimCount} to {claim::player::%player's uuid%::count} ? 0
+            set {_extra} to {claim::extra::%player's uuid%} ? 0
+            set {_tax} to calcTax(player)
+            set {_taxPaid} to {primar::tax::paid::%player's uuid%} ? false
+            set {_hasRes} to {primar::residence::%player's uuid%} ? false
+            send "" to player
+            send "  §6§l✦ Status Proprietate — %{_pn}% §6§l✦" to player
+            send "  §8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to player
+            send "  §7Chunk-uri claim: §e%{_claimCount}%" to player
+            send "  §7Chunk-uri extra: §a%{_extra}%" to player
+            send "  §7Impozit lunar: §e%{_tax}% coins" to player
+            if {_taxPaid} is true:
+                send "  §7Impozit status: §aplatit ✔" to player
+            else:
+                send "  §7Impozit status: §cneplatit ✗" to player
+            if {_hasRes} is true:
+                send "  §7Permis resedinta: §aactiv ✔" to player
+            else:
+                send "  §7Permis resedinta: §cinactiv ✗" to player
+            send "  §8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to player
+            send "" to player
+            stop
+
+# ─────────────────────────────────────────────────────────────
+#  FUNCTII ACTIUNI
+# ─────────────────────────────────────────────────────────────
+
+function cumpChunk(p: player, amount: number):
+    set {_cost} to {_amount} * {@COST_EXTRA_CHUNK}
+    set {_bal} to {_p}'s balance + 0
+    if {_bal} < {_cost}:
+        close {_p}'s inventory
+        send "§c[Primarul] Nu ai suficienti coins! Ai nevoie de §e%{_cost}% coins§c." to {_p}
+        stop
+    remove {_cost} from {_p}'s balance
+    set {_cur} to {claim::extra::%{_p}'s uuid%} ? 0
+    set {claim::extra::%{_p}'s uuid%} to {_cur} + {_amount}
+    close {_p}'s inventory
+    send "§a[Primarul] Ai cumparat §e%{_amount}% chunk-uri extra §apentru §e%{_cost}% coins§a!" to {_p}
+    send "§7Total chunk-uri extra: §e%{claim::extra::%{_p}'s uuid%}%" to {_p}
+    deschidePrimar({_p})
+
+function platImpozit(p: player):
+    set {_taxPaid} to {primar::tax::paid::%{_p}'s uuid%} ? false
+    if {_taxPaid} is true:
+        close {_p}'s inventory
+        send "§e[Primarul] Ai platit deja impozitul pentru aceasta luna!" to {_p}
+        deschidePrimar({_p})
+        stop
+    set {_tax} to calcTax({_p})
+    set {_bal} to {_p}'s balance + 0
+    if {_bal} < {_tax}:
+        close {_p}'s inventory
+        send "§c[Primarul] Nu ai suficienti coins pentru impozit! Ai nevoie de §e%{_tax}% coins§c." to {_p}
+        stop
+    remove {_tax} from {_p}'s balance
+    set {primar::tax::paid::%{_p}'s uuid%} to true
+    close {_p}'s inventory
+    send "§a[Primarul] Impozit platit cu succes! §e%{_tax}% coins §adelbitati." to {_p}
+    deschidePrimar({_p})
+
+function cumpPermis(p: player):
+    set {_hasRes} to {primar::residence::%{_p}'s uuid%} ? false
+    if {_hasRes} is true:
+        close {_p}'s inventory
+        send "§e[Primarul] Detii deja un permis de resedinta!" to {_p}
+        deschidePrimar({_p})
+        stop
+    set {_bal} to {_p}'s balance + 0
+    if {_bal} < {@COST_RESIDENCE}:
+        close {_p}'s inventory
+        send "§c[Primarul] Nu ai suficienti coins! Ai nevoie de §e{@COST_RESIDENCE} coins§c." to {_p}
+        stop
+    remove {@COST_RESIDENCE} from {_p}'s balance
+    set {primar::residence::%{_p}'s uuid%} to true
+    close {_p}'s inventory
+    send "§a[Primarul] Permis de resedinta obtinut! Bun venit in Mittelalter 1400!" to {_p}
+    send "§7Acum poti construi si locui in orasul medieval." to {_p}
+    deschidePrimar({_p})
+
+# ─────────────────────────────────────────────────────────────
+#  COMANDA ADMIN: /primaranunt <linie> <mesaj>
+# ─────────────────────────────────────────────────────────────
+
+command /primaranunt <integer> <text>:
+    permission: smp.admin
+    trigger:
+        set {_n} to arg-1
+        if {_n} < 1:
+            send "&cFoloseste: /primaranunt <1-3> <mesaj>" to sender
+            stop
+        if {_n} > 3:
+            send "&cFoloseste: /primaranunt <1-3> <mesaj>" to sender
+            stop
+        set {primar::news::%{_n}%} to arg-2
+        send "&a[Primar] Anunt %{_n}% setat: &f%arg-2%" to sender
+
+# ─────────────────────────────────────────────────────────────
+#  RESETARE IMPOZITE LUNAR — admin command
+# ─────────────────────────────────────────────────────────────
+
+command /primarreset:
+    permission: smp.admin
+    trigger:
+        loop {hub::lb_names::*}:
+            set {_pn} to loop-value
+            delete {primar::tax::paid::%{_pn}%}
+        send "&a[Primar] Impozitele lunare au fost resetate pentru toti jucatorii!" to sender

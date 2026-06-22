@@ -1,0 +1,68 @@
+# ============================================================
+# IceLegends — Combat Tag
+# Unic: Countdown in action bar + penalizare coins la logout
+#        + blocare teleportari in lupta
+# ============================================================
+
+options:
+    COMBAT_SEC: 15
+    PREFIX_C: &8[&cCombat&8]
+    LOGOUT_PENALTY: 500
+
+function isInCombat(uuid: text) :: boolean:
+    if {combat::%{_uuid}%} is not set:
+        return false
+    if difference between {combat::%{_uuid}%} and now > {@COMBAT_SEC} seconds:
+        delete {combat::%{_uuid}%}
+        return false
+    return true
+
+# Tagheaza la lovitura jucator vs jucator
+on damage of player:
+    if attacker is a player:
+        if world of victim is world "world":
+            set {_vuuid} to "%victim's uuid%"
+            set {_auuid} to "%attacker's uuid%"
+            set {combat::%{_vuuid}%} to now
+            set {combat::%{_auuid}%} to now
+
+# Blocheaza teleportarile in lupta
+on teleport:
+    set {_uuid} to "%player's uuid%"
+    if {combat::%{_uuid}%} is set:
+        if difference between {combat::%{_uuid}%} and now < {@COMBAT_SEC} seconds:
+            cancel event
+            send colored "{@PREFIX_C} &cNu te poti teleporta in lupta!" to player
+
+# Penalizeaza disconnect-ul in lupta
+on quit:
+    set {_uuid} to "%player's uuid%"
+    if {combat::%{_uuid}%} is set:
+        if difference between {combat::%{_uuid}%} and now < {@COMBAT_SEC} seconds:
+            delete {combat::%{_uuid}%}
+            if player's balance > {@LOGOUT_PENALTY}:
+                remove {@LOGOUT_PENALTY} from player's balance
+                loop all players:
+                    if loop-player has permission "smp.staff":
+                        send colored "{@PREFIX_C} &b%player% &7a deconectat in lupta! &c-{@LOGOUT_PENALTY} coins&7." to loop-player
+            else:
+                loop all players:
+                    if loop-player has permission "smp.staff":
+                        send colored "{@PREFIX_C} &b%player% &7a deconectat in lupta! (fara coins de penalizat)" to loop-player
+
+# Action bar in lupta
+every 4 ticks:
+    loop all players:
+        if world of loop-player is world "world":
+            set {_uuid} to "%loop-player's uuid%"
+            if {combat::%{_uuid}%} is set:
+                set {_elapsed} to difference between {combat::%{_uuid}%} and now
+                set {_secs} to floor({_elapsed} / 1 second)
+                set {_left} to {@COMBAT_SEC} - {_secs}
+                if {_left} <= 0:
+                    delete {combat::%{_uuid}%}
+                else:
+                    send action bar colored "&c⚔ COMBAT &8— &7Iesi din lupta in &e%{_left}%s" to loop-player
+
+on world change:
+    delete {combat::%player's uuid%}

@@ -1,0 +1,127 @@
+# ============================================================
+# Spigot Config — Configurație Spigot/Paper
+# Referință: https://www.spigotmc.org/wiki/spigot-configuration/
+# Valorile sunt aliniate cu paper-world-defaults.yml
+# ============================================================
+
+# ── Settings ──────────────────────────────────────────────────
+settings:
+  # Dezactivat — nu folosim BungeeCord
+  bungeecord: false
+  # Restricție mișcare player (anti-noclip baseline)
+  player-shuffle: 0
+  # Rata de trimitere a log-urilor (ms)
+  log-villager-deaths: true
+  # Timeout pentru conexiuni
+  timeout-time: 60
+  # Restart automat la crash
+  restart-on-crash: true
+  restart-script: ./start.sh
+  # Netty threads — 0 = auto (recomandat)
+  netty-threads: 0
+  # Save-uri user cache
+  user-cache-size: 1000
+  # Timeout save user cache (zile)
+  save-user-cache-on-stop-only: false
+  # Compresie sample interval
+  sample-count: 12
+  # Ping interval pentru tablist
+  moved-wrongly-threshold: 0.0625
+  moved-too-quickly-multiplier: 10.0
+
+# ── Messages ──────────────────────────────────────────────────
+messages:
+  # Mesajele în română pentru kick-uri comune
+  whitelist: Serverul nu este deschis publicului încă.
+  unknown-command: Comandă necunoscută. Scrie /help pentru ajutor.
+  server-full: Serverul este plin. Încearcă mai târziu!
+  outdated-client: "Client prea vechi. Folosește versiunea {0}!"
+  outdated-server: "Serverul rulează o versiune mai nouă. Folosește {0}!"
+  restart: Serverul repornește. Reconectează-te în câteva secunde.
+
+# ── World Settings ────────────────────────────────────────────
+world-settings:
+  default:
+    # Distanța de spawn a mob-urilor față de jucători (chunks)
+    # Aliniat cu spawn-limits din paper-world-defaults.yml
+    mob-spawn-range: 6
+
+    # Limita de entități per chunk — previne lag din ferme masive
+    entity-tracking-range:
+      # Jucători vizibili la 128 blocuri
+      players: 128
+      # Animale vizibile la 96 blocuri
+      animals: 96
+      # Monștri vizibili la 96 blocuri
+      monsters: 96
+      # Divers (cărți, cadre) vizibil la 64 blocuri
+      misc: 64
+      # Experiență vizibilă la 32 blocuri
+      experience: 32
+      # Display entities vizibil la 128 blocuri
+      display: 128
+      # Alte entități
+      other: 64
+
+    # Ticks per spawn pentru diferite tipuri (vanilla-like)
+    ticks-per:
+      # Monștri spawneaza la fiecare 1 tick — vanilla
+      monster-spawns: 1
+      # Animale spawnează mai rar
+      animal-spawns: 400
+
+    # Interval de salvare a chunk-urilor (ticks) — 6000 = 5 minute
+    chunk-gc:
+      period-in-ticks: 600
+
+    # Hopper transfer cooldown — vanilla = 8 ticks
+    hopper-transfer: 8
+    hopper-check: 1
+    hopper-amount: 1
+
+    # Viteza de creștere a ierbii (ticks) — vanilla = 1
+    grass-spread-tick-rate: 1
+
+    # Limita de merge pentru item drops — reduce numărul entităților
+    item-merge-radius:
+      item: 2.5
+      exp: 3.0
+
+    # Distanța de activare Arrow — vanilla
+    arrow-despawn-rate: 1200
+
+    # End portal fix
+    end-portal-sound-radius: 0
+
+    # Nerf-uri specifice
+    nerf-spawner-mobs: false
+    hanging-tick-frequency: 100
+
+    # Viteze de creștere plante — toate 100% vanilla
+    growth:
+      cactus-modifier: 100
+      cane-modifier: 100
+      melon-modifier: 100
+      mushroom-modifier: 100
+      pumpkin-modifier: 100
+      sapling-modifier: 100
+      beetroot-modifier: 100
+      carrot-modifier: 100
+      potato-modifier: 100
+      wheat-modifier: 100
+      netherwart-modifier: 100
+      vine-modifier: 100
+      cocoa-modifier: 100
+      bamboo-modifier: 100
+      sweetberry-modifier: 100
+      kelp-modifier: 100
+      torchflower-modifier: 100
+      pitcherplant-modifier: 100
+
+# ── Stats ─────────────────────────────────────────────────────
+stats:
+  disable-saving: false
+  forced-stats: {}
+
+# ── Config version ───────────────────────────────────────────
+config-version: 12

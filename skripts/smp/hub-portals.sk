@@ -1,0 +1,136 @@
+# ============================================================
+# Hub Portale — IceLegends SMP (Multiverse single-server)
+# Portalele teleporteaza jucatorii intre lumi via Multiverse
+# Setup (admin, stai IN portal):
+#   /setportal smp | shop | parkour
+# ============================================================
+
+options:
+    HUB_WORLD: hub
+    TRIGGER_DIST: 2.0
+    COOLDOWN_SEC: 5
+
+on script load:
+    delete {portal::cd::*}
+    # Corecteaza coordonata portala SMP daca e la locatia gresita (x > -30)
+    if {portal::smp::x} is set:
+        if {portal::smp::x} > -30:
+            set {portal::smp::x} to -41.0
+            set {portal::smp::y} to 66.75
+            set {portal::smp::z} to 3.0
+
+command /setportal <text>:
+    permission: smp.admin
+    trigger:
+        if world of player is not world "{@HUB_WORLD}":
+            send "&c[Portal] Trebuie sa fii in HUB!" to player
+            stop
+        set {_t} to arg-1 in lower case
+        if {_t} is "smp":
+            set {portal::smp::x} to x-coordinate of player's location
+            set {portal::smp::y} to y-coordinate of player's location
+            set {portal::smp::z} to z-coordinate of player's location
+            send "&a[Portal] SMP setat la &e%x-coordinate of player's location%&a, &e%y-coordinate of player's location%&a, &e%z-coordinate of player's location%&a!" to player
+            stop
+        if {_t} is "shop":
+            set {portal::shop::x} to x-coordinate of player's location
+            set {portal::shop::y} to y-coordinate of player's location
+            set {portal::shop::z} to z-coordinate of player's location
+            send "&a[Portal] Shop setat la &e%x-coordinate of player's location%&a, &e%y-coordinate of player's location%&a, &e%z-coordinate of player's location%&a!" to player
+            stop
+        if {_t} is "parkour":
+            set {portal::parkour::x} to x-coordinate of player's location
+            set {portal::parkour::y} to y-coordinate of player's location
+            set {portal::parkour::z} to z-coordinate of player's location
+            send "&a[Portal] Parkour setat la &e%x-coordinate of player's location%&a, &e%y-coordinate of player's location%&a, &e%z-coordinate of player's location%&a!" to player
+            stop
+        send "&c[Portal] Foloseste: /setportal <smp|shop|parkour>" to player
+
+command /portalinfo:
+    permission: smp.admin
+    trigger:
+        send "&7=== Portale ===" to player
+        if {portal::smp::x} is set:
+            send "  &bSMP: &e%{portal::smp::x}%, %{portal::smp::y}%, %{portal::smp::z}%" to player
+        else:
+            send "  &bSMP: &cNu e setat" to player
+        if {portal::shop::x} is set:
+            send "  &aShop: &e%{portal::shop::x}%, %{portal::shop::y}%, %{portal::shop::z}%" to player
+        else:
+            send "  &aShop: &cNu e setat" to player
+        if {portal::parkour::x} is set:
+            send "  &dParkour: &e%{portal::parkour::x}%, %{portal::parkour::y}%, %{portal::parkour::z}%" to player
+        else:
+            send "  &dParkour: &cNu e setat" to player
+
+function portalDist(px: number, py: number, pz: number, tx: number, ty: number, tz: number) :: number:
+    set {_dx} to {_px} - {_tx}
+    set {_dz} to {_pz} - {_tz}
+    return sqrt({_dx}*{_dx} + {_dz}*{_dz})
+
+# ── Detectie portale + teleportare Multiverse ─────────────────
+every 10 ticks:
+    loop all players:
+        if world of loop-player is world "{@HUB_WORLD}":
+            # Expira cooldown-ul dupa COOLDOWN_SEC secunde
+            if {portal::cd::%loop-player's uuid%} is set:
+                if difference between {portal::cd::%loop-player's uuid%} and now > {@COOLDOWN_SEC} seconds:
+                    delete {portal::cd::%loop-player's uuid%}
+
+            if {portal::cd::%loop-player's uuid%} is not set:
+                set {_px} to x-coordinate of loop-player's location
+                set {_py} to y-coordinate of loop-player's location
+                set {_pz} to z-coordinate of loop-player's location
+
+                if {portal::smp::x} is set:
+                    if portalDist({_px},{_py},{_pz},{portal::smp::x},{portal::smp::y},{portal::smp::z}) < {@TRIGGER_DIST}:
+                        set {portal::cd::%loop-player's uuid%} to now
+                        send title colored "&b&lIceLegends SMP" with subtitle colored "&7Se incarca lumea..." to loop-player for 3 seconds
+                        if {smp::spawn} is set:
+                            teleport loop-player to {smp::spawn}
+                        else:
+                            teleport loop-player to spawn of world "world"
+                        stop
+
+                if {portal::shop::x} is set:
+                    if portalDist({_px},{_py},{_pz},{portal::shop::x},{portal::shop::y},{portal::shop::z}) < {@TRIGGER_DIST}:
+                        set {portal::cd::%loop-player's uuid%} to now
+                        send title colored "&a&lMagazin" with subtitle colored "&7Se incarca..." to loop-player for 3 seconds
+                        if {shop::spawn} is set:
+                            teleport loop-player to {shop::spawn}
+                        else:
+                            teleport loop-player to spawn of world "shop"
+                        stop
+
+                if {portal::parkour::x} is set:
+                    if portalDist({_px},{_py},{_pz},{portal::parkour::x},{portal::parkour::y},{portal::parkour::z}) < {@TRIGGER_DIST}:
+                        set {portal::cd::%loop-player's uuid%} to now
+                        send title colored "&d&lParkour" with subtitle colored "&7/pk start pentru a incepe!" to loop-player for 3 seconds
+                        teleport loop-player to spawn of world "parkour"
+                        stop
+
+on join:
+    delete {portal::cd::%player's uuid%}
+
+on world change:
+    if name of world of player is "{@HUB_WORLD}":
+        delete {portal::cd::%player's uuid%}
+
+# ── Action bar aproape de portal ──────────────────────────────
+every 2 seconds:
+    loop all players:
+        if world of loop-player is world "{@HUB_WORLD}":
+            set {_px} to x-coordinate of loop-player's location
+            set {_py} to y-coordinate of loop-player's location
+            set {_pz} to z-coordinate of loop-player's location
+            if {portal::smp::x} is set:
+                if portalDist({_px},{_py},{_pz},{portal::smp::x},{portal::smp::y},{portal::smp::z}) < 6:
+                    send action bar colored "&b» &fSMP &8— &7Intra in portal!" to loop-player
+                    stop
+            if {portal::shop::x} is set:
+                if portalDist({_px},{_py},{_pz},{portal::shop::x},{portal::shop::y},{portal::shop::z}) < 6:
+                    send action bar colored "&a» &fMagazin &8— &7Intra in portal!" to loop-player
+                    stop
+            if {portal::parkour::x} is set:
+                if portalDist({_px},{_py},{_pz},{portal::parkour::x},{portal::parkour::y},{portal::parkour::z}) < 6:
+                    send action bar colored "&d» &fParkour &8— &7/pk start!" to loop-player

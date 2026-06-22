@@ -1,0 +1,31 @@
+teleportenabled: true
+teleportauto: false
+godmode: false
+flymode: false
+muted: false
+jailed: false
+ip-address: 172.19.0.1
+afk: false
+socialspy: false
+npc: false
+powertoolsenabled: true
+accepting-pay: true
+baltop-exempt: false
+timestamps:
+  lastteleport: 0
+  lastheal: 0
+  mute: 0
+  jail: 0
+  onlinejail: 0
+  logout: 1780963308206
+  login: 1780962150872
+money: '0'
+last-account-name: FlashuL
+logoutlocation:
+  world: ee4b385b-3001-4e03-a42d-11f62f40ddbd
+  world-name: world
+  x: 113.05139982553709
+  y: 78.0
+  z: 145.69999998807907
+  yaw: -156.1531982421875
+  pitch: 54.75022506713867

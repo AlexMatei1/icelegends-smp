@@ -1,0 +1,464 @@
+# ============================================================
+# SMP Claims — Sistem custom de revendicare teritoriu
+# Inlocuieste Towny | Lume: world (SMP)
+# /claim /unclaim /claiminfo /claimslist /steag
+# /trust <player> /untrust <player> /trustall <player>
+# ============================================================
+
+options:
+    CLAIM_WORLD: world
+    FLAG_NAME: &6&lSteagul Teritoriului
+    CLAIM_COST: 150
+    FREE_CLAIMS: 1
+
+# ─────────────────────────────────────────────────────────────
+#  FUNCTII CORE
+# ─────────────────────────────────────────────────────────────
+
+function ckDirect(cx: number, cz: number, w: text) :: text:
+    return "%{_w}%:%{_cx}%:%{_cz}%"
+
+function ck(x: number, z: number, w: text) :: text:
+    return ckDirect(floor({_x} / 16), floor({_z} / 16), {_w})
+
+function playerCK(p: player) :: text:
+    return ck(x-coordinate of {_p}'s location, z-coordinate of {_p}'s location, "%world of {_p}%")
+
+function locCK(l: location) :: text:
+    return ck(x-coordinate of {_l}, z-coordinate of {_l}, "%world of {_l}%")
+
+function maxChunks(p: player) :: number:
+    if {_p} has permission "smp.admin":
+        return 9999
+    if {_p} has permission "group.moderator":
+        return 9999
+    set {_extra} to {claim::extra::%{_p}'s uuid%} ? 0
+    if {_p} has permission "group.helper":
+        return 200 + {_extra}
+    if {_p} has permission "group.legend":
+        return 50 + {_extra}
+    if {_p} has permission "group.veteran":
+        return 35 + {_extra}
+    if {_p} has permission "group.explorator":
+        return 20 + {_extra}
+    return 10 + {_extra}
+
+function nextCost(p: player) :: number:
+    set {_n} to {claim::player::%{_p}'s uuid%::count} ? 0
+    if {_n} < {@FREE_CLAIMS}:
+        return 0
+    return {@CLAIM_COST}
+
+function canBuild(p: player, key: text) :: boolean:
+    if {_p} has permission "smp.admin":
+        return true
+    if {claim::chunk::%{_key}%::owner} is not set:
+        return true
+    if {claim::chunk::%{_key}%::owner} is "%{_p}'s uuid%":
+        return true
+    loop {claim::chunk::%{_key}%::trusted::*}:
+        if loop-value is {_p}'s name:
+            return true
+    return false
+
+function isOwner(p: player, key: text) :: boolean:
+    if {claim::chunk::%{_key}%::owner} is not set:
+        return false
+    if {claim::chunk::%{_key}%::owner} is "%{_p}'s uuid%":
+        return true
+    return false
+
+# ─────────────────────────────────────────────────────────────
+#  LOGICA CLAIM / UNCLAIM (reutilizata din GUI si comenzi)
+# ─────────────────────────────────────────────────────────────
+
+function doClaim(p: player, key: text):
+    set {_owner} to {claim::chunk::%{_key}%::owner}
+    if {_owner} is set:
+        if {_owner} is "%{_p}'s uuid%":
+            send colored "&c[Claim] Ai deja revendicat acest chunk." to {_p}
+        else:
+            send colored "&c[Claim] Ocupat de &f%{claim::chunk::%{_key}%::owner_name}%&c." to {_p}
+        stop
+    set {_count} to {claim::player::%{_p}'s uuid%::count} ? 0
+    set {_max} to maxChunks({_p})
+    if {_count} >= {_max}:
+        send colored "&c[Claim] Ai atins limita de &e%{_max}% &cchunkuri pentru rangul tau." to {_p}
+        stop
+    set {_cost} to nextCost({_p})
+    if {_cost} > 0:
+        if {_p}'s balance < {_cost}:
+            send colored "&c[Claim] Nu ai destui coins! Cost: &e%{_cost}%&c, sold: &e%floor({_p}'s balance)%&c." to {_p}
+            stop
+        remove {_cost} from {_p}'s balance
+    set {claim::chunk::%{_key}%::owner} to "%{_p}'s uuid%"
+    set {claim::chunk::%{_key}%::owner_name} to {_p}'s name
+    set {claim::chunk::%{_key}%::pvp} to false
+    add 1 to {claim::player::%{_p}'s uuid%::count}
+    add {_key} to {claim::player::%{_p}'s uuid%::chunks::*}
+    set {_newCount} to {claim::player::%{_p}'s uuid%::count}
+    if {_cost} > 0:
+        send colored "&a[Claim] Revendicat! &7-&e%{_cost}% coins &8[%{_newCount}%/%{_max}%]" to {_p}
+    else:
+        send colored "&a[Claim] Revendicat gratuit! &8[%{_newCount}%/%{_max}%]" to {_p}
+    if {_newCount} is 1:
+        give steagItem() to {_p}
+        send colored "&7Ai primit &6&lSteagul Teritoriului&7! Click dreapta = harta." to {_p}
+
+function doUnclaim(p: player, key: text):
+    if isOwner({_p}, {_key}) is false:
+        send colored "&c[Claim] Nu detii acest chunk." to {_p}
+        stop
+    delete {claim::chunk::%{_key}%::owner}
+    delete {claim::chunk::%{_key}%::owner_name}
+    delete {claim::chunk::%{_key}%::pvp}
+    delete {claim::chunk::%{_key}%::trusted::*}
+    remove 1 from {claim::player::%{_p}'s uuid%::count}
+    remove {_key} from {claim::player::%{_p}'s uuid%::chunks::*}
+    send colored "&a[Claim] Chunk eliberat." to {_p}
+
+# ─────────────────────────────────────────────────────────────
+#  STEAG ITEM
+# ─────────────────────────────────────────────────────────────
+
+function steagItem() :: item:
+    set {_f} to white banner named colored "{@FLAG_NAME}"
+    set lore of {_f} to colored "&7Harta si gestiunea teritoriului tau." and colored "&8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" and colored "&e» &fClick dreapta = deschide harta"
+    return {_f}
+
+command /steag:
+    trigger:
+        if world of player is not world "{@CLAIM_WORLD}":
+            send colored "&c[Claim] Trebuie sa fii in lumea SMP." to player
+            stop
+        if {claim::player::%player's uuid%::count} ? 0 < 1:
+            send colored "&c[Claim] Revendica mai intai un chunk cu &e/claim&c." to player
+            stop
+        give steagItem() to player
+        send colored "&a[Claim] Steagul a fost dat!" to player
+
+on right click with white banner:
+    if name of player's held item is colored "{@FLAG_NAME}":
+        cancel event
+        if world of player is not world "{@CLAIM_WORLD}":
+            send colored "&c[Claim] Harta e disponibila doar in lumea SMP." to player
+            stop
+        deschideHarta(player)
+
+on drop:
+    if world of player is world "{@CLAIM_WORLD}":
+        if name of event-item is colored "{@FLAG_NAME}":
+            cancel event
+
+# ─────────────────────────────────────────────────────────────
+#  HARTA GUI — tile color
+# ─────────────────────────────────────────────────────────────
+
+function tileItem(cx: number, cz: number, w: text, viewer: player) :: item:
+    set {_key} to ckDirect({_cx}, {_cz}, {_w})
+    set {_owner} to {claim::chunk::%{_key}%::owner}
+    set {_vUUID} to "%{viewer}'s uuid%"
+    set {_vCX} to floor(x-coordinate of {viewer}'s location / 16)
+    set {_vCZ} to floor(z-coordinate of {viewer}'s location / 16)
+    if {_cx} is {_vCX}:
+        if {_cz} is {_vCZ}:
+            set {_i} to gold block named colored "&e&l★ TU ESTI AICI"
+            set lore of {_i} to colored "&7Chunk: &e%{_cx}%&7, &e%{_cz}%"
+            return {_i}
+    if {_owner} is not set:
+        set {_i} to light gray stained glass pane named colored "&7Neocupat &8(%{_cx}%, %{_cz}%)"
+        set lore of {_i} to colored "&8» Click = Revendica"
+        return {_i}
+    if {_owner} is {_vUUID}:
+        set {_pvp} to {claim::chunk::%{_key}%::pvp} ? false
+        set {_pvpStr} to "&cPvP: OFF"
+        if {_pvp} is true:
+            set {_pvpStr} to "&aPvP: ON"
+        set {_i} to lime stained glass pane named colored "&a■ Al Tau &8(%{_cx}%, %{_cz}%)"
+        set lore of {_i} to colored {_pvpStr} and colored "&8» Click = Elibereaza"
+        return {_i}
+    loop {claim::chunk::%{_key}%::trusted::*}:
+        if loop-value is {viewer}'s name:
+            set {_i} to cyan stained glass pane named colored "&b■ Trusted &8(%{_cx}%, %{_cz}%)"
+            set lore of {_i} to colored "&7Proprietar: &f%{claim::chunk::%{_key}%::owner_name}%" and colored "&7Poti construi aici"
+            return {_i}
+    set {_i} to red stained glass pane named colored "&c■ Ocupat &8(%{_cx}%, %{_cz}%)"
+    set lore of {_i} to colored "&7Proprietar: &f%{claim::chunk::%{_key}%::owner_name}%"
+    return {_i}
+
+# ─────────────────────────────────────────────────────────────
+#  HARTA GUI — deschide
+# ─────────────────────────────────────────────────────────────
+
+function deschideHarta(p: player):
+    set {_inv} to a new chest inventory with 6 rows named "§6§lHarta Teritoriu"
+    set {_count} to {claim::player::%{_p}'s uuid%::count} ? 0
+    set {_max} to maxChunks({_p})
+    set {_cost} to nextCost({_p})
+
+    set {_info} to paper named colored "&b&l%{_p}'s name%"
+    set lore of {_info} to colored "&7Chunkuri: &e%{_count}%&7/&e%{_max}%" and colored "&7Cost urmator: &e%{_cost}% coins" and colored "&7Sold: &e%floor({_p}'s balance)% coins"
+    set slot 0 of {_inv} to {_info}
+    set slot 1 of {_inv} to gray stained glass pane named " "
+
+    set {_btnClaim} to lime dye named colored "&a&l+ REVENDICA"
+    set lore of {_btnClaim} to colored "&7Revendica chunkul in care stai" and colored "&7Cost: &e%{_cost}% coins"
+    set slot 2 of {_inv} to {_btnClaim}
+
+    set {_btnUnclaim} to red dye named colored "&c&l- ELIBEREAZA"
+    set lore of {_btnUnclaim} to colored "&7Elibereaza chunkul in care stai"
+    set slot 3 of {_inv} to {_btnUnclaim}
+
+    set slot 4 of {_inv} to gray stained glass pane named " "
+
+    set {_curKey} to playerCK({_p})
+    set {_pvp} to {claim::chunk::%{_curKey}%::pvp} ? false
+    if {_pvp} is true:
+        set {_btnPvp} to iron sword named colored "&a&lPvP: ACTIVAT"
+        set lore of {_btnPvp} to colored "&7Click = dezactiveaza PvP in chunkul curent"
+    else:
+        set {_btnPvp} to wooden sword named colored "&c&lPvP: DEZACTIVAT"
+        set lore of {_btnPvp} to colored "&7Click = activeaza PvP in chunkul curent"
+    set slot 5 of {_inv} to {_btnPvp}
+
+    set slot 6 of {_inv} to gray stained glass pane named " "
+
+    set {_legend} to book named colored "&7Legenda"
+    set lore of {_legend} to colored "&a■ &7Al tau" and colored "&b■ &7Trusted" and colored "&c■ &7Al altcuiva" and colored "&7■ &7Neocupat" and colored "&e■ &7Tu esti aici"
+    set slot 7 of {_inv} to {_legend}
+    set slot 8 of {_inv} to barrier named colored "&cInchide"
+
+    set {_pcx} to floor(x-coordinate of {_p}'s location / 16)
+    set {_pcz} to floor(z-coordinate of {_p}'s location / 16)
+    set {_w} to "%world of {_p}%"
+
+    loop 45 times:
+        set {_i} to loop-number - 1
+        set {_row} to floor({_i} / 9)
+        set {_col} to {_i} - (floor({_i} / 9) * 9)
+        set {_cx} to {_pcx} + {_col} - 4
+        set {_cz} to {_pcz} + {_row} - 2
+        set {_slot} to {_i} + 9
+        set slot {_slot} of {_inv} to tileItem({_cx}, {_cz}, {_w}, {_p})
+        set {claimgui::%{_p}'s uuid%::%{_slot}%::cx} to {_cx}
+        set {claimgui::%{_p}'s uuid%::%{_slot}%::cz} to {_cz}
+
+    open {_inv} to {_p}
+
+# ─────────────────────────────────────────────────────────────
+#  HARTA GUI — click handler
+# ─────────────────────────────────────────────────────────────
+
+on inventory click:
+    if name of event-inventory is "§6§lHarta Teritoriu":
+        cancel event
+        set {_uuid} to "%player's uuid%"
+
+        if event-slot is 2:
+            close player's inventory
+            doClaim(player, playerCK(player))
+            stop
+        if event-slot is 3:
+            close player's inventory
+            doUnclaim(player, playerCK(player))
+            stop
+        if event-slot is 5:
+            set {_key} to playerCK(player)
+            if isOwner(player, {_key}) is false:
+                send colored "&c[Claim] Nu detii chunkul curent." to player
+                stop
+            if {claim::chunk::%{_key}%::pvp} is true:
+                set {claim::chunk::%{_key}%::pvp} to false
+                send colored "&c[Claim] PvP dezactivat." to player
+            else:
+                set {claim::chunk::%{_key}%::pvp} to true
+                send colored "&a[Claim] PvP activat." to player
+            deschideHarta(player)
+            stop
+        if event-slot is 8:
+            close player's inventory
+            stop
+
+        if event-slot >= 9:
+            if event-slot <= 53:
+                set {_cx} to {claimgui::%{_uuid}%::%event-slot%::cx}
+                set {_cz} to {claimgui::%{_uuid}%::%event-slot%::cz}
+                if {_cx} is not set:
+                    stop
+                set {_key} to ckDirect({_cx}, {_cz}, "%world of player%")
+                set {_owner} to {claim::chunk::%{_key}%::owner}
+                if {_owner} is not set:
+                    doClaim(player, {_key})
+                    deschideHarta(player)
+                    stop
+                if {_owner} is {_uuid}:
+                    doUnclaim(player, {_key})
+                    deschideHarta(player)
+                    stop
+                send colored "&c[Claim] Proprietar: &f%{claim::chunk::%{_key}%::owner_name}%" to player
+                stop
+
+on inventory close:
+    if name of event-inventory is "§6§lHarta Teritoriu":
+        delete {claimgui::%player's uuid%::*}
+
+# ─────────────────────────────────────────────────────────────
+#  COMENZI
+# ─────────────────────────────────────────────────────────────
+
+command /claim:
+    trigger:
+        if world of player is not world "{@CLAIM_WORLD}":
+            send colored "&c[Claim] Poti revendica doar in lumea SMP." to player
+            stop
+        doClaim(player, playerCK(player))
+
+command /unclaim:
+    trigger:
+        if world of player is not world "{@CLAIM_WORLD}":
+            send colored "&c[Claim] Trebuie sa fii in lumea SMP." to player
+            stop
+        doUnclaim(player, playerCK(player))
+
+command /claiminfo:
+    trigger:
+        set {_key} to playerCK(player)
+        if {claim::chunk::%{_key}%::owner} is not set:
+            send colored "&7[Claim] Chunk neocupat." to player
+            stop
+        send colored "&7Proprietar: &f%{claim::chunk::%{_key}%::owner_name}%" to player
+        set {_pvp} to {claim::chunk::%{_key}%::pvp} ? false
+        if {_pvp} is true:
+            send colored "&7PvP: &aActivat" to player
+        else:
+            send colored "&7PvP: &cDezactivat" to player
+        loop {claim::chunk::%{_key}%::trusted::*}:
+            send colored "&7Trusted: &f%loop-value%" to player
+
+command /claimslist:
+    trigger:
+        set {_count} to {claim::player::%player's uuid%::count} ? 0
+        send colored "&7Chunkuri: &e%{_count}%&7/&e%maxChunks(player)% &8| Cost urmator: &e%nextCost(player)% coins" to player
+
+command /trust <text>:
+    trigger:
+        if world of player is not world "{@CLAIM_WORLD}":
+            send colored "&c[Claim] Trebuie sa fii in lumea SMP." to player
+            stop
+        set {_key} to playerCK(player)
+        if isOwner(player, {_key}) is false:
+            send colored "&c[Claim] Nu detii chunkul curent." to player
+            stop
+        if arg-1 is player's name:
+            send colored "&c[Claim] Nu te poti adauga pe tine." to player
+            stop
+        add arg-1 to {claim::chunk::%{_key}%::trusted::*}
+        send colored "&a[Claim] &f%arg-1% &apoate construi in acest chunk." to player
+
+command /untrust <text>:
+    trigger:
+        set {_key} to playerCK(player)
+        if isOwner(player, {_key}) is false:
+            send colored "&c[Claim] Nu detii chunkul curent." to player
+            stop
+        remove arg-1 from {claim::chunk::%{_key}%::trusted::*}
+        send colored "&a[Claim] &f%arg-1% &anu mai are acces." to player
+
+command /trustall <text>:
+    trigger:
+        set {_n} to 0
+        loop {claim::player::%player's uuid%::chunks::*}:
+            add arg-1 to {claim::chunk::%loop-value%::trusted::*}
+            add 1 to {_n}
+        send colored "&a[Claim] &f%arg-1% &aare acces in &e%{_n}% &achunkuri." to player
+
+command /untrustall <text>:
+    trigger:
+        set {_n} to 0
+        loop {claim::player::%player's uuid%::chunks::*}:
+            remove arg-1 from {claim::chunk::%loop-value%::trusted::*}
+            add 1 to {_n}
+        send colored "&a[Claim] &f%arg-1% &anu mai are acces." to player
+
+# ─────────────────────────────────────────────────────────────
+#  PROTECTIE — block break / place
+# ─────────────────────────────────────────────────────────────
+
+on break:
+    if world of player is world "{@CLAIM_WORLD}":
+        set {_key} to locCK(event-block's location)
+        if {claim::chunk::%{_key}%::owner} is set:
+            if canBuild(player, {_key}) is false:
+                cancel event
+                send action bar colored "&c✘ Teritoriu: &f%{claim::chunk::%{_key}%::owner_name}%" to player
+
+on place:
+    if world of player is world "{@CLAIM_WORLD}":
+        set {_key} to locCK(event-block's location)
+        if {claim::chunk::%{_key}%::owner} is set:
+            if canBuild(player, {_key}) is false:
+                cancel event
+                send action bar colored "&c✘ Teritoriu: &f%{claim::chunk::%{_key}%::owner_name}%" to player
+
+# ─────────────────────────────────────────────────────────────
+#  PROTECTIE — containere
+# ─────────────────────────────────────────────────────────────
+
+on right click:
+    if world of player is world "{@CLAIM_WORLD}":
+        if event-block is not set:
+            stop
+        set {_type} to type of event-block
+        if {_type} is chest or trapped chest or barrel or hopper or dropper or dispenser or furnace or blast furnace or smoker or shulker box or white shulker box or orange shulker box or magenta shulker box or light blue shulker box or yellow shulker box or lime shulker box or pink shulker box or gray shulker box or light gray shulker box or cyan shulker box or purple shulker box or blue shulker box or brown shulker box or green shulker box or red shulker box or black shulker box:
+            set {_key} to locCK(event-block's location)
+            if {claim::chunk::%{_key}%::owner} is set:
+                if canBuild(player, {_key}) is false:
+                    cancel event
+                    send action bar colored "&c✘ Container protejat de &f%{claim::chunk::%{_key}%::owner_name}%&c!" to player
+
+# ─────────────────────────────────────────────────────────────
+#  PROTECTIE — explozii (TNT, creeper, ghast)
+# ─────────────────────────────────────────────────────────────
+
+on explosion:
+    loop exploded blocks:
+        if world of loop-block is world "{@CLAIM_WORLD}":
+            set {_key} to locCK(loop-block's location)
+            if {claim::chunk::%{_key}%::owner} is set:
+                remove loop-block from exploded blocks
+
+# ─────────────────────────────────────────────────────────────
+#  PROTECTIE — PvP toggle per claim
+# ─────────────────────────────────────────────────────────────
+
+on damage of player:
+    if attacker is a player:
+        if world of victim is world "{@CLAIM_WORLD}":
+            set {_key} to playerCK(victim)
+            if {claim::chunk::%{_key}%::owner} is set:
+                if {claim::chunk::%{_key}%::pvp} is not true:
+                    cancel event
+                    send action bar colored "&c✘ PvP dezactivat in acest teritoriu!" to attacker
+
+# ─────────────────────────────────────────────────────────────
+#  NOTIFICARE la intrarea in chunk nou
+# ─────────────────────────────────────────────────────────────
+
+every 2 seconds:
+    loop all players:
+        if world of loop-player is world "{@CLAIM_WORLD}":
+            set {_key} to playerCK(loop-player)
+            if {_key} is not {claimnotif::%loop-player's uuid%}:
+                set {claimnotif::%loop-player's uuid%} to {_key}
+                set {_owner} to {claim::chunk::%{_key}%::owner}
+                if {_owner} is set:
+                    if {_owner} is "%loop-player's uuid%":
+                        send action bar colored "&a⚑ Teritoriu propriu" to loop-player
+                    else:
+                        send action bar colored "&c⚑ Teritoriu: &f%{claim::chunk::%{_key}%::owner_name}%" to loop-player
+                else:
+                    send action bar colored "&7◌ Teren liber" to loop-player
+
+on quit:
+    delete {claimgui::%player's uuid%::*}
+    delete {claimnotif::%player's uuid%}

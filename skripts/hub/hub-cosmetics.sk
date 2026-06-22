@@ -1,0 +1,103 @@
+# ============================================================
+# Hub Cosmetics — IceLegends SMP
+# Comenzi: /trail [flacare|sclipici|inima|off], /cosmetics
+# Particle-uri active doar în lumea hub
+# ============================================================
+
+options:
+    HUB_WORLD: hub
+    COS_PREFIX: &8[&5Cosmetics&8]
+
+# ── Comanda /trail ────────────────────────────────────────────
+command /trail [<text>]:
+    trigger:
+        if arg-1 is not set:
+            send "{@COS_PREFIX} &7Tipuri: &dflacare&7, &fsclipici&7, &cinima&7, &7off" to player
+            set {_cur} to {cosmetics::trail::%player's uuid%}
+            if {_cur} is set:
+                send "{@COS_PREFIX} &7Trail activ: &e%{_cur}%" to player
+            else:
+                send "{@COS_PREFIX} &7Trail activ: &7niciun" to player
+            stop
+
+        set {_type} to arg-1 in lower case
+
+        if {_type} is "off":
+            delete {cosmetics::trail::%player's uuid%}
+            send "{@COS_PREFIX} &7Trail dezactivat." to player
+            stop
+
+        if {_type} is "flacare":
+            set {cosmetics::trail::%player's uuid%} to "flacare"
+            send "{@COS_PREFIX} &cTrail &6Flacără &cactivat!" to player
+            stop
+
+        if {_type} is "sclipici":
+            set {cosmetics::trail::%player's uuid%} to "sclipici"
+            send "{@COS_PREFIX} &fTrail &eSclipici &factivat!" to player
+            stop
+
+        if {_type} is "inima":
+            set {cosmetics::trail::%player's uuid%} to "inima"
+            send "{@COS_PREFIX} &cTrail &dInimă &cactivat!" to player
+            stop
+
+        send "{@COS_PREFIX} &cTip necunoscut. Opțiuni: flacare, sclipici, inima, off" to player
+
+# ── Particle loop (la fiecare 3 tick-uri) ─────────────────────
+every 3 ticks:
+    loop all players:
+        if world of loop-player is world "{@HUB_WORLD}":
+            set {_trail} to {cosmetics::trail::%loop-player's uuid%}
+            if {_trail} is set:
+                set {_loc} to loop-player's location
+
+                if {_trail} is "flacare":
+                    show flame particle at {_loc}
+
+                if {_trail} is "sclipici":
+                    show end rod particle at {_loc}
+                    show note particle at {_loc}
+
+                if {_trail} is "inima":
+                    show heart particle at {_loc}
+
+# ── Meniu /cosmetics (inventar GUI) ──────────────────────────
+command /cosmetics:
+    trigger:
+        set {_inv} to a new chest inventory with 3 rows named "§5§lCosmetics [COS]"
+        set slot 10 of {_inv} to red concrete named "&c&lFlacără" with lore "&7Particle de foc" and "&eClick pentru a activa"
+        set slot 12 of {_inv} to yellow concrete named "&e&lSclipici" with lore "&7Particle luminoase" and "&eClick pentru a activa"
+        set slot 14 of {_inv} to pink concrete named "&d&lInimă" with lore "&7Particle de inimă" and "&eClick pentru a activa"
+        set slot 16 of {_inv} to barrier named "&7&lOff" with lore "&7Dezactivează trail-ul"
+        loop integers from 0 to 26:
+            if slot loop-value of {_inv} is air:
+                set slot loop-value of {_inv} to gray stained glass pane named " "
+        open {_inv} to player
+
+on inventory click:
+    if name of event-inventory contains "[COS]":
+        cancel event
+        if event-item is not set:
+            stop
+        if event-item is air:
+            stop
+        if type of event-item is gray stained glass pane:
+            stop
+        set {_name} to name of event-item
+        if {_name} is "&c&lFlacără":
+            set {cosmetics::trail::%player's uuid%} to "flacare"
+            send "{@COS_PREFIX} &cTrail &6Flacără &cactivat!" to player
+            close player's inventory
+        if {_name} is "&e&lSclipici":
+            set {cosmetics::trail::%player's uuid%} to "sclipici"
+            send "{@COS_PREFIX} &fTrail &eSclipici &factivat!" to player
+            close player's inventory
+        if {_name} is "&d&lInimă":
+            set {cosmetics::trail::%player's uuid%} to "inima"
+            send "{@COS_PREFIX} &cTrail &dInimă &cactivat!" to player
+            close player's inventory
+        if {_name} is "&7&lOff":
+            delete {cosmetics::trail::%player's uuid%}
+            send "{@COS_PREFIX} &7Trail dezactivat." to player
+            close player's inventory

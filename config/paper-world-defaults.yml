@@ -1,0 +1,90 @@
+# ============================================================
+# Paper World Defaults — Configurație implicită per lume
+# Referință: https://docs.papermc.io/paper/reference/world-configuration
+# Aceste valori se aplică tuturor lumilor dacă nu sunt suprascrise
+# ============================================================
+
+# Versiunea config — nu modifica manual
+_version: 29
+
+# ── Spawn Limits ──────────────────────────────────────────────
+# Limitele de spawn pentru entități — compatibile vanilla
+# Reducere față de Paper default pentru a menține TPS
+spawn-limits:
+  # Monștri (zombie, skeleton, creeper etc.) — vanilla default 70
+  monsters: 70
+  # Animale (vaci, oi, porci etc.) — redus ușor față de vanilla
+  animals: 10
+  # Animale acvatice (cod, somon etc.)
+  water-animals: 5
+  # Entități acvatice ambientale (squid etc.)
+  water-ambient: 20
+  # Entități subterane (glow squid)
+  underground-water-animals: 5
+  # Ambientale (lilieci)
+  ambient: 15
+
+# ── Tick Rates ────────────────────────────────────────────────
+tick-rates:
+  sensor:
+    villager:
+      # Reduce frecvența senzorilor de sat — major pentru lag villages
+      secondarypoisensor: 40
+      # Reducere comportament villager la căutare locuri de muncă
+      nearestbedsensor: 100
+      nearestlivingentitysensor: 40
+      playersensor: 40
+  behavior:
+    villager:
+      # Reducere comportament gather items — sat cu mulți villagers
+      validatenearbypoi: 60
+
+# ── Hopper ────────────────────────────────────────────────────
+hopper:
+  # Cooldown între transfer-uri (ticks) — vanilla=8, Paper default=8
+  cooldown-when-full: true
+  disable-move-event: false
+
+# ── Redstone ──────────────────────────────────────────────────
+redstone:
+  # Algoritmul Eigencraft optimizat pentru TPS mai bun
+  implementation: EIGENCRAFT
+
+# ── Entity Activation Range ───────────────────────────────────
+# Distanța de activare a entităților față de jucători (blocuri)
+entity-activation-range:
+  # Animale se activează la 32 blocuri
+  animals: 32
+  # Monștri se activează la 32 blocuri
+  monsters: 32
+  # Rase (villager etc.) se activează la 48 blocuri
+  misc: 16
+  # Tick-uri pentru entitățile inactive (verificare mai rară)
+  tick-inactive-villagers: true
+
+# ── Mob Spawning ──────────────────────────────────────────────
+mob-spawner-tick-rate: 1
+
+# ── Despawn Ranges ────────────────────────────────────────────
+despawn-ranges:
+  monster:
+    # Soft despawn — entitățile încep să dispară la 28 blocuri
+    soft: 28
+    # Hard despawn — entitățile dispar forțat la 96 blocuri
+    hard: 96
+  creature:
+    soft: 32
+    hard: 128
+
+# ── Fix pentru villager lag ───────────────────────────────────
+# Dezactivează pathfinding costisitor pentru villagers
+fix-climbing-bypassing-cramming-rule: true
+
+# ── Piston Push Limit ─────────────────────────────────────────
+# Limita default vanilla — 12 blocuri pe push
+piston-push-limit: 12
+
+# ── Arrow ─────────────────────────────────────────────────────
+arrow:
+  # Săgețile în pereți dispar după N ticks (200 = 10s)
+  despawn-rate: 200

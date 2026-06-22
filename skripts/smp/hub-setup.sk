@@ -1,0 +1,224 @@
+# ============================================================
+# Hub Setup — IceLegends SMP
+# Rulat O SINGURA DATA de admin cu /hubsetup din hub
+# Creeaza hologramele si NPC-urile relative la pozitia adminului
+# Dupa rulare: /portal set smp, /portal set shop, /portal set parkour
+# ============================================================
+
+command /hubsetup:
+    permission: smp.admin
+    trigger:
+        if world of player is not world "hub":
+            send "&c[HubSetup] Teleporteaza-te in hub intai! &7(/hub)" to player
+            stop
+
+        send "" to player
+        send "&b&l[HubSetup] &7Construiesc hub-ul IceLegends..." to player
+        send "&7Pozitie referinta: &e%player's location%" to player
+        send "" to player
+
+        # Calculeaza coordonate relative la pozitia adminului
+        set {_x} to floor(x-coordinate of player's location)
+        set {_y} to floor(y-coordinate of player's location)
+        set {_z} to floor(z-coordinate of player's location)
+
+        set {_yTitle} to {_y} + 5
+        set {_yHolo} to {_y} + 3
+        set {_zRules} to {_z} - 12
+        set {_xTop} to {_x} - 12
+        set {_xShop} to {_x} + 12
+
+        # Seteaza gamerules hub
+        wait 5 ticks
+        make player execute command "gamerule doFireTick false"
+        wait 2 ticks
+        make player execute command "gamerule doMobSpawning false"
+        wait 2 ticks
+        make player execute command "gamerule doDaylightCycle false"
+        wait 2 ticks
+        make player execute command "time set noon"
+        wait 2 ticks
+        send "&a  ✔ Gamerules hub configurate" to player
+
+        # ── Hologram titlu principal (deasupra spawn-ului) ─────
+        wait 10 ticks
+        make player execute command "dh create hub-titlu"
+        wait 3 ticks
+        make player execute command "dh line add hub-titlu #5edef4&l    ❄ ICELEGENDS ❄    "
+        wait 2 ticks
+        make player execute command "dh line add hub-titlu &b&lSMP Românesc &8| &7Sezonul 1"
+        wait 2 ticks
+        make player execute command "dh line add hub-titlu &8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add hub-titlu &b/smp &8» &7Intra in lume &8| &b/shop &8» &7Magazin"
+        wait 2 ticks
+        make player execute command "dh line add hub-titlu &b/rules &8» &7Regulament &8| &b/discord &8» &7Discord"
+        wait 2 ticks
+        make player execute command "dh line add hub-titlu &8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add hub-titlu &7mc.ice4legends.com"
+        wait 2 ticks
+        make player execute command "dh teleport hub-titlu %{_x}% %{_yTitle}% %{_z}%"
+        wait 3 ticks
+        send "&a  ✔ Hologram titlu (spawn)" to player
+
+        # ── Hologram reguli (nord, Z-12) ───────────────────────
+        wait 10 ticks
+        make player execute command "dh create hub-reguli"
+        wait 3 ticks
+        make player execute command "dh line add hub-reguli &c&l⚠ REGULAMENT"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &8▬▬▬▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &a✔ &7Respect reciproc"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &a✔ &7PvP consensual"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &a✔ &7Nu distruge constructii"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &c✘ &7Hack-uri &8= &cban permanent"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &c✘ &7Toxicitate &8= &cban"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &c✘ &7Bug abuse &8= &cban"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &8▬▬▬▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add hub-reguli &7/rules pentru detalii"
+        wait 2 ticks
+        make player execute command "dh teleport hub-reguli %{_x}% %{_yHolo}% %{_zRules}%"
+        wait 3 ticks
+        send "&a  ✔ Hologram reguli (nord)" to player
+
+        # ── Hologram top jucatori (vest, X-12) ────────────────
+        wait 10 ticks
+        make player execute command "dh create hub-top"
+        wait 3 ticks
+        make player execute command "dh line add hub-top &6&l⭐ TOP BOGATI"
+        wait 2 ticks
+        make player execute command "dh line add hub-top &8▬▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add hub-top &e#1 &f{papi:vault_eco_top_balance_1} &8- &6{papi:vault_eco_top_balance_1_amount} C"
+        wait 2 ticks
+        make player execute command "dh line add hub-top &7#2 &f{papi:vault_eco_top_balance_2} &8- &e{papi:vault_eco_top_balance_2_amount} C"
+        wait 2 ticks
+        make player execute command "dh line add hub-top &7#3 &f{papi:vault_eco_top_balance_3} &8- &e{papi:vault_eco_top_balance_3_amount} C"
+        wait 2 ticks
+        make player execute command "dh line add hub-top &8#4 &f{papi:vault_eco_top_balance_4}"
+        wait 2 ticks
+        make player execute command "dh line add hub-top &8#5 &f{papi:vault_eco_top_balance_5}"
+        wait 2 ticks
+        make player execute command "dh teleport hub-top %{_xTop}% %{_yHolo}% %{_z}%"
+        wait 3 ticks
+        send "&a  ✔ Hologram top jucatori (vest)" to player
+
+        # ── Hologram portal SMP (est, X+14) ───────────────────
+        wait 10 ticks
+        set {_xSMP} to {_x} + 14
+        make player execute command "dh create hub-portal-smp"
+        wait 3 ticks
+        make player execute command "dh line add hub-portal-smp &b&l⟶ LUMEA SMP"
+        wait 2 ticks
+        make player execute command "dh line add hub-portal-smp &7Supravietuire · Aventura · PvP"
+        wait 2 ticks
+        make player execute command "dh line add hub-portal-smp &8▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add hub-portal-smp &bIntra in portal &7sau /smp"
+        wait 2 ticks
+        make player execute command "dh teleport hub-portal-smp %{_xSMP}% %{_yTitle}% %{_z}%"
+        wait 3 ticks
+        send "&a  ✔ Hologram portal SMP (est)" to player
+
+        # ── Hologram portal Shop (sud, Z+12) ──────────────────
+        wait 10 ticks
+        set {_zShop} to {_z} + 12
+        make player execute command "dh create hub-portal-shop"
+        wait 3 ticks
+        make player execute command "dh line add hub-portal-shop &a&l🛒 MAGAZIN"
+        wait 2 ticks
+        make player execute command "dh line add hub-portal-shop &7Cumpara · Vinde · Investeste"
+        wait 2 ticks
+        make player execute command "dh line add hub-portal-shop &8▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add hub-portal-shop &aIntra in portal &7sau /shop"
+        wait 2 ticks
+        make player execute command "dh teleport hub-portal-shop %{_x}% %{_yTitle}% %{_zShop}%"
+        wait 3 ticks
+        send "&a  ✔ Hologram portal Shop (sud)" to player
+
+        # ── Hologram info server (langa spawn) ────────────────
+        wait 10 ticks
+        set {_xInfo} to {_x} + 6
+        make player execute command "dh create hub-info"
+        wait 3 ticks
+        make player execute command "dh line add hub-info &7IP: &bmc.ice4legends.com"
+        wait 2 ticks
+        make player execute command "dh line add hub-info &7Discord: &b/discord"
+        wait 2 ticks
+        make player execute command "dh line add hub-info &7Website: &bmc.ice4legends.com"
+        wait 2 ticks
+        make player execute command "dh teleport hub-info %{_xInfo}% %{_yHolo}% %{_z}%"
+        wait 3 ticks
+        send "&a  ✔ Hologram info server" to player
+
+        # ── NPC-uri FancyNpcs ──────────────────────────────────
+        wait 10 ticks
+        # NPC Ghid — langa spawn
+        make player execute command "fnpc create Ghid"
+        wait 4 ticks
+        make player execute command "fnpc attribute Ghid show_in_tab false"
+        wait 2 ticks
+        make player execute command "fnpc attribute Ghid glow_color AQUA"
+        wait 2 ticks
+        make player execute command "fnpc message Ghid &b&lBun venit pe &f&lIceLegends&b&l!"
+        wait 2 ticks
+        make player execute command "fnpc message Ghid &7/smp — intra in lume"
+        wait 2 ticks
+        make player execute command "fnpc message Ghid &7/shop — magazin"
+        wait 2 ticks
+        make player execute command "fnpc message Ghid &7/rules — regulament"
+        wait 3 ticks
+        send "&a  ✔ NPC Ghid creat la pozitia ta" to player
+
+        wait 5 ticks
+        # NPC Negustor — langa portalul shop (muta-l manual dupa)
+        make player execute command "fnpc create Negustor"
+        wait 4 ticks
+        make player execute command "fnpc attribute Negustor show_in_tab false"
+        wait 2 ticks
+        make player execute command "fnpc attribute Negustor glow_color GREEN"
+        wait 2 ticks
+        make player execute command "fnpc message Negustor &a&lMagazinul IceLegends"
+        wait 2 ticks
+        make player execute command "fnpc message Negustor &7Cumpara si vinde cu &6Coins!"
+        wait 2 ticks
+        make player execute command "fnpc action Negustor add PLAYER_COMMAND shop"
+        wait 3 ticks
+        send "&a  ✔ NPC Negustor creat (click = /shop)" to player
+
+        wait 10 ticks
+
+        # ── Rezumat final ──────────────────────────────────────
+        send "" to player
+        send "&b&l[HubSetup] &a&lGata! ✔" to player
+        send "" to player
+        send "&7Pasi urmatori:" to player
+        send "  &e1. &b/hub setspawn &7— stai la spawn si seteaza-l" to player
+        send "  &e2. &b/portal set smp &7— stai in fata portalului SMP" to player
+        send "  &e3. &b/portal set shop &7— stai in fata portalului Shop" to player
+        send "  &e4. &b/portal set parkour &7— stai la intrarea parkour" to player
+        send "  &e5. &b/fnpc move Ghid &7— muta NPC-ul Ghid la locul dorit" to player
+        send "  &e6. &b/fnpc move Negustor &7— muta NPC-ul langa portalul shop" to player
+        send "  &e7. &b/dh list &7— verifica hologramele create" to player
+        send "" to player
+
+command /hubclean:
+    permission: smp.admin
+    trigger:
+        make player execute command "dh delete hub-titlu"
+        make player execute command "dh delete hub-reguli"
+        make player execute command "dh delete hub-top"
+        make player execute command "dh delete hub-portal-smp"
+        make player execute command "dh delete hub-portal-shop"
+        make player execute command "dh delete hub-info"
+        send "&c[HubSetup] Toate hologramele hub sterse." to player

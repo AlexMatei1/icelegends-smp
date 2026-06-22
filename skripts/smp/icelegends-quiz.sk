@@ -1,0 +1,67 @@
+# ============================================================
+# IceLegends — Quiz in Chat
+# La fiecare 20 minute, un quiz matematic/trivia in chat.
+# Primul jucator care raspunde corect primeste 100 coins.
+# ============================================================
+
+options:
+    PREFIX: &8[&e❓ Quiz&8]
+    REWARD: 100
+    INTERVAL: 20
+
+variables:
+    {quiz::active} = false
+    {quiz::answer} = ""
+
+every {@INTERVAL} minutes:
+    if number of all players > 0:
+        startQuiz()
+
+function startQuiz():
+    if {quiz::active} is true:
+        stop
+    set {_type} to random integer between 1 and 3
+    if {_type} is 1:
+        set {_a} to random integer between 10 and 50
+        set {_b} to random integer between 10 and 50
+        set {_ans} to {_a} + {_b}
+        set {_q} to "%{_a}% + %{_b}%"
+    else if {_type} is 2:
+        set {_a} to random integer between 5 and 20
+        set {_b} to random integer between 2 and {_a}
+        set {_ans} to {_a} - {_b}
+        set {_q} to "%{_a}% - %{_b}%"
+    else:
+        set {_a} to random integer between 2 and 12
+        set {_b} to random integer between 2 and 12
+        set {_ans} to {_a} * {_b}
+        set {_q} to "%{_a}% x %{_b}%"
+    set {quiz::active} to true
+    set {quiz::answer} to "%{_ans}%"
+    broadcast colored ""
+    broadcast colored "{@PREFIX} &7Cat face &e%{_q}%&7?"
+    broadcast colored "{@PREFIX} &7Primul care raspunde in chat castiga &6{@REWARD} coins&7!"
+    broadcast colored ""
+    # Auto-expire dupa 60 secunde
+    wait 60 seconds
+    if {quiz::active} is true:
+        set {quiz::active} to false
+        set {quiz::answer} to ""
+        broadcast colored "{@PREFIX} &cTimp expirat! &7Nimeni nu a raspuns corect."
+
+on chat:
+    if {quiz::active} is true:
+        if message is {quiz::answer}:
+            set {quiz::active} to false
+            set {quiz::answer} to ""
+            add {@REWARD} to player's balance
+            broadcast colored ""
+            broadcast colored "{@PREFIX} &b%player% &aa raspuns corect! &6+{@REWARD} coins"
+            broadcast colored ""
+
+command /quiz:
+    permission: smp.admin
+    description: Porneste un quiz manual.
+    trigger:
+        startQuiz()
+        send colored "{@PREFIX} &aQuiz pornit!" to player

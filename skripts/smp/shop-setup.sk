@@ -1,0 +1,218 @@
+# ============================================================
+# Shop Setup — IceLegends SMP
+# Rulat O SINGURA DATA de admin cu /shopsetup din shop world
+# Creeaza hologramele si NPC-urile relative la pozitia adminului
+# Categorii: Resources, Food, MobDrops, Agriculture, Special
+# ============================================================
+
+command /shopsetup:
+    permission: smp.admin
+    trigger:
+        if world of player is not world "shop":
+            send "&c[ShopSetup] Trebuie să fii în shop world! &7(/shoptp)" to player
+            stop
+
+        send "" to player
+        send "&a&l[ShopSetup] &7Construiesc shop hub-ul IceLegends..." to player
+        send "" to player
+
+        # Pozitie de referinta (admin trebuie sa fie la centrul platformei)
+        set {_x} to floor(x-coordinate of player's location)
+        set {_y} to floor(y-coordinate of player's location)
+        set {_z} to floor(z-coordinate of player's location)
+
+        # Coordonate relative
+        set {_yNpc} to {_y}
+        set {_yHolo} to {_y} + 3
+        set {_yTitle} to {_y} + 6
+
+        # Gamerules
+        wait 3 ticks
+        make player execute command "gamerule doFireTick false"
+        wait 2 ticks
+        make player execute command "gamerule doMobSpawning false"
+        wait 2 ticks
+        make player execute command "gamerule doDaylightCycle false"
+        wait 2 ticks
+        make player execute command "time set noon"
+        wait 2 ticks
+        send "&a  ✔ Gamerules shop configurate" to player
+
+        # ── Hologram titlu principal ───────────────────────────
+        wait 10 ticks
+        make player execute command "dh create shop-titlu"
+        wait 3 ticks
+        make player execute command "dh line add shop-titlu &a&l    🛒 MAGAZIN ICELEGENDS    "
+        wait 2 ticks
+        make player execute command "dh line add shop-titlu &7Cumpara si vinde iteme cu &6Coins"
+        wait 2 ticks
+        make player execute command "dh line add shop-titlu &8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add shop-titlu &7Alege o categorie de la NPC-urile din jur"
+        wait 2 ticks
+        make player execute command "dh line add shop-titlu &8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        wait 2 ticks
+        make player execute command "dh line add shop-titlu &b/hub &8» &7Inapoi in Hub"
+        wait 2 ticks
+        make player execute command "dh teleport shop-titlu %{_x}% %{_yTitle}% %{_z}%"
+        wait 3 ticks
+        send "&a  ✔ Hologram titlu (centru)" to player
+
+        # ── NPC + Hologram: Resurse (nord, Z-8) ───────────────
+        wait 10 ticks
+        set {_zN} to {_z} - 8
+        make player execute command "dh create shop-resurse"
+        wait 3 ticks
+        make player execute command "dh line add shop-resurse &6&l⛏ RESURSE"
+        wait 2 ticks
+        make player execute command "dh line add shop-resurse &7Lemn · Piatra · Minerale"
+        wait 2 ticks
+        make player execute command "dh line add shop-resurse &8Click pe NPC pentru a cumpara"
+        wait 2 ticks
+        make player execute command "dh teleport shop-resurse %{_x}% %{_yHolo}% %{_zN}%"
+        wait 3 ticks
+
+        make player execute command "fnpc create Resurse"
+        wait 4 ticks
+        make player execute command "fnpc attribute Resurse show_in_tab false"
+        wait 2 ticks
+        make player execute command "fnpc attribute Resurse glow_color GOLD"
+        wait 2 ticks
+        make player execute command "fnpc message Resurse &6&lRezurse — &7Lemn, piatra, minerale"
+        wait 2 ticks
+        make player execute command "fnpc message Resurse &7Click pentru a deschide magazinul!"
+        wait 2 ticks
+        make player execute command "fnpc action Resurse add PLAYER_COMMAND shop resurse"
+        wait 3 ticks
+        send "&a  ✔ NPC Resurse creat (nord)" to player
+
+        # ── NPC + Hologram: Hrana (est, X+8) ──────────────────
+        wait 10 ticks
+        set {_xE} to {_x} + 8
+        make player execute command "dh create shop-hrana"
+        wait 3 ticks
+        make player execute command "dh line add shop-hrana &a&l🍎 HRANA"
+        wait 2 ticks
+        make player execute command "dh line add shop-hrana &7Alimente · Bauturi · Ferme"
+        wait 2 ticks
+        make player execute command "dh line add shop-hrana &8Click pe NPC pentru a cumpara"
+        wait 2 ticks
+        make player execute command "dh teleport shop-hrana %{_xE}% %{_yHolo}% %{_z}%"
+        wait 3 ticks
+
+        make player execute command "fnpc create Bucatar"
+        wait 4 ticks
+        make player execute command "fnpc attribute Bucatar show_in_tab false"
+        wait 2 ticks
+        make player execute command "fnpc attribute Bucatar glow_color GREEN"
+        wait 2 ticks
+        make player execute command "fnpc message Bucatar &a&lHrana — &7Alimente si retete"
+        wait 2 ticks
+        make player execute command "fnpc action Bucatar add PLAYER_COMMAND shop hrana"
+        wait 3 ticks
+        send "&a  ✔ NPC Bucatar creat (est)" to player
+
+        # ── NPC + Hologram: Drops Mob-uri (sud, Z+8) ──────────
+        wait 10 ticks
+        set {_zS} to {_z} + 8
+        make player execute command "dh create shop-drops"
+        wait 3 ticks
+        make player execute command "dh line add shop-drops &c&l⚔ DROPS MOB-URI"
+        wait 2 ticks
+        make player execute command "dh line add shop-drops &7Iteme rare de la monstri"
+        wait 2 ticks
+        make player execute command "dh line add shop-drops &8Click pe NPC pentru a cumpara"
+        wait 2 ticks
+        make player execute command "dh teleport shop-drops %{_x}% %{_yHolo}% %{_zS}%"
+        wait 3 ticks
+
+        make player execute command "fnpc create Vanator"
+        wait 4 ticks
+        make player execute command "fnpc attribute Vanator show_in_tab false"
+        wait 2 ticks
+        make player execute command "fnpc attribute Vanator glow_color RED"
+        wait 2 ticks
+        make player execute command "fnpc message Vanator &c&lDrops — &7Iteme de la mob-uri"
+        wait 2 ticks
+        make player execute command "fnpc action Vanator add PLAYER_COMMAND shop mobdrops"
+        wait 3 ticks
+        send "&a  ✔ NPC Vanator creat (sud)" to player
+
+        # ── NPC + Hologram: Agricultura (vest, X-8) ───────────
+        wait 10 ticks
+        set {_xW} to {_x} - 8
+        make player execute command "dh create shop-agri"
+        wait 3 ticks
+        make player execute command "dh line add shop-agri &2&l🌾 AGRICULTURA"
+        wait 2 ticks
+        make player execute command "dh line add shop-agri &7Seminte · Plante · Ferme"
+        wait 2 ticks
+        make player execute command "dh line add shop-agri &8Click pe NPC pentru a cumpara"
+        wait 2 ticks
+        make player execute command "dh teleport shop-agri %{_xW}% %{_yHolo}% %{_z}%"
+        wait 3 ticks
+
+        make player execute command "fnpc create Fermier"
+        wait 4 ticks
+        make player execute command "fnpc attribute Fermier show_in_tab false"
+        wait 2 ticks
+        make player execute command "fnpc attribute Fermier glow_color DARK_GREEN"
+        wait 2 ticks
+        make player execute command "fnpc message Fermier &2&lAgricultura — &7Seminte si plante"
+        wait 2 ticks
+        make player execute command "fnpc action Fermier add PLAYER_COMMAND shop agricultura"
+        wait 3 ticks
+        send "&a  ✔ NPC Fermier creat (vest)" to player
+
+        # ── NPC + Hologram: Special (nord-est, diagonala) ─────
+        wait 10 ticks
+        set {_xNE} to {_x} + 6
+        set {_zNE} to {_z} - 6
+        make player execute command "dh create shop-special"
+        wait 3 ticks
+        make player execute command "dh line add shop-special &5&l✨ SPECIAL"
+        wait 2 ticks
+        make player execute command "dh line add shop-special &7Iteme rare si unice"
+        wait 2 ticks
+        make player execute command "dh line add shop-special &8Click pe NPC pentru a cumpara"
+        wait 2 ticks
+        make player execute command "dh teleport shop-special %{_xNE}% %{_yHolo}% %{_zNE}%"
+        wait 3 ticks
+
+        make player execute command "fnpc create Negustor"
+        wait 4 ticks
+        make player execute command "fnpc attribute Negustor show_in_tab false"
+        wait 2 ticks
+        make player execute command "fnpc attribute Negustor glow_color PURPLE"
+        wait 2 ticks
+        make player execute command "fnpc message Negustor &5&lSpecial — &7Iteme rare si unice!"
+        wait 2 ticks
+        make player execute command "fnpc message Negustor &7Doar pentru cei bogati..."
+        wait 2 ticks
+        make player execute command "fnpc action Negustor add PLAYER_COMMAND shop special"
+        wait 3 ticks
+        send "&a  ✔ NPC Negustor Special creat (nord-est)" to player
+
+        wait 10 ticks
+
+        # ── Rezumat ───────────────────────────────────────────
+        send "" to player
+        send "&a&l[ShopSetup] &a&lGata! ✔" to player
+        send "" to player
+        send "&7NPC-uri create: &eRezurse&7, &eBucatar&7, &eVanator&7, &eFermier&7, &eNegustor" to player
+        send "&7Pasi urmatori:" to player
+        send "  &e1. &b/shop setspawn &7— stai la centru si seteaza spawn" to player
+        send "  &e2. &b/fnpc move <Resurse|Bucatar|Vanator|Fermier|Negustor> &7— muta NPC-urile" to player
+        send "  &e3. &7Construieste platforma si decoreaza!" to player
+        send "" to player
+
+command /shopclean:
+    permission: smp.admin
+    trigger:
+        make player execute command "dh delete shop-titlu"
+        make player execute command "dh delete shop-resurse"
+        make player execute command "dh delete shop-hrana"
+        make player execute command "dh delete shop-drops"
+        make player execute command "dh delete shop-agri"
+        make player execute command "dh delete shop-special"
+        send "&c[ShopSetup] Toate hologramele shop sterse." to player

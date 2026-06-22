@@ -1,0 +1,426 @@
+# ============================================================
+# Hub Parkour — IceLegends SMP
+# Un singur parcurs continuu: Easy → Medium → Hard
+# Admin setup:
+#   /pksetup start              — stai la start
+#   /pksetup checkpoint <1-30>  — stai la checkpoint
+#   /pksetup medium             — stai la tranzitia Easy→Medium
+#   /pksetup hard               — stai la tranzitia Medium→Hard
+#   /pksetup end                — stai la finish
+#   /pksetup info               — afiseaza setup-ul curent
+#   /pksetup clear              — sterge TOT setup-ul
+# Player:
+#   /pk start  — incepe
+#   /pk stop   — abandoneaza
+#   /pk top    — top timpi
+# Recompense: Easy=150c | Medium=350c | Hard=750c
+# ============================================================
+
+options:
+    PK_WORLD: parkour
+    DETECT_R: 2.0
+    EASY_REWARD: 150
+    MED_REWARD: 350
+    HARD_REWARD: 750
+
+# ─────────────────────────────────────────────────────────────
+#  FUNCTII HELPER
+# ─────────────────────────────────────────────────────────────
+
+function pkDist(px: number, py: number, pz: number, tx: number, ty: number, tz: number) :: number:
+    set {_dx} to {_px} - {_tx}
+    set {_dy} to {_py} - {_ty}
+    set {_dz} to {_pz} - {_tz}
+    return sqrt({_dx}*{_dx} + {_dy}*{_dy} + {_dz}*{_dz})
+
+function pkFormatTime(t: number) :: text:
+    set {_m} to floor({_t} / 60)
+    set {_s} to floor({_t} - ({_m} * 60))
+    if {_s} < 10:
+        return "%{_m}%:0%{_s}%"
+    return "%{_m}%:%{_s}%"
+
+function pkGiveReward(name: text, amount: number):
+    execute console command "eco give %{_name}% %{_amount}%"
+
+# ─────────────────────────────────────────────────────────────
+#  /pksetup — ADMIN SETUP
+# ─────────────────────────────────────────────────────────────
+
+command /pksetup <text> [<integer>]:
+    permission: smp.admin
+    trigger:
+        set {_sub} to arg-1 in lower case
+
+        if {_sub} is "start":
+            set {pk::start::x} to x-coordinate of player's location
+            set {pk::start::y} to y-coordinate of player's location
+            set {pk::start::z} to z-coordinate of player's location
+            send "&a[Parkour] Start setat la %floor(x-coordinate of player's location)%, %floor(y-coordinate of player's location)%, %floor(z-coordinate of player's location)%." to sender
+            stop
+
+        if {_sub} is "medium":
+            set {pk::section::medium::x} to x-coordinate of player's location
+            set {pk::section::medium::y} to y-coordinate of player's location
+            set {pk::section::medium::z} to z-coordinate of player's location
+            send "&e[Parkour] Tranzitie Easy-Medium setata." to sender
+            stop
+
+        if {_sub} is "hard":
+            set {pk::section::hard::x} to x-coordinate of player's location
+            set {pk::section::hard::y} to y-coordinate of player's location
+            set {pk::section::hard::z} to z-coordinate of player's location
+            send "&c[Parkour] Tranzitie Medium-Hard setata." to sender
+            stop
+
+        if {_sub} is "end":
+            set {pk::end::x} to x-coordinate of player's location
+            set {pk::end::y} to y-coordinate of player's location
+            set {pk::end::z} to z-coordinate of player's location
+            send "&a[Parkour] Finish setat!" to sender
+            stop
+
+        if {_sub} is "checkpoint":
+            if arg-2 is not set:
+                send "&c[Parkour] Foloseste: /pksetup checkpoint <1-30>" to sender
+                stop
+            if arg-2 < 1:
+                send "&c[Parkour] Numarul checkpoint-ului trebuie sa fie >= 1" to sender
+                stop
+            if arg-2 > 30:
+                send "&c[Parkour] Maxim 30 de checkpoint-uri" to sender
+                stop
+            set {pk::cp::%arg-2%::x} to x-coordinate of player's location
+            set {pk::cp::%arg-2%::y} to y-coordinate of player's location
+            set {pk::cp::%arg-2%::z} to z-coordinate of player's location
+            if {pk::cp::count} is not set:
+                set {pk::cp::count} to 0
+            if arg-2 > {pk::cp::count}:
+                set {pk::cp::count} to arg-2
+            send "&a[Parkour] Checkpoint #%arg-2% setat." to sender
+            stop
+
+        if {_sub} is "info":
+            send "&7=== Parkour Setup ===" to sender
+            if {pk::start::x} is set:
+                send "  &aStart: &e%floor({pk::start::x})%, %floor({pk::start::y})%, %floor({pk::start::z})%" to sender
+            else:
+                send "  &cStart: &7Nu e setat" to sender
+            if {pk::section::medium::x} is set:
+                send "  &eMedium: &e%floor({pk::section::medium::x})%, %floor({pk::section::medium::y})%, %floor({pk::section::medium::z})%" to sender
+            else:
+                send "  &cMedium: &7Nu e setat" to sender
+            if {pk::section::hard::x} is set:
+                send "  &cHard: &e%floor({pk::section::hard::x})%, %floor({pk::section::hard::y})%, %floor({pk::section::hard::z})%" to sender
+            else:
+                send "  &cHard: &7Nu e setat" to sender
+            if {pk::end::x} is set:
+                send "  &aFinish: &e%floor({pk::end::x})%, %floor({pk::end::y})%, %floor({pk::end::z})%" to sender
+            else:
+                send "  &cFinish: &7Nu e setat" to sender
+            if {pk::cp::count} is set:
+                send "  &7Checkpoints: &e%{pk::cp::count}%" to sender
+            else:
+                send "  &7Checkpoints: &e0" to sender
+            stop
+
+        if {_sub} is "clear":
+            delete {pk::start::x}
+            delete {pk::start::y}
+            delete {pk::start::z}
+            delete {pk::section::medium::x}
+            delete {pk::section::medium::y}
+            delete {pk::section::medium::z}
+            delete {pk::section::hard::x}
+            delete {pk::section::hard::y}
+            delete {pk::section::hard::z}
+            delete {pk::end::x}
+            delete {pk::end::y}
+            delete {pk::end::z}
+            loop 30 times:
+                delete {pk::cp::%loop-number%::x}
+                delete {pk::cp::%loop-number%::y}
+                delete {pk::cp::%loop-number%::z}
+            delete {pk::cp::count}
+            send "&c[Parkour] Setup sters." to sender
+            stop
+
+        send "&c[Parkour] Subcomenzi: start | medium | hard | end | checkpoint <n> | info | clear" to sender
+
+# ─────────────────────────────────────────────────────────────
+#  /pkcoords — SETUP BY COORDS (RCON/console friendly)
+#  /pkcoords <start|medium|hard|end> <x> <y> <z>
+#  /pkcoords checkpoint <x> <y> <z> <n>
+# ─────────────────────────────────────────────────────────────
+
+command /pkcoords <text> <number> <number> <number> [<integer>]:
+    permission: smp.admin
+    trigger:
+        set {_sub} to arg-1 in lower case
+        set {_x} to arg-2
+        set {_y} to arg-3
+        set {_z} to arg-4
+
+        if {_sub} is "start":
+            set {pk::start::x} to {_x}
+            set {pk::start::y} to {_y}
+            set {pk::start::z} to {_z}
+            send "&a[Parkour] Start setat: %{_x}%, %{_y}%, %{_z}%" to sender
+            stop
+
+        if {_sub} is "medium":
+            set {pk::section::medium::x} to {_x}
+            set {pk::section::medium::y} to {_y}
+            set {pk::section::medium::z} to {_z}
+            send "&e[Parkour] Tranzitie Medium setata: %{_x}%, %{_y}%, %{_z}%" to sender
+            stop
+
+        if {_sub} is "hard":
+            set {pk::section::hard::x} to {_x}
+            set {pk::section::hard::y} to {_y}
+            set {pk::section::hard::z} to {_z}
+            send "&c[Parkour] Tranzitie Hard setata: %{_x}%, %{_y}%, %{_z}%" to sender
+            stop
+
+        if {_sub} is "end":
+            set {pk::end::x} to {_x}
+            set {pk::end::y} to {_y}
+            set {pk::end::z} to {_z}
+            send "&a[Parkour] Finish setat: %{_x}%, %{_y}%, %{_z}%" to sender
+            stop
+
+        if {_sub} is "checkpoint":
+            if arg-5 is not set:
+                send "&c[Parkour] Foloseste: /pkcoords checkpoint <x> <y> <z> <n>" to sender
+                stop
+            set {_n} to arg-5
+            if {_n} < 1:
+                send "&c[Parkour] Numarul trebuie sa fie >= 1" to sender
+                stop
+            if {_n} > 30:
+                send "&c[Parkour] Maxim 30 de checkpoints" to sender
+                stop
+            set {pk::cp::%{_n}%::x} to {_x}
+            set {pk::cp::%{_n}%::y} to {_y}
+            set {pk::cp::%{_n}%::z} to {_z}
+            if {pk::cp::count} is not set:
+                set {pk::cp::count} to 0
+            if {_n} > {pk::cp::count}:
+                set {pk::cp::count} to {_n}
+            send "&a[Parkour] Checkpoint #%{_n}% setat: %{_x}%, %{_y}%, %{_z}%" to sender
+            stop
+
+        send "&c[Parkour] Sub-comenzi: start | medium | hard | end | checkpoint" to sender
+
+# ─────────────────────────────────────────────────────────────
+#  /pk — COMENZI PLAYER
+# ─────────────────────────────────────────────────────────────
+
+command /pk [<text>]:
+    trigger:
+        set {_sub} to arg-1 in lower case
+        if {_sub} is not set:
+            set {_sub} to "start"
+
+        if {_sub} is "start":
+            if {pk::start::x} is not set:
+                send "&c[Parkour] Parcursul nu e configurat inca!" to player
+                stop
+            if {pk::active::%player's uuid%} is true:
+                send "&c[Parkour] Esti deja pe parcurs. Foloseste /pk stop." to player
+                stop
+            teleport player to location({pk::start::x}, {pk::start::y}, {pk::start::z}, world "{@PK_WORLD}")
+            set {pk::active::%player's uuid%} to true
+            set {pk::start_time::%player's uuid%} to now
+            set {pk::section::%player's uuid%} to "easy"
+            set {pk::last_cp::%player's uuid%} to 0
+            set {pk::earned::%player's uuid%} to 0
+            send "" to player
+            send "&d  ============================" to player
+            send "&d  &f&l  PARKOUR ICELEGENDS" to player
+            send "&d  ============================" to player
+            send "&7  Easy &8--> &7Medium &8--> &cHard" to player
+            send "&7  Checkpoints te salveaza automat!" to player
+            send "&7  /pk stop pentru a abandona" to player
+            send "" to player
+            send title "&d&lParkour!" with subtitle "&7Easy - Medium - Hard" to player for 3 seconds
+            stop
+
+        if {_sub} is "stop":
+            if {pk::active::%player's uuid%} is not true:
+                send "&c[Parkour] Nu esti pe parcurs." to player
+                stop
+            delete {pk::active::%player's uuid%}
+            delete {pk::start_time::%player's uuid%}
+            delete {pk::section::%player's uuid%}
+            delete {pk::last_cp::%player's uuid%}
+            delete {pk::earned::%player's uuid%}
+            teleport player to hubSpawn()
+            send "&c[Parkour] Ai abandonat parcursul." to player
+            stop
+
+        if {_sub} is "top":
+            send "&d&l=== Top Parkour ===" to player
+            loop all players:
+                if {pk::record::%loop-player's name%} is set:
+                    send "  &e%loop-player's name% &8-- &f%pkFormatTime({pk::record::%loop-player's name%})%" to player
+            stop
+
+        send "&c[Parkour] /pk start | /pk stop | /pk top" to player
+
+# ─────────────────────────────────────────────────────────────
+#  DETECTIE PROXIMITATE — la fiecare 4 tick-uri
+# ─────────────────────────────────────────────────────────────
+
+every 8 ticks:
+    loop all players:
+        if {pk::active::%loop-player's uuid%} is not true:
+            continue
+        if world of loop-player is not world "{@PK_WORLD}":
+            continue
+
+        set {_px} to x-coordinate of loop-player's location
+        set {_py} to y-coordinate of loop-player's location
+        set {_pz} to z-coordinate of loop-player's location
+        set {_elapsed} to difference between now and {pk::start_time::%loop-player's uuid%}
+        set {_sec} to floor({_elapsed} / 1 second)
+        # Cache sectiunea la inceputul tick-ului pentru a evita double-trigger
+        set {_section} to {pk::section::%loop-player's uuid%}
+
+        # ── Checkpoint-uri ────────────────────────────────────
+        if {pk::cp::count} is set:
+            if {pk::cp::count} > 0:
+                loop {pk::cp::count} times:
+                    if {pk::cp::%loop-number%::x} is set:
+                        if pkDist({_px},{_py},{_pz},{pk::cp::%loop-number%::x},{pk::cp::%loop-number%::y},{pk::cp::%loop-number%::z}) < {@DETECT_R}:
+                            if loop-number > {pk::last_cp::%loop-player's uuid%}:
+                                set {pk::last_cp::%loop-player's uuid%} to loop-number
+                                send action bar "&a Checkpoint %loop-number% salvat!" to loop-player
+
+        # ── Tranzitie Easy→Medium ─────────────────────────────
+        if {_section} is "easy":
+            if {pk::section::medium::x} is set:
+                if pkDist({_px},{_py},{_pz},{pk::section::medium::x},{pk::section::medium::y},{pk::section::medium::z}) < {@DETECT_R}:
+                    set {pk::section::%loop-player's uuid%} to "medium"
+                    set {pk::earned::%loop-player's uuid%} to {pk::earned::%loop-player's uuid%} + {@EASY_REWARD}
+                    pkGiveReward(loop-player's name, {@EASY_REWARD})
+                    set {_eR} to {@EASY_REWARD}
+                    set {_tStr} to pkFormatTime({_sec})
+                    send title "&e&lEASY Complet!" with subtitle "&7+%{_eR}% coins" to loop-player for 3 seconds
+                    send "  &e>> Easy terminat! &e+%{_eR}% &fcoins &8| Timer: &f%{_tStr}%" to loop-player
+
+        # ── Tranzitie Medium→Hard (cacheat, nu se retriggereaza) ─
+        if {_section} is "medium":
+            if {pk::section::hard::x} is set:
+                if pkDist({_px},{_py},{_pz},{pk::section::hard::x},{pk::section::hard::y},{pk::section::hard::z}) < {@DETECT_R}:
+                    set {pk::section::%loop-player's uuid%} to "hard"
+                    set {pk::earned::%loop-player's uuid%} to {pk::earned::%loop-player's uuid%} + {@MED_REWARD}
+                    pkGiveReward(loop-player's name, {@MED_REWARD})
+                    set {_mR} to {@MED_REWARD}
+                    set {_tStr} to pkFormatTime({_sec})
+                    send title "&c&lMEDIUM Complet!" with subtitle "&7+%{_mR}% coins" to loop-player for 3 seconds
+                    send "  &c>> Medium terminat! &e+%{_mR}% &fcoins &8| Timer: &f%{_tStr}%" to loop-player
+
+        # ── Finish ────────────────────────────────────────────
+        if {_section} is "hard":
+            if {pk::end::x} is set:
+                if pkDist({_px},{_py},{_pz},{pk::end::x},{pk::end::y},{pk::end::z}) < {@DETECT_R}:
+                    set {_total} to {_sec}
+                    set {_hR} to {@HARD_REWARD}
+                    set {_earned} to {pk::earned::%loop-player's uuid%} + {_hR}
+                    pkGiveReward(loop-player's name, {_hR})
+
+                    set {_prev} to {pk::record::%loop-player's name%}
+                    if {_prev} is not set:
+                        set {pk::record::%loop-player's name%} to {_total}
+                        set {_recMsg} to "&a>> Primul tau record!"
+                    else:
+                        if {_total} < {_prev}:
+                            set {pk::record::%loop-player's name%} to {_total}
+                            set {_recMsg} to "&a>> NOU RECORD! &f%pkFormatTime({_prev})% -> &e%pkFormatTime({_total})%"
+                        else:
+                            set {_recMsg} to "&7Record: &e%pkFormatTime({_prev})%"
+
+                    delete {pk::active::%loop-player's uuid%}
+                    delete {pk::start_time::%loop-player's uuid%}
+                    delete {pk::section::%loop-player's uuid%}
+                    delete {pk::last_cp::%loop-player's uuid%}
+                    delete {pk::earned::%loop-player's uuid%}
+
+                    set {_tStr} to pkFormatTime({_total})
+                    send title "&a&lFINISH!" with subtitle "&fTimp: %{_tStr}% | +%{_hR}% coins" to loop-player for 5 seconds
+                    send "" to loop-player
+                    send "  &a>> PARKOUR COMPLET!" to loop-player
+                    send "  &7Timp total: &f%{_tStr}%" to loop-player
+                    send "  &7Recompensa totala: &e+%{_earned}% &7coins" to loop-player
+                    send "  %{_recMsg}%" to loop-player
+                    send "" to loop-player
+                    broadcast "&d[Parkour] &f%loop-player's name% &7a terminat in &f%{_tStr}%&7! &e+%{_earned}% coins"
+
+# ─────────────────────────────────────────────────────────────
+#  ACTION BAR TIMER
+# ─────────────────────────────────────────────────────────────
+
+every 1 second:
+    loop all players:
+        if {pk::active::%loop-player's uuid%} is not true:
+            continue
+        if world of loop-player is world "{@PK_WORLD}":
+            set {_elapsed} to difference between now and {pk::start_time::%loop-player's uuid%}
+            set {_sec} to floor({_elapsed} / 1 second)
+            set {_section} to {pk::section::%loop-player's uuid%}
+            set {_cp} to {pk::last_cp::%loop-player's uuid%}
+            set {_tStr} to pkFormatTime({_sec})
+            if {_section} is "easy":
+                send action bar "&7Easy &8| Timer: &e%{_tStr}% &8| CP: &f%{_cp}%" to loop-player
+            if {_section} is "medium":
+                send action bar "&eMedium &8| Timer: &e%{_tStr}% &8| CP: &f%{_cp}%" to loop-player
+            if {_section} is "hard":
+                send action bar "&c&lHard &8| Timer: &c%{_tStr}% &8| CP: &f%{_cp}%" to loop-player
+
+# ─────────────────────────────────────────────────────────────
+#  MOARTE — respawn la ultimul checkpoint
+# ─────────────────────────────────────────────────────────────
+
+on death of player:
+    if {pk::active::%victim's uuid%} is not true:
+        stop
+    cancel event
+    set {_cp} to {pk::last_cp::%victim's uuid%}
+    if {_cp} is 0:
+        if {pk::start::x} is set:
+            teleport victim to location({pk::start::x}, {pk::start::y}, {pk::start::z}, world "{@PK_WORLD}")
+        send "&c[Parkour] Ai murit! Respawnat la start." to victim
+        stop
+    if {pk::cp::%{_cp}%::x} is set:
+        teleport victim to location({pk::cp::%{_cp}%::x}, {pk::cp::%{_cp}%::y}, {pk::cp::%{_cp}%::z}, world "{@PK_WORLD}")
+    send "&c[Parkour] Ai murit! Respawnat la checkpoint #%{_cp}%." to victim
+
+# ─────────────────────────────────────────────────────────────
+#  CURATARE SESIUNE
+# ─────────────────────────────────────────────────────────────
+
+on join:
+    # Curata sesiunile ramase dupa un eventual crash
+    delete {pk::active::%player's uuid%}
+    delete {pk::start_time::%player's uuid%}
+    delete {pk::section::%player's uuid%}
+    delete {pk::last_cp::%player's uuid%}
+    delete {pk::earned::%player's uuid%}
+
+on quit:
+    if {pk::active::%player's uuid%} is true:
+        delete {pk::active::%player's uuid%}
+        delete {pk::start_time::%player's uuid%}
+        delete {pk::section::%player's uuid%}
+        delete {pk::last_cp::%player's uuid%}
+        delete {pk::earned::%player's uuid%}
+
+on world change:
+    if {pk::active::%player's uuid%} is true:
+        delete {pk::active::%player's uuid%}
+        delete {pk::start_time::%player's uuid%}
+        delete {pk::section::%player's uuid%}
+        delete {pk::last_cp::%player's uuid%}
+        delete {pk::earned::%player's uuid%}
+        send "&c[Parkour] Ai iesit din lume - parcurs abandonat." to player

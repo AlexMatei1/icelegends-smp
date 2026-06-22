@@ -1,0 +1,5 @@
+# Trimite jucatorul inapoi la Hub server (via Velocity /server)
+command /hub:
+    trigger:
+        send title "&b&lHub" with subtitle "&7Se intoarce la lobby..." to player for 2 seconds
+        make player execute command "server hub"

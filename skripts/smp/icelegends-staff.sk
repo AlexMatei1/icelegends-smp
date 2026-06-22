@@ -1,0 +1,139 @@
+# ============================================================
+# IceLegends — Garda (Staff Tools)
+# Unic: Vanish cu notificare staff + freeze cu teleport-back
+#        + canal staff chat privat + stafflist command
+# /vanish /freeze /god /sc /stafflist /staffmode
+# ============================================================
+
+options:
+    SC_PREFIX: &8[&4Garda&8]
+
+# ── Vanish ────────────────────────────────────────────────────
+
+command /vanish:
+    permission: smp.staff
+    trigger:
+        if {staff::vanish::%player's uuid%} is true:
+            delete {staff::vanish::%player's uuid%}
+            reveal player
+            loop all players:
+                if loop-player has permission "smp.staff":
+                    send colored "{@SC_PREFIX} &b%player% &7a dezactivat vanish-ul." to loop-player
+        else:
+            set {staff::vanish::%player's uuid%} to true
+            hide player from all players
+            loop all players:
+                if loop-player has permission "smp.staff":
+                    send colored "{@SC_PREFIX} &b%player% &7a activat vanish-ul &8(invizibil pentru toti)." to loop-player
+            send colored "{@SC_PREFIX} &7Esti invizibil pentru toti jucatorii (inclusiv staff)." to player
+
+on join:
+    # Reaplica vanish dupa reconectare
+    if {staff::vanish::%player's uuid%} is true:
+        hide player from all players
+        loop all players:
+            if loop-player has permission "smp.staff":
+                send colored "{@SC_PREFIX} &b%player% &7(staff) a intrat in sesiune in vanish." to loop-player
+    # Ascunde jucatorii in vanish fata de noul jucator
+    loop all players:
+        if {staff::vanish::%loop-player's uuid%} is true:
+            hide loop-player from player
+
+# ── Freeze ────────────────────────────────────────────────────
+
+command /freeze <player>:
+    permission: smp.mod
+    trigger:
+        set {_t} to arg-1
+        if {_t} is not set:
+            send colored "{@SC_PREFIX} &c/freeze <jucator>" to player
+            stop
+        if {_t} has permission "smp.staff":
+            send colored "{@SC_PREFIX} &cNu poti ingheta un alt staff." to player
+            stop
+        if {staff::frozen::%{_t}'s uuid%} is true:
+            delete {staff::frozen::%{_t}'s uuid%}
+            delete {staff::frozen_loc::%{_t}'s uuid%}
+            send colored "{@SC_PREFIX} &b%{_t}% &aa fost dezinghetat." to player
+            send colored "{@SC_PREFIX} &aAi fost dezinghetat de &b%player%&a. Poti circula liber." to {_t}
+            loop all players:
+                if loop-player has permission "smp.staff":
+                    if loop-player is not player:
+                        send colored "{@SC_PREFIX} &b%player% &7a dezinghetat pe &b%{_t}%&7." to loop-player
+        else:
+            set {staff::frozen::%{_t}'s uuid%} to true
+            set {staff::frozen_loc::%{_t}'s uuid%} to {_t}'s location
+            send colored "{@SC_PREFIX} &c❄ &b%{_t}% &aa fost inghetat." to player
+            send colored "{@SC_PREFIX} &c❄ AI FOST INGHETAT de &b%player%&c!" to {_t}
+            send colored "{@SC_PREFIX} &7Nu te poti misca. Contacteaza staff pe Discord." to {_t}
+            loop all players:
+                if loop-player has permission "smp.staff":
+                    if loop-player is not player:
+                        send colored "{@SC_PREFIX} &b%player% &7a inghetat pe &b%{_t}%&7." to loop-player
+
+# Mentine jucatorii inghetati in loc (la fiecare 10 ticks)
+every 10 ticks:
+    loop all players:
+        if {staff::frozen::%loop-player's uuid%} is true:
+            send action bar colored "&c❄ Esti inghetat! &7Contacteaza staff pe Discord." to loop-player
+            if {staff::frozen_loc::%loop-player's uuid%} is set:
+                if distance between loop-player's location and {staff::frozen_loc::%loop-player's uuid%} > 1:
+                    teleport loop-player to {staff::frozen_loc::%loop-player's uuid%}
+
+# ── God Mode ──────────────────────────────────────────────────
+
+command /god:
+    permission: smp.staff
+    trigger:
+        if {staff::god::%player's uuid%} is true:
+            delete {staff::god::%player's uuid%}
+            send colored "{@SC_PREFIX} &7Godmode &cDEZACTIVAT&7." to player
+        else:
+            set {staff::god::%player's uuid%} to true
+            send colored "{@SC_PREFIX} &7Godmode &aACTIVAT &8— esti invulnerabil." to player
+
+on damage:
+    if victim is a player:
+        if {staff::god::%victim's uuid%} is true:
+            cancel event
+
+# ── Staff Chat ─────────────────────────────────────────────────
+
+command /sc [<text>]:
+    aliases: /staffchat
+    permission: smp.staff
+    trigger:
+        if arg-1 is not set:
+            send colored "{@SC_PREFIX} &c/sc <mesaj>" to player
+            stop
+        loop all players:
+            if loop-player has permission "smp.staff":
+                send colored "{@SC_PREFIX} &b%player%&8: &f%arg-1%" to loop-player
+        send "[StaffChat] %player%: %arg-1%" to console
+
+# ── Staff List ─────────────────────────────────────────────────
+
+command /stafflist:
+    trigger:
+        set {_found} to false
+        send colored "&4&lGarda Online &8— &7IceLegends Staff:" to player
+        loop all players:
+            if loop-player has permission "smp.staff":
+                set {_role} to "&7Staff"
+                if loop-player has permission "smp.admin":
+                    set {_role} to "&4Admin"
+                else if loop-player has permission "smp.mod":
+                    set {_role} to "&cModerator"
+                else if loop-player has permission "smp.helper":
+                    set {_role} to "&aHelper"
+                if {staff::vanish::%loop-player's uuid%} is not true:
+                    send colored "  &b» &f%loop-player% &8[%{_role}%&8]" to player
+                    set {_found} to true
+        if {_found} is false:
+            send colored "  &7Niciun staff online momentan. &8(Discord activ)" to player
+
+# ── Cleanup pe quit ───────────────────────────────────────────
+
+on quit:
+    # Pastreaza frozen in persistenta — jucatorul ramanea frozen si dupa reconectare
+    delete {staff::frozen_loc::%player's uuid%}

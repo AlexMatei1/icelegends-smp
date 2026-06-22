@@ -1,0 +1,405 @@
+# ============================================================
+# IceLegends — Elemente (Skills System)
+# Unic: Sistem bazat pe 5 elemente cu abilitati pasive
+#   Pamant (Mining), Foc (Combat), Viata (Farming),
+#   Apa (Fishing), Vant (Exploration)
+# Inlocuieste AuraSkills
+# ============================================================
+# Formula nivel: XP total pt nivel L = L*(90 + 10*L)
+# XP pt urmatorul nivel = 100 + nivel_curent*20
+# Nivel din XP = floor((-90 + sqrt(8100 + 40*xp)) / 20)
+# ============================================================
+
+options:
+    SMP_WORLD: world
+    SKILL_PREFIX: &8[&2Elemente&8]
+
+# ── Functii nucleu ────────────────────────────────────────────
+
+function skillLevel(xp: number) :: number:
+    if {_xp} <= 0:
+        return 0
+    set {_lv} to floor((-90 + sqrt(8100 + 40 * {_xp})) / 20)
+    if {_lv} > 100:
+        return 100
+    return {_lv}
+
+function skillXpToNextLevel(xp: number) :: number:
+    set {_lv} to skillLevel({_xp})
+    if {_lv} >= 100:
+        return 0
+    return 100 + {_lv} * 20
+
+function skillCurrentProgress(xp: number) :: number:
+    set {_lv} to skillLevel({_xp})
+    set {_total_at} to {_lv} * (90 + 10 * {_lv})
+    return {_xp} - {_total_at}
+
+function addSkillXP(p: player, skill: text, amount: number):
+    if world of {_p} is not world "world":
+        stop
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_old_lv} to skillLevel({skills::%{_uuid}%::%{_skill}%})
+    if {skills::%{_uuid}%::%{_skill}%} is not set:
+        set {skills::%{_uuid}%::%{_skill}%} to 0
+    add {_amount} to {skills::%{_uuid}%::%{_skill}%}
+    set {_new_lv} to skillLevel({skills::%{_uuid}%::%{_skill}%})
+    if {_new_lv} > {_old_lv}:
+        onSkillLevelUp({_p}, {_skill}, {_new_lv})
+
+function onSkillLevelUp(p: player, skill: text, level: number):
+    set {_icon} to skillIcon({_skill})
+    send colored "" to {_p}
+    send colored "&6&l★ LEVEL UP! &8— &f%{_icon}% &6%{_skill}% &8Nivel &e&l%{_level}%" to {_p}
+    if {_level} is 10 or 25 or 50 or 75 or 100:
+        send colored "&e  Abilitate noua deblocata! &7/skills %{_skill}% &7pentru detalii." to {_p}
+        broadcast colored "{@SKILL_PREFIX} &b%{_p}% &7a atins &6Nivel %{_level}% &7la &f%{_icon}% &6%{_skill}%&7!"
+        # Recompensa coins la milestones
+        set {_coins} to 0
+        if {_level} is 10:
+            set {_coins} to 200
+        if {_level} is 25:
+            set {_coins} to 500
+        if {_level} is 50:
+            set {_coins} to 1000
+        if {_level} is 75:
+            set {_coins} to 2000
+        if {_level} is 100:
+            set {_coins} to 5000
+        if {_coins} > 0:
+            add {_coins} to balance of {_p}
+            send colored "&6  +%{_coins}% coins &7drept recompensa de milestone!" to {_p}
+        # Aplica efectul imediat (nu astepta tick-ul de 60s)
+        applySkillPassive({_p}, {_skill}, {_level})
+    send colored "" to {_p}
+    send title colored "&6&l★ Level Up!" with subtitle colored "&f%{_icon}% %{_skill}% &8— &6Nivel %{_level}%" to {_p} for 3 seconds
+
+function applySkillPassive(p: player, skill: text, level: number):
+    if {_skill} is "Pamant":
+        if {_level} >= 75:
+            apply haste 2 to {_p} for 70 seconds
+        else if {_level} >= 25:
+            apply haste 1 to {_p} for 70 seconds
+    if {_skill} is "Foc":
+        if {_level} >= 75:
+            apply strength 1 to {_p} for 70 seconds
+        if {_level} >= 25:
+            apply regeneration 1 to {_p} for 5 seconds
+    if {_skill} is "Apa":
+        if {_level} >= 50:
+            apply night vision 1 to {_p} for 70 seconds
+    if {_skill} is "Vant":
+        if {_level} >= 50:
+            apply speed 2 to {_p} for 70 seconds
+        else if {_level} >= 10:
+            apply speed 1 to {_p} for 70 seconds
+
+function skillIcon(skill: text) :: text:
+    if {_skill} is "Pamant":
+        return "⛏"
+    if {_skill} is "Foc":
+        return "⚔"
+    if {_skill} is "Viata":
+        return "❤"
+    if {_skill} is "Apa":
+        return "~"
+    if {_skill} is "Vant":
+        return "^"
+    return "★"
+
+# ── Abilitati pasive (aplicate la fiecare 60s) ────────────────
+
+every 60 seconds:
+    loop all players:
+        if world of loop-player is world "world":
+            set {_uuid} to "%loop-player's uuid%"
+            # Pamant — Haste
+            set {_lv} to skillLevel({skills::%{_uuid}%::Pamant})
+            if {_lv} >= 75:
+                apply haste 2 to loop-player for 70 seconds
+            else if {_lv} >= 25:
+                apply haste 1 to loop-player for 70 seconds
+            # Foc — Strength
+            set {_lv} to skillLevel({skills::%{_uuid}%::Foc})
+            if {_lv} >= 75:
+                apply strength 1 to loop-player for 70 seconds
+            # Apa — Night vision sub apa
+            set {_lv} to skillLevel({skills::%{_uuid}%::Apa})
+            if {_lv} >= 50:
+                if loop-player is in water:
+                    apply night vision 1 to loop-player for 70 seconds
+            # Vant — Speed
+            set {_lv} to skillLevel({skills::%{_uuid}%::Vant})
+            if {_lv} >= 50:
+                apply speed 2 to loop-player for 70 seconds
+            else if {_lv} >= 10:
+                apply speed 1 to loop-player for 70 seconds
+
+# ── Fall damage reduction (Vant nivel 25) ─────────────────────
+
+on damage:
+    if victim is a player:
+        if damage cause is fall:
+            set {_uuid} to "%victim's uuid%"
+            set {_lv} to skillLevel({skills::%{_uuid}%::Vant})
+            if {_lv} >= 75:
+                cancel event
+            else if {_lv} >= 25:
+                set damage to damage * 0.7
+
+# ── Mining — Pamant XP ─────────────────────────────────────────
+
+on mine:
+    if world of player is not world "world":
+        stop
+    set {_xp} to 0
+    set {_t} to type of event-block
+    if {_t} is coal ore or deepslate coal ore:
+        set {_xp} to 2
+    if {_t} is copper ore or deepslate copper ore:
+        set {_xp} to 3
+    if {_t} is iron ore or deepslate iron ore:
+        set {_xp} to 5
+    if {_t} is gold ore or deepslate gold ore:
+        set {_xp} to 8
+    if "%{_t}%" contains "lapis":
+        set {_xp} to 4
+    if {_t} is redstone ore or deepslate redstone ore:
+        set {_xp} to 3
+    if {_t} is emerald ore or deepslate emerald ore:
+        set {_xp} to 15
+    if {_t} is diamond ore or deepslate diamond ore:
+        set {_xp} to 20
+    if {_t} is nether gold ore:
+        set {_xp} to 4
+    if {_t} is nether quartz ore:
+        set {_xp} to 3
+    if {_t} is ancient debris:
+        set {_xp} to 80
+    if {_xp} > 0:
+        addSkillXP(player, "Pamant", {_xp})
+        # Double drop (Pamant nivel 50+, 10% sansa)
+        set {_uuid} to "%player's uuid%"
+        set {_lv} to skillLevel({skills::%{_uuid}%::Pamant})
+        if {_lv} >= 50:
+            if chance of 10%:
+                drop (drops of event-block) at location of event-block
+
+# ── Farming — Viata XP ─────────────────────────────────────────
+
+on mine:
+    if world of player is not world "world":
+        stop
+    set {_xp} to 0
+    set {_t} to type of event-block
+    if {_t} is wheat or carrots or potatoes or beetroots or sugar cane:
+        set {_xp} to 1
+    if {_t} is melon or pumpkin:
+        set {_xp} to 2
+    if {_t} is nether wart:
+        set {_xp} to 3
+    if {_xp} > 0:
+        addSkillXP(player, "Viata", {_xp})
+        # Bonus crop (Viata nivel 25+, 15% sansa)
+        set {_uuid} to "%player's uuid%"
+        set {_lv} to skillLevel({skills::%{_uuid}%::Viata})
+        if {_lv} >= 25:
+            if chance of 15%:
+                drop (drops of event-block) at location of event-block
+
+# ── Combat — Foc XP ────────────────────────────────────────────
+
+on death:
+    if attacker is a player:
+        if world of attacker is world "world":
+            set {_xp} to 0
+            if victim is a zombie or husk or drowned:
+                set {_xp} to 2
+            if victim is a skeleton or stray or bogged:
+                set {_xp} to 2
+            if victim is a spider or cave spider:
+                set {_xp} to 1
+            if victim is a creeper:
+                set {_xp} to 4
+            if victim is an enderman:
+                set {_xp} to 5
+            if victim is a witch:
+                set {_xp} to 3
+            if victim is a blaze:
+                set {_xp} to 5
+            if victim is a ghast:
+                set {_xp} to 8
+            if victim is a wither skeleton:
+                set {_xp} to 6
+            if victim is a piglin or piglin brute:
+                set {_xp} to 4
+            if victim is a hoglin or zoglin:
+                set {_xp} to 5
+            if victim is a warden:
+                set {_xp} to 50
+            if victim is a wither:
+                set {_xp} to 200
+            if victim is an ender dragon:
+                set {_xp} to 500
+            if {_xp} > 0:
+                addSkillXP(attacker, "Foc", {_xp})
+                # Regeneration burst (Foc nivel 25+)
+                set {_uuid} to "%attacker's uuid%"
+                set {_lv} to skillLevel({skills::%{_uuid}%::Foc})
+                if {_lv} >= 25:
+                    apply regeneration 1 to attacker for 3 seconds
+
+# Foc nivel 50: 20% sansa sa incendiezi monstrul + Foc nivel 100: execute sub 20% HP
+on damage of entity:
+    if attacker is a player:
+        if world of attacker is world "world":
+            if victim is not a player:
+                set {_uuid} to "%attacker's uuid%"
+                set {_lv} to skillLevel({skills::%{_uuid}%::Foc})
+                if {_lv} >= 50:
+                    if chance of 20%:
+                        ignite victim for 3 seconds
+                if {_lv} >= 100:
+                    if max health of victim > 0:
+                        if health of victim / max health of victim < 0.2:
+                            kill victim
+
+# Fishing (Apa XP) — not trackable in this Skript build
+# XP for Apa skill must be granted manually via /skillgrant
+
+# ── Exploration — Vant XP ─────────────────────────────────────
+
+every 30 seconds:
+    loop all players:
+        if world of loop-player is world "world":
+            set {_uuid} to "%loop-player's uuid%"
+            if {skills::explore_loc::%{_uuid}%} is set:
+                set {_dist} to distance between loop-player's location and {skills::explore_loc::%{_uuid}%}
+                if {_dist} > 50:
+                    set {_gained} to floor({_dist} / 50)
+                    addSkillXP(loop-player, "Vant", {_gained})
+            set {skills::explore_loc::%{_uuid}%} to loop-player's location
+
+# ── Comenzi ───────────────────────────────────────────────────
+
+command /skills [<text>]:
+    trigger:
+        set {_uuid} to "%player's uuid%"
+        if arg-1 is not set:
+            send colored "" to player
+            send colored "&2&l⚡ ELEMENTE &8— &7Skill-urile tale:" to player
+            send colored "&8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to player
+            printSkill(player, "Pamant", "⛏", "&a")
+            printSkill(player, "Foc", "⚔", "&c")
+            printSkill(player, "Viata", "❤", "&2")
+            printSkill(player, "Apa", "◉", "&b")
+            printSkill(player, "Vant", "✈", "&f")
+            send colored "&8▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬" to player
+            send colored "&7/skills <pamant|foc|viata|apa|vant> &8— &7abilitati" to player
+            send colored "" to player
+        else:
+            printSkillDetail(player, arg-1 in lower case)
+
+function printSkill(p: player, skill: text, icon: text, color: text):
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_xp} to {skills::%{_uuid}%::%{_skill}%}
+    if {_xp} is not set:
+        set {_xp} to 0
+    set {_lv} to skillLevel({_xp})
+    if {_lv} >= 100:
+        send colored "  %{_icon}% %{_color}%%{_skill}% &8— &6&lMAX &8(&7%{_xp}% XP total&8)" to {_p}
+    else:
+        set {_prog} to skillCurrentProgress({_xp})
+        set {_need} to skillXpToNextLevel({_xp})
+        send colored "  %{_icon}% %{_color}%%{_skill}% &8— &7Nivel &e%{_lv}% &8| &7XP: &e%{_prog}%&8/&e%{_need}%" to {_p}
+
+function printSkillDetail(p: player, input: text):
+    set {_skill} to "Pamant"
+    if {_input} is "foc":
+        set {_skill} to "Foc"
+    if {_input} is "combat":
+        set {_skill} to "Foc"
+    if {_input} is "fire":
+        set {_skill} to "Foc"
+    if {_input} is "viata":
+        set {_skill} to "Viata"
+    if {_input} is "farming":
+        set {_skill} to "Viata"
+    if {_input} is "farm":
+        set {_skill} to "Viata"
+    if {_input} is "apa":
+        set {_skill} to "Apa"
+    if {_input} is "fishing":
+        set {_skill} to "Apa"
+    if {_input} is "water":
+        set {_skill} to "Apa"
+    if {_input} is "vant":
+        set {_skill} to "Vant"
+    if {_input} is "explore":
+        set {_skill} to "Vant"
+    if {_input} is "wind":
+        set {_skill} to "Vant"
+    if {_input} is "viteza":
+        set {_skill} to "Vant"
+    set {_uuid} to "%{_p}'s uuid%"
+    set {_xp} to {skills::%{_uuid}%::%{_skill}%}
+    if {_xp} is not set:
+        set {_xp} to 0
+    set {_lv} to skillLevel({_xp})
+    set {_icon} to skillIcon({_skill})
+    send colored "" to {_p}
+    send colored "&2%{_icon}% &l%{_skill}% &8— &7Nivel &e%{_lv}%&8/&e100  &8| &7XP total: &e%{_xp}%" to {_p}
+    if {_lv} < 100:
+        set {_prog} to skillCurrentProgress({_xp})
+        set {_need} to skillXpToNextLevel({_xp})
+        send colored "&7Progress nivel curent: &e%{_prog}%&8/&e%{_need}% XP" to {_p}
+    send colored "&7Abilitati:" to {_p}
+    printAbils({_p}, {_skill}, {_lv})
+    send colored "" to {_p}
+
+function printAbils(p: player, skill: text, lv: number):
+    if {_skill} is "Pamant":
+        showAbil({_p}, 10, "Senzor Mineral", "Simti vibratii cand esti aproape de minerale", {_lv})
+        showAbil({_p}, 25, "Haste I", "Pui mai rapid in SMP", {_lv})
+        showAbil({_p}, 50, "Vena Dubla 10%%", "10%% sansa de dublu drop la orice mineral", {_lv})
+        showAbil({_p}, 75, "Haste II", "Viteza maxima de minare", {_lv})
+        showAbil({_p}, 100, "Maestrul Minierului", "Triple vena 5%% + drop maxim garantat", {_lv})
+    if {_skill} is "Foc":
+        showAbil({_p}, 10, "Furie Latenta", "+10%% experienta din monstri", {_lv})
+        showAbil({_p}, 25, "Regenerare Rapida", "Regeneration I 3s dupa fiecare kill", {_lv})
+        showAbil({_p}, 50, "Flacara Interna", "20%% sansa sa incendiezi monstrul la lovire", {_lv})
+        showAbil({_p}, 75, "Strength I", "Forta permanenta in SMP", {_lv})
+        showAbil({_p}, 100, "Executie", "Monstrii sub 20%% HP mor instant", {_lv})
+    if {_skill} is "Viata":
+        showAbil({_p}, 10, "Deget Verde", "Recoltele cresc mai repede in apropierea ta", {_lv})
+        showAbil({_p}, 25, "Recolta Dubla 15%%", "15%% sansa la recolta dubla", {_lv})
+        showAbil({_p}, 50, "Pamant Roditor", "15%% sansa la triplu drop din culturi", {_lv})
+        showAbil({_p}, 75, "Vita de Vie", "Animalele accepta mai repede imperecherea", {_lv})
+        showAbil({_p}, 100, "Maestrul Fermier", "Recolta 5x cu 5%% sansa + replant automat", {_lv})
+    if {_skill} is "Apa":
+        showAbil({_p}, 10, "Lure I", "Pestii musca mai repede", {_lv})
+        showAbil({_p}, 25, "Loot Rar", "Sansa dubla de comori din pescare", {_lv})
+        showAbil({_p}, 50, "Vedere Subacvatica", "Night Vision cand esti in apa", {_lv})
+        showAbil({_p}, 75, "Lure II + Luck of Sea II", "Efect maxim de pescare", {_lv})
+        showAbil({_p}, 100, "Neptun", "Triplezi comorile + respirati nelimitata", {_lv})
+    if {_skill} is "Vant":
+        showAbil({_p}, 10, "Speed I", "Viteza permanenta in SMP", {_lv})
+        showAbil({_p}, 25, "Aterizare Sigura", "Reduci fall damage cu 30%%", {_lv})
+        showAbil({_p}, 50, "Speed II", "Viteza maxima permanenta in SMP", {_lv})
+        showAbil({_p}, 75, "Imunitate Fall", "Fall damage complet eliminat", {_lv})
+        showAbil({_p}, 100, "Maestrul Vantului", "Speed II permanent + foamea se reduce mai lent", {_lv})
+
+function showAbil(p: player, req: number, name: text, desc: text, cur: number):
+    if {_cur} >= {_req}:
+        send colored "  &a✔ &7Nivel %{_req}%: &f%{_name}% &8— &7%{_desc}%" to {_p}
+    else:
+        send colored "  &8✘ &7Nivel %{_req}%: &8%{_name}% &8(-%{_req} - {_cur}% niveluri ramase)" to {_p}
+
+command /skillreset <player> <text>:
+    permission: smp.admin
+    trigger:
+        set {_p} to arg-1
+        set {_skill} to arg-2
+        set {_uuid} to "%{_p}'s uuid%"
+        delete {skills::%{_uuid}%::%{_skill}%}
+        send colored "{@SKILL_PREFIX} &aSkill &e%{_skill}% &aal lui &b%{_p}% &aresetat la 0." to player

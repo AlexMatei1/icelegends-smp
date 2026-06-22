@@ -1,0 +1,30 @@
+# ============================================================
+# SMP Broadcasts — Mesaje automate la interval fix
+# ============================================================
+
+options:
+    INTERVAL: 15 minutes
+
+on load:
+    set {broadcast::index} to 0
+
+every {@INTERVAL}:
+    add 1 to {broadcast::index}
+    if {broadcast::index} > 8:
+        set {broadcast::index} to 1
+    if {broadcast::index} is 1:
+        broadcast "&8[&6SMP&8] &7Foloseste &e/shop &7pentru a cumpara si vinde resurse."
+    if {broadcast::index} is 2:
+        broadcast "&8[&6SMP&8] &7Foloseste &e/skills &7pentru a-ti vedea progresul in abilitati."
+    if {broadcast::index} is 3:
+        broadcast "&8[&6SMP&8] &7Fondeaza sau alatura-te unui town cu &e/t new &7sau &e/t join."
+    if {broadcast::index} is 4:
+        broadcast "&8[&6SMP&8] &7Raporteaza comportament necorespunzator unui &aHelper&7."
+    if {broadcast::index} is 5:
+        broadcast "&8[&6SMP&8] &7Economia: vinde resurse la &e/shop &7sau direct altor jucatori."
+    if {broadcast::index} is 6:
+        broadcast "&8[&6SMP&8] &7Quest-urile zilnice: &e/q list &7(80-100 coins pe zi)."
+    if {broadcast::index} is 7:
+        broadcast "&8[&6SMP&8] &7Claim-urile te protejeaza! Foloseste &e/claim &7in baza ta."
+    if {broadcast::index} is 8:
+        broadcast "&8[&6SMP&8] &7Vorbeste cu &e&lBatranul &7de la spawn pentru quest-uri de poveste."

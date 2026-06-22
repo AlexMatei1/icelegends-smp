@@ -1,0 +1,69 @@
+# ============================================================
+# Quest Q1 — Prima Zi (First Day)
+# Plugin: Quests by PikaMug
+# Trigger: Automat la prima conectare
+# NPC: Bătrânul (Citizens) — plasat la spawn
+# ============================================================
+
+quests:
+  prima-zi:
+    name: "Prima Zi"
+    description: "Vorbește cu Bătrânul și colectează 32 de bușteni."
+
+    # Dialog NPC la acceptarea quest-ului
+    ask-message: |
+      &6&lBătrânul: &rAh... altul care s-a trezit. Bun.
+      &6&lBătrânul: &rNu întreba de unde ești. Nimeni nu mai știe.
+      &6&lBătrânul: &rTaie 32 de bușteni. Arată-mi că ești real.
+
+    # Mesaj la finalizarea quest-ului
+    finish-message: |
+      &6&lBătrânul: &rBine. Ești util. Deocamdată.
+      &a✓ Quest finalizat: Prima Zi!
+
+    # NPC care oferă quest-ul (Citizens NPC id — setat în joc)
+    npc-giver-id: 1
+
+    # Ordinea etapelor — secvențial
+    stages:
+      ordered:
+        '1':
+          # Obiectiv: colectează 32 de bușteni din orice tip de copac
+          objectives:
+            - type: breakBlock
+              names:
+                - OAK_LOG
+                - BIRCH_LOG
+                - SPRUCE_LOG
+                - JUNGLE_LOG
+                - ACACIA_LOG
+                - DARK_OAK_LOG
+                - MANGROVE_LOG
+                - CHERRY_LOG
+              amount: 32
+          # Mesaj de progres afișat jucătorului
+          start-message: "&7Colectează &e32 de bușteni &7din orice tip de copac."
+          complete-message: "&a✓ Ai colectat destui bușteni. Întoarce-te la Bătrânul!"
+
+    # Recompense la finalizare
+    rewards:
+      money: 200
+      items:
+        - type: BREAD
+          amount: 16
+          name: "Pâine de la Bătrânul"
+      # Mesaj recompensă
+      message: "&a+200 coins &7și &f16 pâine"
+      # Comandă executată la finalizare (opțional — titlu cosmetic)
+      commands: []
+
+    # Nu se poate repeta — quest de storyline
+    repeat: false
+
+    # Timp limită (0 = nelimitat)
+    time-limit: 0
+
+    # Cerințe pentru a accepta quest-ul
+    requirements:
+      # Fără cerințe — automat disponibil la prima conectare
+      message: "&cNu îndeplinești cerințele pentru acest quest."

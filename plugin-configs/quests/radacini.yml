@@ -1,0 +1,64 @@
+# ============================================================
+# Quest Q2 — Rădăcini (Roots)
+# Plugin: Quests by PikaMug 5.x
+# Trigger: Automat după completarea Q1 (Prima Zi)
+# NPC: Bătrânul (Citizens) — același NPC, dialog nou
+# ============================================================
+
+quests:
+  radacini:
+    name: "Rădăcini"
+    description: "Construiește-ți o bază în lume. Intră într-un town sau fondează unul."
+
+    # Dialog NPC la acceptarea quest-ului
+    ask-message: |
+      &6&lBătrânul: &rUn om fără rădăcini e un om pierdut.
+      &6&lBătrânul: &rPune-ți lucrurile undeva. Fii real.
+      &6&lBătrânul: &rPlasează un cufăr — primul semn că ai venit să rămâi.
+
+    # Mesaj la finalizarea quest-ului
+    finish-message: |
+      &6&lBătrânul: &rAcum ai rădăcini. Poate supraviețuiești.
+      &a✓ Quest finalizat: Rădăcini!
+
+    # NPC care oferă quest-ul
+    npc-giver-id: 1
+
+    # Cerință: Prima Zi trebuie completată mai întâi
+    requirements:
+      quests:
+        - prima-zi
+      message: "&cTermină întâi quest-ul &ePrima Zi&c!"
+
+    stages:
+      ordered:
+        '1':
+          # Obiectiv: plasează un cufăr (simbol pentru stabilire)
+          # Alternativă admin: /quests forcequest <player> radacini după /t join
+          objectives:
+            - type: placeBlock
+              names:
+                - CHEST
+              amount: 1
+          start-message: "&7Plasează un &eCufăr &7undeva în lume — primul semn de viață."
+          complete-message: "&a✓ Ți-ai pus bazele! Întoarce-te la Bătrânul."
+
+    rewards:
+      money: 500
+      items:
+        # Iron tool kit — set de unelte de fier
+        - type: IRON_PICKAXE
+          amount: 1
+          name: "Kit de Unelte al Bătrânului"
+        - type: IRON_AXE
+          amount: 1
+        - type: IRON_SHOVEL
+          amount: 1
+        - type: IRON_SWORD
+          amount: 1
+      message: "&a+500 coins &7și &fkit de unelte din fier"
+      commands: []
+
+    # Nu se poate repeta — quest de storyline
+    repeat: false
+    time-limit: 0

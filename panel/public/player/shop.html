@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop — IceLegends</title>
+  <link rel="stylesheet" href="/player/ice.css">
+  <style>
+    /* ── Filter bar ── */
+    .filter-bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:20px; }
+    .cat-btn {
+      padding:7px 14px; border-radius:10px; border:1px solid var(--border);
+      background:transparent; color:var(--muted);
+      font-family:'Exo 2',sans-serif; font-size:.75rem; font-weight:700; letter-spacing:.8px;
+      cursor:pointer; transition:all .2s; white-space:nowrap;
+    }
+    .cat-btn:hover { border-color:var(--border-soft); color:var(--text); }
+    .cat-btn.active { background:rgba(100,223,223,.1); border-color:rgba(100,223,223,.35); color:var(--ice); }
+    .filter-search { flex:1; min-width:160px; max-width:280px; }
+
+    /* ── Balance strip ── */
+    .balance-strip {
+      display:flex; align-items:center; gap:12px;
+      background:var(--glass); backdrop-filter:blur(16px);
+      border:1px solid var(--border); border-radius:var(--r-md);
+      padding:12px 18px; margin-bottom:20px;
+    }
+    .balance-strip .bal-icon { font-size:1.5rem; }
+    .balance-strip .bal-label { font-size:.75rem; color:var(--muted); margin-bottom:2px; letter-spacing:1px; text-transform:uppercase; }
+    .balance-strip .bal-val { font-family:'Exo 2',sans-serif; font-size:1.3rem; font-weight:900; color:var(--gold); }
+    .balance-strip .bal-note { margin-left:auto; font-size:.75rem; color:var(--muted); }
+
+    /* ── Grid ── */
+    .shop-grid {
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:14px; margin-bottom:28px;
+    }
+    @media(max-width:1100px){.shop-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:768px) {.shop-grid{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:480px) {.shop-grid{grid-template-columns:1fr;}}
+
+    /* ── Item card ── */
+    .shop-item {
+      background:var(--glass); backdrop-filter:blur(16px);
+      border:1px solid var(--border); border-radius:var(--r-md);
+      padding:18px 14px 14px;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      text-align:center; transition:all .25s; position:relative; overflow:hidden;
+    }
+    .shop-item::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,var(--border-soft),transparent);
+    }
+    .shop-item:hover {
+      border-color:rgba(100,223,223,.22); transform:translateY(-3px);
+      box-shadow:0 12px 32px rgba(0,0,0,.35),0 0 20px rgba(100,223,223,.06);
+    }
+    .item-emoji { font-size:2.4rem; line-height:1; filter:drop-shadow(0 2px 8px rgba(0,0,0,.4)); }
+    .item-name { font-family:'Exo 2',sans-serif; font-size:.85rem; font-weight:700; color:var(--text); line-height:1.3; }
+    .item-prices { display:flex; flex-direction:column; gap:5px; width:100%; margin-top:2px; }
+    .price-badge {
+      display:flex; align-items:center; justify-content:center; gap:5px;
+      padding:4px 10px; border-radius:8px;
+      font-family:'Exo 2',sans-serif; font-size:.78rem; font-weight:700;
+    }
+    .price-buy  { background:rgba(100,230,130,.1); border:1px solid rgba(100,230,130,.25); color:#70e890; }
+    .price-sell { background:rgba(255,160,60,.1);  border:1px solid rgba(255,160,60,.25);  color:#ffaa44; }
+    .price-none { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); color:var(--muted); font-size:.72rem; font-weight:400; }
+    .item-cat-badge {
+      background:rgba(100,223,223,.07); border:1px solid rgba(100,223,223,.15);
+      color:var(--muted); border-radius:20px; padding:2px 9px;
+      font-size:.65rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    }
+    .buy-btn {
+      width:100%; padding:7px 0; border:none; border-radius:var(--r-sm);
+      background:linear-gradient(135deg,rgba(0,55,140,.85),rgba(0,120,200,.85));
+      color:#fff; font-family:'Exo 2',sans-serif; font-size:.78rem; font-weight:700;
+      letter-spacing:.8px; cursor:pointer; transition:all .2s; margin-top:4px;
+    }
+    .buy-btn:hover { box-shadow:0 4px 20px rgba(94,223,255,.25); transform:translateY(-1px); }
+    .buy-btn:disabled { opacity:.4; cursor:not-allowed; transform:none; box-shadow:none; }
+
+    /* ── Buy modal ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:500; align-items:center; justify-content:center; backdrop-filter:blur(6px); }
+    .modal-overlay.open { display:flex; }
+    .buy-modal {
+      background:var(--glass); backdrop-filter:blur(28px);
+      border:1px solid var(--border-soft); border-radius:var(--r-lg);
+      padding:32px; width:100%; max-width:360px;
+      box-shadow:0 24px 80px rgba(0,0,0,.6);
+      position:relative;
+    }
+    .buy-modal::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--border-bright),transparent); }
+    .modal-item-head { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+    .modal-emoji { font-size:2.8rem; }
+    .modal-item-name { font-family:'Exo 2',sans-serif; font-size:1.1rem; font-weight:900; margin-bottom:4px; }
+    .modal-unit-price { font-size:.8rem; color:var(--muted); }
+    .modal-unit-price span { color:var(--gold); font-weight:700; }
+
+    .qty-row { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+    .qty-row label { font-size:.72rem; color:var(--muted); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
+    .qty-input {
+      flex:1; background:rgba(0,8,22,.65); border:1px solid var(--border-soft);
+      border-radius:var(--r-sm); padding:10px 14px; color:var(--text);
+      font-family:'Exo 2',sans-serif; font-size:1rem; font-weight:700;
+      text-align:center; outline:none;
+    }
+    .qty-input:focus { border-color:rgba(100,223,223,.4); }
+    .qty-presets { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+    .qty-preset {
+      flex:1; min-width:44px; padding:6px 4px; border:1px solid var(--border);
+      border-radius:8px; background:transparent; color:var(--muted);
+      font-family:'Exo 2',sans-serif; font-size:.78rem; font-weight:700; cursor:pointer; transition:all .2s;
+    }
+    .qty-preset:hover { border-color:var(--border-soft); color:var(--text); }
+    .qty-preset.active { background:rgba(100,223,223,.1); border-color:rgba(100,223,223,.3); color:var(--ice); }
+
+    .modal-total {
+      background:rgba(251,191,36,.06); border:1px solid rgba(251,191,36,.2);
+      border-radius:var(--r-sm); padding:12px 16px;
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:18px;
+    }
+    .modal-total-label { font-size:.78rem; color:var(--muted); letter-spacing:1px; }
+    .modal-total-val { font-family:'Exo 2',sans-serif; font-size:1.2rem; font-weight:900; color:var(--gold); }
+
+    .modal-actions { display:flex; gap:10px; }
+    .modal-buy-confirm {
+      flex:1; padding:12px; background:linear-gradient(135deg,#0b3265,#1568b0,#2bb8cc);
+      border:none; border-radius:var(--r-sm); color:#fff;
+      font-family:'Exo 2',sans-serif; font-size:.9rem; font-weight:700; letter-spacing:1px;
+      cursor:pointer; transition:all .2s;
+    }
+    .modal-buy-confirm:hover { box-shadow:0 6px 24px rgba(94,223,255,.3); transform:translateY(-1px); }
+    .modal-buy-confirm:disabled { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
+    .modal-cancel { background:rgba(255,255,255,.05); border:1px solid var(--border-soft); color:var(--muted); border-radius:var(--r-sm); padding:12px 18px; font-family:'Exo 2',sans-serif; font-size:.85rem; font-weight:700; cursor:pointer; transition:all .2s; }
+    .modal-cancel:hover { background:rgba(255,255,255,.09); color:var(--text); }
+
+    .modal-msg { margin-top:12px; padding:10px 14px; border-radius:var(--r-sm); font-size:.83rem; display:none; }
+    .modal-msg.ok  { background:rgba(100,255,200,.07); border:1px solid rgba(100,255,200,.22); color:var(--green); display:block; }
+    .modal-msg.err { background:rgba(255,82,82,.07);   border:1px solid rgba(255,82,82,.25);  color:#ff8a8a;      display:block; }
+
+    .no-results { grid-column:1/-1; text-align:center; padding:48px 20px; color:var(--muted); }
+    .no-results-icon { font-size:2.4rem; margin-bottom:12px; opacity:.5; }
+  </style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div><div class="a4"></div></div>
+<div id="snow"></div>
+
+<nav class="ice-nav">
+  <a class="nav-brand" href="/player/dashboard">❄ ICELEGENDS</a>
+  <div class="nav-links">
+    <a class="nav-link" href="/player/dashboard">Dashboard</a>
+    <a class="nav-link" href="/player/bounties">Bounties</a>
+    <a class="nav-link" href="/player/stocks">Stocks</a>
+    <a class="nav-link" href="/player/capsule">Capsule</a>
+    <a class="nav-link" href="/player/wars">Wars</a>
+    <a class="nav-link" href="/player/missions">Misiuni</a>
+    <a class="nav-link active" href="/player/shop">Shop</a>
+    <a class="nav-link" href="/player/clans">Clanuri</a>
+    <a class="nav-link" href="/player/vote">Vot</a>
+    <a class="nav-link" href="/player/appeal">Contestație</a>
+  </div>
+  <div class="nav-right">
+    <img class="nav-mc-head" src="" alt="" style="width:28px;height:28px;border-radius:4px;display:none;image-rendering:pixelated">
+    <span class="nav-user-name">Bun venit, <strong id="navName">...</strong></span>
+    <button class="btn-logout" onclick="logout()">Delogare</button>
+  </div>
+</nav>
+
+<!-- Buy modal -->
+<div class="modal-overlay" id="buyModal" onclick="closeModal(event)">
+  <div class="buy-modal">
+    <div class="modal-item-head">
+      <span class="modal-emoji" id="mEmoji">📦</span>
+      <div>
+        <div class="modal-item-name" id="mName">Item</div>
+        <div class="modal-unit-price">Preț per unitate: <span id="mUnitPrice">0</span> coins</div>
+      </div>
+    </div>
+    <div class="qty-row">
+      <label>Cantitate</label>
+      <input type="number" class="qty-input" id="qtyInput" min="1" max="64" value="1" oninput="updateTotal()">
+    </div>
+    <div class="qty-presets">
+      <button class="qty-preset active" onclick="setQty(1)">1</button>
+      <button class="qty-preset" onclick="setQty(8)">8</button>
+      <button class="qty-preset" onclick="setQty(16)">16</button>
+      <button class="qty-preset" onclick="setQty(32)">32</button>
+      <button class="qty-preset" onclick="setQty(64)">64</button>
+    </div>
+    <div class="modal-total">
+      <span class="modal-total-label">TOTAL</span>
+      <span class="modal-total-val" id="mTotal">0 coins</span>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Anulează</button>
+      <button class="modal-buy-confirm" id="mConfirmBtn" onclick="confirmBuy()">🛒 Cumpără</button>
+    </div>
+    <div class="modal-msg" id="modalMsg"></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="container">
+    <div class="page-hero">
+      <div class="page-hero-title">🛒 <span class="accent">Shop IceLegends</span></div>
+      <div class="page-hero-sub">Cumpără iteme cu coins direct din portal (trebuie să fii online în joc)</div>
+    </div>
+
+    <div class="balance-strip" id="balanceStrip" style="display:none">
+      <span class="bal-icon">💰</span>
+      <div>
+        <div class="bal-label">Balanță</div>
+        <div class="bal-val" id="balVal">0 coins</div>
+      </div>
+      <div class="bal-note">🎮 Trebuie să fii online pentru a cumpăra</div>
+    </div>
+
+    <div id="loadingState" class="loading-wrap"><div class="spinner"></div></div>
+
+    <div id="mainContent" style="display:none">
+      <div class="sec-label">Catalog</div>
+      <div class="filter-bar">
+        <button class="cat-btn active" data-cat="Toate"      onclick="setCat('Toate',this)">Toate</button>
+        <button class="cat-btn" data-cat="Materiale"         onclick="setCat('Materiale',this)">Materiale</button>
+        <button class="cat-btn" data-cat="Metale"            onclick="setCat('Metale',this)">Metale</button>
+        <button class="cat-btn" data-cat="Pretioase"         onclick="setCat('Pretioase',this)">Prețioase</button>
+        <button class="cat-btn" data-cat="Mancare"           onclick="setCat('Mancare',this)">Mâncare</button>
+        <button class="cat-btn" data-cat="Mob Drops"         onclick="setCat('Mob Drops',this)">Mob Drops</button>
+        <button class="cat-btn" data-cat="Agricultura"       onclick="setCat('Agricultura',this)">Agricultură</button>
+        <button class="cat-btn" data-cat="Rare"              onclick="setCat('Rare',this)">Rare</button>
+        <input class="form-input filter-search" type="text" id="searchInput" placeholder="Caută item..." oninput="renderItems()">
+      </div>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/player/ice.js"></script>
+<script>
+'use strict';
+let allItems = [];
+let activeCat = 'Toate';
+let myBalance = 0;
+let currentItem = null;
+
+const CAT_LABELS = { Materiale:'Materiale', Metale:'Metale', Pretioase:'Prețioase', Mancare:'Mâncare', 'Mob Drops':'Mob Drops', Agricultura:'Agricultură', Rare:'Rare' };
+function catLabel(c) { return CAT_LABELS[c] || c || ''; }
+function fmt(n) { return Math.floor(n).toLocaleString('ro-RO'); }
+
+async function init() {
+  try {
+    const r = await fetch('/api/player/me', { credentials:'include' });
+    if (!r.ok) { location.href = '/player/login'; return; }
+    const me = await r.json();
+    document.getElementById('navName').textContent = me.username;
+    // load balance
+    try {
+      const s = await fetch(`/api/player/profile/${me.username}`, { credentials:'include' });
+      if (s.ok) {
+        const d = await s.json();
+        myBalance = d.balance || 0;
+        document.getElementById('balVal').textContent = fmt(myBalance) + ' coins';
+        document.getElementById('balanceStrip').style.display = 'flex';
+      }
+    } catch {}
+  } catch {}
+
+  try {
+    const r = await fetch('/api/shop', { credentials:'include' });
+    allItems = await r.json();
+  } catch { allItems = []; }
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  renderItems();
+}
+
+function setCat(cat, btn) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderItems();
+}
+
+function renderItems() {
+  const grid = document.getElementById('shopGrid');
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  let items = allItems;
+  if (activeCat !== 'Toate') items = items.filter(i => i.cat === activeCat);
+  if (q) items = items.filter(i => i.name.toLowerCase().includes(q));
+
+  if (!items.length) {
+    grid.innerHTML = `<div class="no-results"><div class="no-results-icon">🔍</div><div>Niciun item${q ? ` pentru "<strong>${q}</strong>"` : ''}</div></div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(item => {
+    const buyBadge  = item.buy  != null ? `<div class="price-badge price-buy">🛒 ${fmt(item.buy)} coins</div>`  : `<div class="price-badge price-none">Nu se vinde</div>`;
+    const sellBadge = item.sell != null ? `<div class="price-badge price-sell">💰 ${fmt(item.sell)} coins</div>` : `<div class="price-badge price-none">Nu se cumpără</div>`;
+    const canBuy = item.buy != null;
+    return `
+      <div class="shop-item">
+        <div class="item-emoji">${item.emoji || '📦'}</div>
+        <div class="item-name">${item.name}</div>
+        <div class="item-prices">${buyBadge}${sellBadge}</div>
+        <div class="item-cat-badge">${catLabel(item.cat)}</div>
+        ${canBuy ? `<button class="buy-btn" onclick="openBuyModal('${item.id}')">🛒 Cumpără</button>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ── Modal ──────────────────────────────────────────────────────
+function openBuyModal(itemId) {
+  currentItem = allItems.find(i => i.id === itemId);
+  if (!currentItem) return;
+  document.getElementById('mEmoji').textContent = currentItem.emoji || '📦';
+  document.getElementById('mName').textContent = currentItem.name;
+  document.getElementById('mUnitPrice').textContent = fmt(currentItem.buy);
+  document.getElementById('qtyInput').value = 1;
+  document.getElementById('modalMsg').className = 'modal-msg';
+  document.getElementById('modalMsg').textContent = '';
+  document.getElementById('mConfirmBtn').disabled = false;
+  document.querySelectorAll('.qty-preset').forEach(b => b.classList.toggle('active', b.textContent === '1'));
+  updateTotal();
+  document.getElementById('buyModal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('buyModal')) return;
+  document.getElementById('buyModal').classList.remove('open');
+  currentItem = null;
+}
+
+function setQty(n) {
+  document.getElementById('qtyInput').value = n;
+  document.querySelectorAll('.qty-preset').forEach(b => b.classList.toggle('active', parseInt(b.textContent) === n));
+  updateTotal();
+}
+
+function updateTotal() {
+  if (!currentItem) return;
+  const qty = Math.max(1, Math.min(64, parseInt(document.getElementById('qtyInput').value) || 1));
+  const total = currentItem.buy * qty;
+  document.getElementById('mTotal').textContent = fmt(total) + ' coins';
+  document.getElementById('mTotal').style.color = total > myBalance ? 'var(--red)' : 'var(--gold)';
+}
+
+async function confirmBuy() {
+  if (!currentItem) return;
+  const qty = Math.max(1, Math.min(64, parseInt(document.getElementById('qtyInput').value) || 1));
+  const btn = document.getElementById('mConfirmBtn');
+  const msg = document.getElementById('modalMsg');
+  btn.disabled = true;
+  btn.textContent = 'Se procesează...';
+  msg.className = 'modal-msg';
+  msg.textContent = '';
+
+  const r = await fetch('/api/shop/buy', {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ itemId: currentItem.id, qty })
+  });
+  const d = await r.json();
+
+  if (r.ok) {
+    msg.className = 'modal-msg ok';
+    msg.textContent = `✓ Ai cumpărat ${qty}x ${d.item} pentru ${fmt(d.spent)} coins!`;
+    myBalance -= d.spent;
+    document.getElementById('balVal').textContent = fmt(myBalance) + ' coins';
+    updateTotal();
+    btn.textContent = '✓ Cumpărat!';
+    setTimeout(() => {
+      document.getElementById('buyModal').classList.remove('open');
+      btn.textContent = '🛒 Cumpără';
+      btn.disabled = false;
+    }, 1800);
+  } else {
+    msg.className = 'modal-msg err';
+    msg.textContent = d.error || 'Eroare necunoscută.';
+    btn.textContent = '🛒 Cumpără';
+    btn.disabled = false;
+  }
+}
+
+async function logout() {
+  await fetch('/api/player/logout', { method:'POST', credentials:'include' });
+  location.href = '/player/login';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('buyModal').classList.remove('open'); });
+init();
+</script>
+</body>
+</html>

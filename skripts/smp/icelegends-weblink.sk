@@ -1,0 +1,37 @@
+# ============================================================
+# IceLegends — WebLink (Player Platform Integration)
+# /registerweb — stores a one-time 6-digit token in memory so
+#               the panel can verify it via RCON (iclwebtoken)
+#               when the player registers at mc.ice4legends.com/player/register
+# ============================================================
+
+options:
+    PREFIX_W: &8[&b❄Web&8]
+
+command /registerweb:
+    trigger:
+        set {_uuid} to "%player's uuid%"
+        set {_token} to "%random integer from 100000 to 999999%"
+        set {_ts} to floor(unix timestamp of now)
+        set {weblink::token::%{_uuid}%} to {_token}
+        set {weblink::tokenname::%{_uuid}%} to player's name
+        set {weblink::tokents::%{_uuid}%} to {_ts}
+        send colored "" to player
+        send colored "{@PREFIX_W} &7Codul tau de inregistrare web:" to player
+        send colored "  &e&l%{_token}%" to player
+        send colored "{@PREFIX_W} &7Mergi la &bmc.ice4legends.com/player/register" to player
+        send colored "&7si introdu acest cod. &cExpira in 10 minute&7." to player
+        send colored "" to player
+
+# Console-only command used by the panel via RCON to read the
+# in-memory token without waiting for variables.csv to flush.
+# Usage: /iclwebtoken <uuid>
+command /iclwebtoken <text>:
+    executable by: console
+    trigger:
+        set {_tok} to {weblink::token::%arg 1%}
+        set {_ts} to {weblink::tokents::%arg 1%}
+        if {_tok} is set:
+            send "ICLWT:%arg 1%:%{_tok}%:%{_ts}%"
+        else:
+            send "ICLWT:notfound"
