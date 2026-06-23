@@ -7,7 +7,7 @@
 
 <br/>
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.4-62b447?style=for-the-badge&logo=minecraft&logoColor=white)](https://papermc.io)
+[![Minecraft](https://img.shields.io/badge/PaperMC-26.1.2-62b447?style=for-the-badge&logo=minecraft&logoColor=white)](https://papermc.io)
 [![Flutter](https://img.shields.io/badge/Flutter-3.44-54C5F8?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)

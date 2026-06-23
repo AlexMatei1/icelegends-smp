@@ -1,6 +1,6 @@
 # ============================================================
 # IceLegends SMP — Server unic (Hub + SMP + Shop via Multiverse)
-# Optimizat pentru VM 7GB — heap 2G, CPU cap 3 cores
+# PaperMC 26.1.2 — Optimizat pentru VM 7GB — heap 3G, CPU cap 3 cores
 # ============================================================
 
 x-jvm-flags: &jvm-flags >-
@@ -50,7 +50,8 @@ services:
     environment:
       EULA: "TRUE"
       TYPE: PAPER
-      VERSION: LATEST
+      VERSION: "26.1.2"
+      PAPER_BUILD: "72"
       INIT_MEMORY: 1024M
       MEMORY: 3000M
       MAX_PLAYERS: ${MAX_PLAYERS:-15}
@@ -72,6 +73,9 @@ services:
       - "25565:25565/udp"
     volumes:
       - ./data:/data
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     networks:
       - mc-internal
     cpus: 3.0
