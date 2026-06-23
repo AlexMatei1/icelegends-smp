@@ -65,7 +65,7 @@ services:
       ENABLE_RCON: "true"
       RCON_PASSWORD: ${RCON_PASSWORD}
       RCON_PORT: "25575"
-      MAX_TICK_TIME: "60000"
+      MAX_TICK_TIME: "-1"
       TZ: ${TZ:-Europe/Bucharest}
       JVM_OPTS: *jvm-flags
     ports:
